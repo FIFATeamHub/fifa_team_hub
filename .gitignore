@@ -1,0 +1,28 @@
+# Dependências gerais
+node_modules/
+venv/
+__pycache__/
+*.pyc
+
+# Builds
+dist/
+build/
+.next/
+.vite/
+
+# Variáveis de ambiente — NUNCA commitar
+.env
+*.env.local
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# Credenciais Cloud
+*service-account*.json
+*credentials*.json
