@@ -84,7 +84,7 @@ Documento vivo — atualizar sempre que uma decisão relevante for tomada em reu
 Uma seleção só será considerada "Confirmada" para o Organizador quando todos os documentos obrigatórios de todos os membros forem devidamente enviados no sistema. 
 
 **Row-Level**
-O uso de um sistema Row-Level (RLS) não foi abordado, porém, para o projeto, a tecnologia do RLS é essencial para garantir a segurança para evitar o vazamento de informações relevantes para adversários, pois garante restrições no acesso de uma linha de dados, como uma específica seleção e permitindo a com a equipe apenas para usúarios da comissão técnica ou o organizador do evento. O RLS atua diretamente em bancos de dados e limita a leitura de dados para usúarios específicos, sendo a perfeita alternativa na segurança do projeto.
+O uso de um sistema Row-Level (RLS) não foi abordado, porém, no projeto, a tecnologia do RLS é essencial para garantir a segurança para evitar o vazamento de informações relevantes para adversários, pois garante restrições no acesso de uma linha de dados, como uma específica seleção, e permite a visualização da equipe apenas para usúarios da comissão técnica ou o organizador do evento. O RLS atua diretamente em bancos de dados e limita a leitura de dados para usúarios específicos, sendo a perfeita alternativa na segurança do projeto.
 ---
 
 ## ADR-003 · Branches e Commits
