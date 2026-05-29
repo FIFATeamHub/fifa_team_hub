@@ -66,13 +66,13 @@ Documento vivo — atualizar sempre que uma decisão relevante for tomada em reu
 
 - Um usuário comum não pode pertencer a mais de uma seleção.
 
-- A Comissão Técnica possui acesso restrito exclusivamente aos documentos da sua própria seleção (Multitenancy). 
+- A Comissão Técnica possui acesso restrito exclusivamente aos documentos da sua própria seleção (Multitenancy).
  
 - O Organizador do campeonato possui visão global e irrestrita sobre todas as seleções.
 
  **Gestão de Documentos (Upload/Delete):**
 
-- O Atleta é o responsável por realizar o upload inicial dos arquivos (Passaporte, Laudos, etc). 
+- O Atleta é o responsável por realizar o upload inicial dos arquivos (Passaporte, Laudos, Exames, etc). 
 
 - Formatos de arquivos aceitos estritamente limitados a .pdf e .jpg. 
 
@@ -84,8 +84,7 @@ Documento vivo — atualizar sempre que uma decisão relevante for tomada em reu
 Uma seleção só será considerada "Confirmada" para o Organizador quando todos os documentos obrigatórios de todos os membros forem devidamente enviados no sistema. 
 
 **Row-Level**
-Arthur escreve aqui
-
+O uso de um sistema Row-Level (RLS) não foi abordado, porém, para o projeto, a tecnologia do RLS é essencial para garantir a segurança para evitar o vazamento de informações relevantes para adversários, pois garante restrições no acesso de uma linha de dados, como uma específica seleção e permitindo a com a equipe apenas para usúarios da comissão técnica ou o organizador do evento. O RLS atua diretamente em bancos de dados e limita a leitura de dados para usúarios específicos, sendo a perfeita alternativa na segurança do projeto.
 ---
 
 ## ADR-003 · Branches e Commits
