@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:17
+
+    container_name: fifa_team_hub_db
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: fifa_team_hub
+      POSTGRES_USER: fifa_user
+      POSTGRES_PASSWORD: fifa_password
+
+    ports:
+      - "15432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  postgres_data:
