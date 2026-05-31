@@ -108,3 +108,52 @@ fifa-team-hub/
 ├── docs/                # Documentação técnica e ADRs
 ├── .github/             # Templates e CI/CD
 └── README.md
+```
+
+---
+
+# Como Executar o Projeto Localmente
+
+## Pré-requisitos
+- Python 3.14+
+- Docker e Docker Desktop (para rodar o banco de dados)
+
+## Backend (Flask)
+
+1. **Clone o repositório:**
+   ```bash
+   git clone https://github.com/FIFATeamHub/fifa_team_hub.git
+   cd fifa_team_hub
+   ```
+
+2. **Crie e ative o ambiente virtual:**
+   No Windows (PowerShell):
+   ```powershell
+   python -m venv backend/venv
+   backend\venv\Scripts\Activate
+   ```
+   No Linux/Mac:
+   ```bash
+   python3 -m venv backend/venv
+   source backend/venv/bin/activate
+   ```
+
+3. **Instale as dependências:**
+   ```bash
+   pip install -r backend/requirements.txt
+   ```
+
+4. **Configure as Variáveis de Ambiente:**
+   Copie o arquivo modelo `.env.example` para um novo arquivo chamado `.env` na raiz do projeto. Preencha os valores conforme a sua máquina local (já há exemplos no `.env.example`).
+
+5. **Suba o Banco de Dados (Docker):**
+   Certifique-se de que o Docker Desktop está aberto e rodando.
+   ```bash
+   docker compose up -d
+   ```
+
+6. **Inicie o Servidor:**
+   ```bash
+   python backend/wsgi.py
+   ```
+   Acesse no navegador: `http://localhost:5000/health` para validar se o servidor está rodando.
