@@ -64,20 +64,27 @@ Isso significa que:
 
 ---
 
+# Atribuições Semanais
+
+![Rotatividade dos Membros durante as semanas]("C:\Users\force\OneDrive\Imagens\rotatividade_dos_membros_fifa_team_hub.jpeg")
+
+---
+
 # Stack Tecnológica
 
 A stack será definida e refinada ao longo das sprints iniciais conforme as necessidades do projeto.
 
 ## Tecnologias em avaliação
 
-| Camada | Possíveis Tecnologias |
+| Camada | Tecnologias |
 |---|---|
-| Frontend | React · Next.js · Astro |
-| Backend | Node.js · FastAPI · NestJS |
-| Banco de Dados | PostgreSQL |
-| Autenticação | JWT · OAuth2 |
+| Frontend | Vue 3 |
+| Backend | Flask |
+| Banco de Dados e ORM | PostgreSQL · SQLAlchemy + Alembic |
+| Segurança e Autenticação | Python-jose + jsonwebtoken |
 | Infraestrutura | Docker · GitHub Actions |
-| Deploy | Vercel · Railway · AWS |
+| Storage | Google Cloud Storage |
+| Deploy | A definir |
 
 ---
 
@@ -99,6 +106,98 @@ A documentação oficial será mantida em um portal dedicado utilizando:
 
 ---
 
+# Como executar o programa com Docker
+
+### 1. Clone o repositório:
+
+```bash
+git clone <https://github.com/FIFATeamHub/fifa_team_hub.git>
+cd fifa-team-hub
+```
+
+### 2. Crie o arquivo `.env` na raiz do projeto com base no `.env.example`.
+
+### 3. Execute o comando abaixo para construir e iniciar todos os serviços:
+
+```bash
+docker compose up --build
+```
+
+### 4. Após a inicialização:
+
+   * PostgreSQL estará disponível na porta configurada no `docker-compose.yml`;
+   * Backend estará disponível na porta `5000`;
+   * Frontend estará disponível na porta `5173`.
+
+### 5. Para interromper os serviços:
+
+```bash
+docker compose down
+```
+
+---
+
+# Executando o projeto localmente (sem Docker)
+
+## Pré-requisitos
+
+  * Python 3.13+
+  * Node.js 22+
+  * PostgreSQL 15+
+  * Git
+
+### 1. Clone o repositório
+
+```bash
+git clone <https://github.com/FIFATeamHub/fifa_team_hub.git>
+cd fifa-team-hub
+```
+
+### 2. Configure as variáveis de ambiente
+
+Crie um arquivo `.env` na raiz do projeto utilizando o `.env.example` como referência.
+
+### 3. Configure o banco de dados
+
+Crie um banco PostgreSQL com as credenciais definidas no arquivo `.env`.
+
+### 4. Inicie o backend
+
+```bash
+cd backend
+
+python -m venv venv
+
+# Linux/macOS
+source venv/bin/activate
+
+# Windows
+venv\Scripts\activate
+
+pip install -r requirements.txt
+
+python run.py
+```
+
+### 5. Inicie o frontend
+
+Em outro terminal:
+
+```bash
+cd frontend
+
+npm install
+
+npm run dev
+```
+
+### 6. Acesse a aplicação
+
+  * Frontend: http://localhost:5173
+  * Backend: http://localhost:5000
+
+---
+
 # Estrutura Inicial do Repositório
 
 ```txt
@@ -108,52 +207,3 @@ fifa-team-hub/
 ├── docs/                # Documentação técnica e ADRs
 ├── .github/             # Templates e CI/CD
 └── README.md
-```
-
----
-
-# Como Executar o Projeto Localmente
-
-## Pré-requisitos
-- Python 3.14+
-- Docker e Docker Desktop (para rodar o banco de dados)
-
-## Backend (Flask)
-
-1. **Clone o repositório:**
-   ```bash
-   git clone https://github.com/FIFATeamHub/fifa_team_hub.git
-   cd fifa_team_hub
-   ```
-
-2. **Crie e ative o ambiente virtual:**
-   No Windows (PowerShell):
-   ```powershell
-   python -m venv backend/venv
-   backend\venv\Scripts\Activate
-   ```
-   No Linux/Mac:
-   ```bash
-   python3 -m venv backend/venv
-   source backend/venv/bin/activate
-   ```
-
-3. **Instale as dependências:**
-   ```bash
-   pip install -r backend/requirements.txt
-   ```
-
-4. **Configure as Variáveis de Ambiente:**
-   Copie o arquivo modelo `.env.example` para um novo arquivo chamado `.env` na raiz do projeto. Preencha os valores conforme a sua máquina local (já há exemplos no `.env.example`).
-
-5. **Suba o Banco de Dados (Docker):**
-   Certifique-se de que o Docker Desktop está aberto e rodando.
-   ```bash
-   docker compose up -d
-   ```
-
-6. **Inicie o Servidor:**
-   ```bash
-   python backend/wsgi.py
-   ```
-   Acesse no navegador: `http://localhost:5000/health` para validar se o servidor está rodando.
