@@ -63,7 +63,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['uploaded_by'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.execute('DROP TABLE IF EXISTS "users"')
+    #op.drop_table('users')
     # ### end Alembic commands ###
 
 
