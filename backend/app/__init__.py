@@ -22,8 +22,11 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
 
-    @app.get("/health")
-    def health():
-        return {"status": "ok"}, 200
+    # Registra os blueprints
+    from app.routes.auth import auth_bp
+    from app.routes.health import health_bp
 
-    return app
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(health_bp)
+
+    return app
