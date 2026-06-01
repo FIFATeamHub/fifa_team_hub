@@ -2,12 +2,15 @@ import os
 
 from dotenv import load_dotenv
 from flask import Flask # type: ignore[import]
+from flask_migrate import Migrate # type: ignore[import]
 
-from app.config.database import db
+from app.config.database import db # type: ignore[import]
 
 load_dotenv()
 
 from app.models import *
+
+migrate = Migrate()
 
 def create_app():
 
@@ -17,6 +20,7 @@ def create_app():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     db.init_app(app)
+    migrate.init_app(app, db)
 
     @app.get("/health")
     def health():
