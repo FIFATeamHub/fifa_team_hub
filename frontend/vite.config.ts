@@ -9,7 +9,10 @@ export default defineConfig({
   plugins: [
     vue(),
     vueDevTools(),
+    
   ],
+  // Load VITE_* vars from the repository root (.env at ../.env)
+  envDir: fileURLToPath(new URL('..', import.meta.url)),
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
