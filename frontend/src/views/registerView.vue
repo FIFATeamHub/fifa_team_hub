@@ -1,19 +1,21 @@
 
-
 <template>
     <div class = "page">
 
-        <LoginForm/>
+        <h1>Cadastro</h1>
 
-        <!-- <p>teste</p> -->
-
+        <cadastroForm/>
+        
     </div>
+
+
 
 </template>
 
-<script setup>
+<script setup lang="js">
 
-import LoginForm from '@/components/loginForm.vue';
+import { RouterView } from 'vue-router'
+import cadastroForm from '@/components/cadastroForm.vue'
 
 </script>
 
@@ -25,12 +27,7 @@ import LoginForm from '@/components/loginForm.vue';
         margin: 0;
         padding: 0; 
         box-sizing: border-box;
-        
+        background-color: #dfdfdf;
     }
-
-    .page{
-        background-color: #061c42;
-    }
-
 
 </style>

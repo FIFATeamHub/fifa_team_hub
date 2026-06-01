@@ -1,0 +1,124 @@
+
+<template>
+    <div class = "container-page">
+
+        <h1>Login</h1>
+
+
+        <div class = "container-form">
+            <form @submit.prevent="handleSubmit">
+                <label for = "email">Email:</label>
+                <input name = "email" type="email" v-model="email" required>
+
+                <label for = "password">Senha:</label>
+                <input name = "password" type="password" v-model="password" required>
+                
+                <p>{{ errorMessage }}</p>
+
+                <button type="submit">Entrar</button>
+            </form>
+
+            <p id = "#cadastro">
+                Ainda não possui conta? : <RouterLink to="/cadastro">Cadastre-se</RouterLink>
+            </p>
+        </div>
+    </div>
+
+
+</template>
+
+
+
+
+
+<script setup>
+
+import { ref } from 'vue'
+import { useAuthStore } from '../stores/auth'
+import { useRouter, RouterLink } from 'vue-router'      
+
+const authStore = useAuthStore()
+const router = useRouter()
+
+const email = ref('')
+const password = ref('')
+const errorMessage = ref('')
+
+async function handleSubmit() {
+  errorMessage.value = ''
+
+  try {
+    
+    await authStore.login({ email: email.value, password: password.value })
+    router.push('/dashboard')
+
+  } catch (error) {
+    if (error.status === 401) {
+      errorMessage.value = 'E-mail ou senha incorretos'
+    }
+  }
+}
+</script>
+
+
+
+
+<style scoped>
+
+    :global(html),
+    :global(body),
+    :global(#app) {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+
+
+    .container-page{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 420px;
+        width: 100%;
+    }
+
+    .container-page h1{
+        margin-top: 130px;
+        color: #F3F4F6;
+    }
+
+    .container-form{
+        padding: 70px;
+        display: flex;
+        flex-direction: column;
+        background-color: #b39532;
+        border-radius: 10px;
+
+
+    }
+
+    .container-form label{
+        color: #E2E8F0;
+        display: block;
+        margin-bottom: 10px;
+
+    }
+
+    .container-form p{
+        color: white;
+        display: block;
+
+    }
+
+    .container-form input{
+        background-color: #E2E8F0;;
+        display: block;
+        border-radius: 1px;
+        border-color: #121E2B;
+
+    }
+
+
+</style>
