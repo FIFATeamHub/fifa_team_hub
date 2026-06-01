@@ -2,7 +2,20 @@ from enum import Enum
 
 class UserRole(str,Enum):
     ATHELETE = "ATHELETE"
+    AUDITOR = "AUDITOR"
     TECHNICAL_STAFF = "TECHNICAL_STAFF"
     MEDICAL_STAFF = "MEDICAL_STAFF"
     ORGANIZER = "ORGANIZER"
 
+class TypeDocument(str,Enum):
+    PASSPORT = "PASSPORT"
+    CONVOCADO = "CONVOCADO"
+    LAUDO_MEDICO = "LAUDO_MEDICO"
+
+class LogAction(str,Enum):
+    LOGIN = "LOGIN"
+    LOGOUT = "LOGOUT"
+    DELETE = "DELETE"
+    UPLOAD = "UPLOAD"
+    DOWNLOAD = "DOWNLOAD"
+    ACCESS_DENIED = "ACCESS_DENIED"

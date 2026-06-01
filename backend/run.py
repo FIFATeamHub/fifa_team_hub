@@ -1,6 +1,6 @@
 from flask_migrate import Migrate
 
-from app.config.database import db
+from app.config.database import db # type: ignore[import]
 from app import create_app
 
 app = create_app()
