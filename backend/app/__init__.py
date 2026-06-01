@@ -1,17 +1,25 @@
-from flask import Flask
-from .config import Config #carregar os .env
-from .extensions import db, migrate, cors #carregar as extenções
-from .routes.health import health_bp
+import os
+
+from dotenv import load_dotenv
+from flask import Flask # type: ignore[import]
+
+from app.config.database import db
+
+load_dotenv()
+
+from app.models import *
 
 def create_app():
 
     app = Flask(__name__)
 
-    app.config.from_object(Config) #carregar as config
-    db.init_app(app) #conecta o banco ao app
-    migrate.init_app(app, db) #conecta o banco ao app
-    cors.init_app(app) #conecta o cors ao app
-  
-    app.register_blueprint(health_bp)
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    db.init_app(app)
+
+    @app.get("/health")
+    def health():
+        return {"status": "ok"}, 200
 
     return app

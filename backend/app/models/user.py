@@ -1,0 +1,59 @@
+from uuid import uuid4
+
+from sqlalchemy import Enum
+
+from app.config.database import db
+from app.models.enums.user_role import UserRole
+
+
+class User(db.Model):
+    __tablename__ = "users"
+
+    id = db.Column(
+        db.UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+
+    full_name = db.Column(
+        db.String(255),
+        nullable=False
+    )
+
+    email = db.Column(
+        db.String(255),
+        unique=True,
+        nullable=False
+    )
+
+    password_hash = db.Column(
+        db.String(255),
+        nullable=False
+    )
+
+    role = db.Column(
+        Enum(UserRole),
+        nullable=False
+    )
+
+    selection_id = db.Column(
+        db.UUID(as_uuid=True),
+        nullable=True
+    )
+
+    is_active = db.Column(
+        db.Boolean,
+        default=True,
+        nullable=False
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        server_default=db.func.now()
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        server_default=db.func.now(),
+        onupdate=db.func.now()
+    )
