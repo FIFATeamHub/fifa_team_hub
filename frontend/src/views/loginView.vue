@@ -1,4 +1,5 @@
 
+<<<<<<< HEAD
 <template>
   <form @submit.prevent="handleSubmit">
     <input type="email" v-model="email" required>
@@ -38,3 +39,40 @@ async function handleSubmit() {
   }
 }
 </script>
+=======
+
+<template>
+    <div class = "page">
+
+        <LoginForm/>
+
+        <!-- <p>teste</p> -->
+
+    </div>
+
+</template>
+
+<script setup>
+
+import LoginForm from '@/components/loginForm.vue';
+
+</script>
+
+<style scoped>
+
+    :global(html),
+    :global(body),
+    :global(#app) {
+        margin: 0;
+        padding: 0; 
+        box-sizing: border-box;
+        
+    }
+
+    .page{
+        background-color: #061c42;
+    }
+
+
+</style>
+>>>>>>> e6e1e96 (fetch : logica e página de registros / estilizando algumas tela / organizando arquivos em componentes)
