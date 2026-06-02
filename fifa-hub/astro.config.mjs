@@ -6,7 +6,7 @@ import starlightThemeRapidePlugin from "starlight-theme-rapide";
 
 export default defineConfig({
 	site: "https://fifa_team_hub.github.io",
-	base: "/fifa-hub/",
+	base: "/fifa-hub",
 	integrations: [
 		starlight({
 			plugins: [starlightThemeRapidePlugin()],
