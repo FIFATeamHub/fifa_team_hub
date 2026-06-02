@@ -111,7 +111,7 @@ A documentação oficial será mantida em um portal dedicado utilizando:
 ### 1. Clone o repositório:
 
 ```bash
-git clone <https://github.com/FIFATeamHub/fifa_team_hub.git>
+git clone https://github.com/FIFATeamHub/fifa_team_hub.git
 cd fifa-team-hub
 ```
 
@@ -149,7 +149,7 @@ docker compose down
 ### 1. Clone o repositório
 
 ```bash
-git clone <https://github.com/FIFATeamHub/fifa_team_hub.git>
+git clone https://github.com/FIFATeamHub/fifa_team_hub.git
 cd fifa-team-hub
 ```
 
