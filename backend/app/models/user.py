@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 from sqlalchemy import Enum # type: ignore[import]
+from sqlalchemy.orm import Mapped,registry
 
 from app.config.database import db # type: ignore[import]
 from app.models.enums.user_role import UserRole
@@ -34,7 +35,7 @@ class Selection(db.Model):
     )
 
 class User(db.Model):
-    __tablename__ = "user"
+    __tablename__ = "users"
 
     id = db.Column(
         db.UUID(as_uuid=True),
@@ -167,3 +168,5 @@ class AuditLog(db.Model):
         db.DateTime,
         server_default=db.func.now()
     )
+
+table_registry = registry()
