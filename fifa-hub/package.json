@@ -12,6 +12,10 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^6.4.2"
+    "@astrojs/starlight": "^0.39.3",
+    "@fontsource/geist-mono": "^5.2.8",
+    "@fontsource/geist-sans": "^5.2.5",
+    "astro": "^6.4.2",
+    "starlight-theme-rapide": "^0.5.2"
   }
 }
