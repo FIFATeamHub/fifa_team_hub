@@ -19,7 +19,7 @@ api.interceptors.request.use((config) => {
 
 // 2. Interceptor de Resposta (Pega erro 401)
 api.interceptors.response.use(
-  (response) => response
+  (response) => response,
   (error) => {
     // Se o backend responder 401, limpa os dados salvos e manda pro Login
     if (error.response && error.response.status === 401) {
