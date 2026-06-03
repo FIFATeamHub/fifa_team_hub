@@ -45,8 +45,9 @@ jobs:
           cd fifa-hub
           npm run build
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v5
+      # 🔄 ALTERADO: Usando a action específica para o GitHub Pages
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ./fifa-hub/dist
 
