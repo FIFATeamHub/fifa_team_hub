@@ -11,7 +11,9 @@ with app.app_context():
     db.session.query(Selection).delete()
 
     selecao_bra = Selection(name="Confederação Brasileira de Futebol", code="BRA")
+    selecao_arg = Selection(name="Associação do Futebol Argentino", code = "ARG" )
     db.session.add(selecao_bra)
+    db.session.add(selecao_arg)
     db.session.flush() 
 
     usuarios_seed = [
@@ -21,6 +23,13 @@ with app.app_context():
             password_hash="scrypt:32000:16:1$safehash...",
             role=UserRole.TECHNICAL_STAFF,
             selection_id=selecao_bra.id
+        ),
+         User(
+            full_name="Staff Técnico Argentina",
+            email="tech@afa.com.br",
+            password_hash="scrypt:32000:16:1$safehash...",
+            role=UserRole.TECHNICAL_STAFF,
+            selection_id=selecao_arg.id
         ),
         User(
             full_name="Organizador FIFA",

@@ -1,5 +1,7 @@
 from uuid import uuid4
 
+from werkzeug.security import generate_password_hash #Gera a senha em hash para user.password_hash
+
 from sqlalchemy import Enum # type: ignore[import]
 from sqlalchemy.orm import Mapped,registry
 
@@ -32,7 +34,7 @@ class User(db.Model):
     )
 
     password_hash = db.Column(
-        db.String(255),
+        db.generate_password_hash(),
         nullable=False
     )
 
@@ -64,6 +66,7 @@ class User(db.Model):
         onupdate=db.func.now()
     )
 
-
+def senha_para_hash(value):
+    return generate_password_hash(value)
 
 table_registry = registry()
