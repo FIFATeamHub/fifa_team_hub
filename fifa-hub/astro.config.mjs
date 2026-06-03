@@ -10,7 +10,7 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			plugins: [starlightThemeRapidePlugin()],
-			title: "Softex - Sistema de Gestão de Recursos",
+			title: "FIFA Team Hub",
 			social: [
 				{
 					icon: "github",

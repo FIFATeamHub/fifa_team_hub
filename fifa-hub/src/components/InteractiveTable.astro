@@ -7,40 +7,45 @@
     <thead>
       <tr>
         <th>Ferramenta</th>
-        <th>Uso</th>
+        <th>Uso no Projeto</th>
         <th>Frequência</th>
       </tr>
     </thead>
     <tbody>
       <tr class="tool-row" data-tool="whatsapp">
         <td>📱 <strong>WhatsApp</strong></td>
-        <td>Comunicação instantânea da equipe</td>
+        <td>Avisos rápidos e comunicação urgente</td>
         <td>Diário</td>
       </tr>
       <tr class="tool-row" data-tool="discord">
         <td>🎮 <strong>Discord</strong></td>
-        <td>Reuniões internas e aulas</td>
+        <td>Reuniões, alinhamentos e pareamento de código</td>
         <td>Semanal</td>
-      </tr>
-      <tr class="tool-row" data-tool="slack">
-        <td>💬 <strong>Slack</strong></td>
-        <td>Canal direto com cliente</td>
-        <td>Contínuo</td>
-      </tr>
-      <tr class="tool-row" data-tool="meet">
-        <td>📹 <strong>Google Meet</strong></td>
-        <td>Reuniões oficiais quinzenais</td>
-        <td>Quinzenal</td>
       </tr>
       <tr class="tool-row" data-tool="github">
         <td>🐙 <strong>GitHub</strong></td>
-        <td>Gestão de projeto e código</td>
+        <td>Gestão do repositório da Organização</td>
         <td>Diário</td>
       </tr>
-      <tr class="tool-row" data-tool="gitpages">
-        <td>📚 <strong>GitPages</strong></td>
-        <td>Documentação centralizada</td>
+      <tr class="tool-row" data-tool="docker">
+        <td>🐳 <strong>Docker</strong></td>
+        <td>Containerização do banco e padronização do ambiente</td>
         <td>Contínuo</td>
+      </tr>
+      <tr class="tool-row" data-tool="dbeaver">
+        <td>🦫 <strong>DBeaver</strong></td>
+        <td>Gerenciamento e consultas ao PostgreSQL</td>
+        <td>Contínuo</td>
+      </tr>
+      <tr class="tool-row" data-tool="postman">
+        <td>🚀 <strong>Postman</strong></td>
+        <td>Testes e consumo das rotas da API</td>
+        <td>Contínuo</td>
+      </tr>
+      <tr class="tool-row" data-tool="dbdiagram">
+        <td>📊 <strong>dbdiagram.io</strong></td>
+        <td>Modelagem e esboço do diagrama de entidades (DER)</td>
+        <td>Pontual</td>
       </tr>
     </tbody>
   </table>
@@ -66,7 +71,8 @@
   }
   
   .interactive-table th {
-    background: #8B5CF6;
+    /* Fundo Azul FIFA */
+    background: var(--fifa-blue, #3B82F6);
     color: white;
     font-weight: 600;
     font-size: 0.9em;
@@ -79,15 +85,18 @@
   
   .tool-row {
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, transform 0.2s ease;
   }
   
   .tool-row:hover {
-    background: rgba(139, 92, 246, 0.1);
+    /* Hover com Azul FIFA suave */
+    background: rgba(59, 130, 246, 0.1);
   }
   
   .tool-row.active {
-    background: rgba(139, 92, 246, 0.15);
+    /* Linha ativa com Verde FIFA para destaque de seleção */
+    background: rgba(16, 185, 129, 0.15);
+    border-left: 3px solid var(--fifa-green, #10B981);
   }
 </style>
 
@@ -99,7 +108,12 @@
     rows.forEach(row => {
       row.addEventListener('click', function(this: HTMLTableRowElement) {
         // Remove active class from all rows
-        rows.forEach(r => r.classList.remove('active'));
+        rows.forEach(r => {
+          r.classList.remove('active');
+          // Limpa a borda customizada das outras linhas
+          (r as HTMLElement).style.borderLeft = '';
+        });
+        
         // Add active class to clicked row
         this.classList.add('active');
         
