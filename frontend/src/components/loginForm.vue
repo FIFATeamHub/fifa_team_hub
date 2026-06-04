@@ -15,7 +15,9 @@
                 
                 <p>{{ errorMessage }}</p>
 
-                <button type="submit">Entrar</button>
+                <button type="submit" :disabled="loading">
+                    {{ loading ? 'Loading...' : 'Entrar' }}
+                </button>
             </form>
 
             <p id = "#cadastro">
@@ -43,19 +45,22 @@ const router = useRouter()
 const email = ref('')
 const password = ref('')
 const errorMessage = ref('')
+const loading = ref(false)
 
 async function handleSubmit() {
   errorMessage.value = ''
+    loading.value = true
 
   try {
     
     await authStore.login({ email: email.value, password: password.value })
-    router.push('/dashboard')
 
   } catch (error) {
     if (error.status === 401) {
       errorMessage.value = 'E-mail ou senha incorretos'
     }
+    } finally {
+        loading.value = false
   }
 }
 </script>
@@ -110,6 +115,11 @@ async function handleSubmit() {
         color: white;
         display: block;
 
+    }
+
+    .container-form button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
     }
 
     .container-form input{
