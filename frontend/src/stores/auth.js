@@ -2,6 +2,9 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import router from '../router/index'
 
+//importei api
+import api from '../services/api.js'
+
 
 
 export const useAuthStore = defineStore('auth', () => {
@@ -37,8 +40,9 @@ export const useAuthStore = defineStore('auth', () => {
     // const resposta = await api.post('/auth/login', { email, password }) # IMPLEMENTAR COM AXIOS
     // const dados = resposta.data
 
-    token.value = data.token
-    localStorage.setItem('token', data.token)
+    //sauma - alterar data.token para data.access_token
+    token.value = data.access_token
+    localStorage.setItem('token', data.access_token)
 
     await fetchMe()
 
@@ -51,11 +55,12 @@ export const useAuthStore = defineStore('auth', () => {
 
     try{
 
+        //mudei os nomes das variaves p ingles para alinhas com o backend
         const resposta = await api.post('/auth/register', {
-            nome: dadosCadastro.nome,
+            full_name: dadosCadastro.nome,
             email: dadosCadastro.email,
             password: dadosCadastro.password,
-            cargo: dadosCadastro.cargo
+            role: dadosCadastro.cargo
         })
         
         return resposta.data  

@@ -6,11 +6,11 @@
     <div class = "container-form">
         <form @submit.prevent="lidarComCadastro">   
             <div class = "container-campo">
-                <label for="nome"></label>
+                <label for="nome">Nome:</label>
                 <input name = "nome" type="text" v-model ="nome" required>
             </div>
             <div class = "container-campo">
-                <label for="email"></label>
+                <label for="email">Email:</label>
                 <input name = "email" type="email" v-model ="email" required>
             </div>
 
@@ -18,10 +18,10 @@
                 <label>Cargo:</label>
                 <select v-model="cargo" required>
                 <option value="" disabled>Selecione uma opção</option>
-                <option value="jogador">Jogador</option>
-                <option value="Comissão Técnica">Comissão Técnica</option>
-                <option value="Comissão médica">Comissão Médica</option>
-                <option value="Organizador">Organizador</option>
+                <option value="ATHELETE">Jogador</option>
+                <option value="TECHNICAL_STAFF">Comissão Técnica</option>
+                <option value="MEDICAL_STAFF">Comissão Médica</option>
+                <option value="ORGANIZER">Organizador</option>
                 </select>
             </div>
 
