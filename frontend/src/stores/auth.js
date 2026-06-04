@@ -66,14 +66,17 @@ export const useAuthStore = defineStore('auth', () => {
         return resposta.data  
     }
     catch (erro) {
-    
-        if (erro.response) {
-        throw { 
-            status: erro.response.status, 
-            message: erro.response.data.message || 'Erro ao realizar cadastro.' 
+      if (erro.response) {
+        const status = erro.response.status
+        const mensagemPadrao = erro.response.data?.message || erro.response.data?.error || 'Erro ao realizar cadastro.'
+
+        throw {
+          status,
+          message: status === 409 ? 'email já cadastrado' : mensagemPadrao,
         }
-        }
-        throw erro
+      }
+
+      throw erro
     }
 
 
