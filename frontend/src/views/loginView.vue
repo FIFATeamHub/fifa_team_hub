@@ -31,10 +31,14 @@ async function handleSubmit() {
     await authStore.login({ email: email.value, password: password.value })
     router.push('/dashboard')
 
-  } catch (error) {
+    } catch (error) {
     if (error.status === 401) {
       errorMessage.value = 'E-mail ou senha incorretos'
+    } else {
+      errorMessage.value = 'Ocorreu um erro no servidor. Verifique os dados e tente novamente.'
     }
+    console.error(error) // Isso imprime o erro no F12 para você debugar!
   }
+
 }
 </script>

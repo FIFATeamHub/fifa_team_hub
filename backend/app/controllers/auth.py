@@ -1,5 +1,7 @@
 from flask import request, jsonify
 
+import re #importa o regex
+
 from app.config.database import db
 from app.models.user import User
 from app.models.enums.user_role import UserRole
@@ -56,19 +58,25 @@ def login():
     if not email or not password:
         return jsonify({"error": "Email e password são obrigatórios"}), 400
 
-    # Busca user por email
-    user = User.query.filter_by(email=email).first()
+    if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
+        return jsonify({"error": "Formato de e-mail inválido. Verifique se digitou corretamente (ex: faltou o .com?)"}), 400
 
-    # Credenciais inválidas — mesma mensagem para email e senha errados (segurança)
-    if not user or not verificar_senha(password, user.password_hash):
-        return jsonify({"error": "Credenciais inválidas"}), 401
-
-    token = gerar_token(user)
-
-    return jsonify({
-        "access_token": token,
-        "token_type": "bearer"
-    }), 200
+    try:
+        # Busca user por email
+        user = User.query.filter_by(email=email.lower()).first()
+        # Credenciais inválidas
+        if not user or not verificar_senha(password, user.password_hash):
+            return jsonify({"error": "Credenciais inválidas"}), 401
+        token = gerar_token(user)
+        return jsonify({
+            "access_token": token,
+            "token_type": "bearer"
+        }), 200
+    except Exception as e:
+        # Se QUALQUER coisa der errado (banco cair, erro de digitação no código), 
+        # a gente captura aqui para não dar erro 500 seco no navegador.
+        print(f"Erro no login: {e}") # Isso vai pro terminal
+        return jsonify({"error": "Erro interno no servidor"}), 500
 
 
 def me(current_user):
