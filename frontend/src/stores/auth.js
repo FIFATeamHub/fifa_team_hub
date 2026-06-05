@@ -60,7 +60,8 @@ export const useAuthStore = defineStore('auth', () => {
             full_name: dadosCadastro.nome,
             email: dadosCadastro.email,
             password: dadosCadastro.password,
-            role: dadosCadastro.cargo
+            role: dadosCadastro.cargo,
+            selection_id: dadosCadastro.selection
         })
         
         return resposta.data  

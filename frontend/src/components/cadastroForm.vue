@@ -21,7 +21,17 @@
                 <option value="ATHELETE">Jogador</option>
                 <option value="TECHNICAL_STAFF">Comissão Técnica</option>
                 <option value="MEDICAL_STAFF">Comissão Médica</option>
+                <option value="AUDITOR">Auditor</option>
                 <option value="ORGANIZER">Organizador</option>
+                </select>
+            </div>
+
+            <div class="campo">
+                <label>Seleção :</label>
+                <select v-model="selection">
+                <option value="" disabled>Selecione sua seleção</option>
+                <option value="BRA">Brasil</option>
+                <option value="ARG">Argentina</option>
                 </select>
             </div>
 
@@ -68,6 +78,7 @@ const email = ref('')
 const cargo = ref('')
 const password = ref('')
 const passwordConfirm = ref('')
+const selection = ref(null)
 
 
 const errorMessage = ref('')
@@ -94,7 +105,8 @@ const lidarComCadastro = async() => {
             nome: nome.value,
             email: email.value,
             password: password.value,
-            cargo: cargo.value
+            cargo: cargo.value,
+            selection: selection.value
         })
 
         successMessage.value = 'Cadastro realizado com sucesso'
@@ -104,6 +116,7 @@ const lidarComCadastro = async() => {
         cargo.value = ''
         password.value = ''
         passwordConfirm.value = ''
+        selection.value = null
 
         setTimeout(() => {
             router.push('/login')
