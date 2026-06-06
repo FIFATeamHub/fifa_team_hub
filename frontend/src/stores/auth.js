@@ -73,7 +73,7 @@ export const useAuthStore = defineStore('auth', () => {
 
         throw {
           status,
-          message: status === 409 ? 'email já cadastrado' : mensagemPadrao,
+          message: status === 409 ? 'Este email já está cadastrado.' : mensagemPadrao,
         }
       }
 
