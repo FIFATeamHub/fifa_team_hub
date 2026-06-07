@@ -7,6 +7,7 @@ from flask import Flask # type: ignore[import]
 from flask_migrate import Migrate # type: ignore[import]
 
 from app.config.database import db # type: ignore[import]
+from app.extensions import cors
 
 load_dotenv()
 
@@ -20,6 +21,22 @@ def create_app():
 
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    
+    #CORS permite que o navegador do cliente faça requisições ao backend mesmo que frontend e backend estejam em origens diferentes.
+    
+    cors.init_app(
+        app,
+        resources={
+            r"/*": {
+                "origins": [
+                    "http://localhost:5173",
+                    "http://127.0.0.1:5173",
+                    "http://localhost:5000",
+                    "http://127.0.0.1:5000",
+                ]
+            }
+        },
+    )
 
     db.init_app(app)
     migrate.init_app(app, db)

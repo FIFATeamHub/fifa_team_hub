@@ -1,1 +1,4 @@
-from app.models.user import User, Selection, Document, AuditLog
+from .user import User
+from .selection import Selection
+from .document import Document
+from .audit_log import AuditLog

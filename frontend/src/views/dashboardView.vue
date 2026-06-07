@@ -3,7 +3,7 @@
       
       <header class="dashboard-header">
         <div class="usuario-info">
-          <span>Bem-vindo, <strong>{{ authStore.user?.nome || 'Usuário' }}</strong></span>
+          <span>Bem-vindo, <strong>{{ authStore.user?.full_name || 'Usuário' }}</strong></span>
         </div>
         
         <button @click="efetuarLogout" class="botao-sair">Sair do Sistema</button>
@@ -21,19 +21,15 @@
 
 
 <script setup>
+import { onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
-
-
 
 const authStore = useAuthStore()
 const router = useRouter()
 
 const efetuarLogout = () => {
-
   authStore.logout()
-  
- 
   router.push('/login')
 }
 
