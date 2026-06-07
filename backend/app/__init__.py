@@ -1,5 +1,7 @@
 import os
 
+from app.extensions import cors #haabilitar o cors
+
 from dotenv import load_dotenv
 from flask import Flask # type: ignore[import]
 from flask_migrate import Migrate # type: ignore[import]
@@ -38,6 +40,8 @@ def create_app():
 
     db.init_app(app)
     migrate.init_app(app, db)
+
+    cors.init_app(app)
 
     # Registra os blueprints
     from app.routes.auth import auth_bp
