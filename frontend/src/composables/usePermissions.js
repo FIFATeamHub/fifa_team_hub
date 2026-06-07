@@ -1,6 +1,6 @@
 import {useAuthStore} from "../stores/auth.js"
 
-export function usePermitions(){
+export function usePermissions(){
 
     const authStore = useAuthStore()
 
