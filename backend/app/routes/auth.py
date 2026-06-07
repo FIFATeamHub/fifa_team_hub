@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash
 from app.models import User
 from app import db
 from app.schemas import RegisterSchema
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 auth_bp = Blueprint('auth', __name__)
 register_schema = RegisterSchema()
@@ -38,3 +39,19 @@ def register():
         "email": new_user.email,
         "role": new_user.role
     }), 201
+
+@auth_bp.route('/me', methods=['GET'])
+@jwt_required()
+def me():
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+
+    if not user:
+        return jsonify({"error": "Usuário não encontrado"}), 404
+
+    return jsonify({
+        "id": user.id,
+        "email": user.email,
+        "role": user.role,
+        "selection_id": user.selection_id
+    }), 200
