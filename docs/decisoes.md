@@ -23,19 +23,19 @@ Documento vivo — atualizar sempre que uma decisão relevante for tomada em reu
 
 ### Backend:
 
-**Decidido:** Flask (Python)
+**Decidido:** Flask (Python) `v3.1.x`
 
 **Descartado:** FastAPI, Express.js
 
-**Motivo:**  Escolhido pela simplicidade de configuração e abordagem amigável para o início dos estudos da equipe no ecossistema Python. 
+**Motivo:**  Escolhido pela simplicidade de configuração e abordagem amigável para o início dos estudos da equipe no ecossistema Python.
 
 ### Banco de Dados & ORM:
 
-**Decidido:** PostgreSQL
+**Decidido:** PostgreSQL `v17`
 
 **Descartado:** MySQL, SQLite
 
-**Motivo:**  Adotado por ser um banco relacional robusto e denso, aproveitando a familiaridade prévia do time com MySQL e SQLite. 
+**Motivo:**  Adotado por ser um banco relacional robusto e denso, aproveitando a familiaridade prévia do time com MySQL e SQLite.
 
 
 **Decidido:** SQLAlchemy + Alembic
@@ -46,11 +46,11 @@ Documento vivo — atualizar sempre que uma decisão relevante for tomada em reu
 
 ### Segurança & Autenticação
 
-**Decidido:** Python-jose + jsonwebtoken
+**Decidido:** python-jose[cryptography] (JWT) + Werkzeug (Hash)
 
-**Descartado:** passlib, bcrypt
+**Descartado:** jsonwebtoken (específico de Node.js)
 
-**Motivo:**  Utilizados para implementar a estratégia de autenticação segura baseada em tokens JWT.
+**Motivo:** A biblioteca `python-jose` garante o uso correto da especificação JWT com o algoritmo HS256 no backend Python. Já a ferramenta embutida `werkzeug.security` (via `generate_password_hash`) foi escolhida para as senhas pois dispensa a instalação de libs pesadas adicionais como bcrypt ou passlib.
 
 ### Infraestrutura & Storage
 
