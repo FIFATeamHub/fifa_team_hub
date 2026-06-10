@@ -1,280 +1,366 @@
 ---
 title: Solução Proposta
-description: Sistema de gestão de recursos físicos para ambiente híbrido
+description: Portal seguro de gestão de recursos para seleções nacionais
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components'
 
+### Objetivo do Produto
 
-###  Objetivo do Produto
-
-O objetivo do produto é modernizar e centralizar o processo de reservas de salas e estações de trabalho, que atualmente é feito de forma manual, por meio de planilhas pouco utilizadas e da atuação de uma pessoa responsável pelas marcações. Esse modelo consome tempo, gera conflitos de uso e dificulta o planejamento do espaço físico.
+O objetivo do produto é centralizar e securizar o gerenciamento de documentos críticos de seleções nacionais — convocações, documentação de viagem, laudos médicos e relatórios táticos — num portal único, auditável e com isolamento garantido entre seleções. Atualmente, estes processos ocorrem por e-mail, drives compartilhadas e planilhas, gerando riscos de segurança, perda de rastreabilidade e acesso não autorizado.
 
 #### Objetivos Específicos
 
-- **Eliminar ineficiências do processo atual**: reduzir dependência de planilhas (modo que é feito atualmente) e do trabalho manual de uma única pessoa.
+- <span id="eliminar-ineficiencias">**OE1 - Eliminar ineficiências do processo atual**</span>: substituir troca de e-mails e drives manuais por um portal centralizado com rastreamento completo.
 
-- **Otimizar a utilização do espaço**: permitir que colaboradores planejem com antecedência sua presença no escritório, garantindo previsibilidade e reduzindo conflitos.
+- <span id="garantir-isolamento">**OE2 - Garantir isolamento absoluto entre seleções**</span>: implementar isolamento multi-tenant que torna tecnicamente impossível uma seleção aceder documentos de outra.
 
-- **Aumentar a produtividade interna**: liberar tempo dos colaboradores que hoje gastam em tarefas administrativas e resolução de conflitos de reserva.
+- <span id="criar-auditoria">**OE3 - Criar trilha de auditoria completa**</span>: registar cada ação (login, upload, download, exclusão) com timestamp, IP e responsável, para conformidade regulatória.
 
-- **Proporcionar autonomia e conveniência**: criar um processo centralizado e acessível de agendamento de recursos, sem necessidade de intermediários.
+- <span id="acelerar-compliance">**OE4 - Acelerar decisões de compliance**</span>: disponibilizar informações estruturadas sobre documentação de viagem, laudos médicos e consentimentos em interface clara.
 
-- **Ampliar a visibilidade estratégica para a gestão**: disponibilizar dados consistentes sobre taxa de ocupação e padrões de uso do escritório, apoiando decisões sobre infraestrutura e custos operacionais.
+- <span id="apoiar-comissoes">**OE5 - Apoiar autonomia das comissões técnicas**</span>: criar ferramenta autoatendimento que reduz dependência de intermediários para gestão de documentação.
 
-- **Apoiar a adesão ao modelo híbrido**: tornar o trabalho presencial mais organizado e eficiente, fortalecendo a integração entre equipes.
+---
 
-###  Características da Solução
+### Características da Solução
 
-A solução proposta terá como foco apoiar a organização e o planejamento do modelo híbrido da empresa, garantindo o uso eficiente das salas e ambientes de trabalho. De forma preliminar, destacam-se as seguintes características:
+A solução proposta terá como foco garantir segurança, conformidade e rastreabilidade absoluta no gerenciamento de documentos oficiais de seleções nacionais. As características foram organizadas **por objetivo**.
 
-- **Reserva de Salas e Estações de Trabalho**: reservas online simples e rápidas, com prevenção automática de conflitos e maior controle do uso dos espaços.
+---
 
-- **Mapa Interativo de Ocupação**: visualização em tempo real de salas e estações disponíveis/ocupadas, apoiando decisões imediatas.
+## 🎯 OE1 — Centralizar gestão de documentos
 
-- **Gestão de Capacidade e Regras de Uso**: definição de limites por sala conforme políticas internas e normas de segurança, garantindo uso adequado.
+- **1.1 Upload de documentos por tipo**: convocações, passaportes, laudos médicos, relatórios táticos e esquemas de jogadas numa interface unificada.
 
-- **Relatórios e Indicadores de Utilização**: métricas de frequência de uso, horários de pico e uso por equipe, apoiando reorganização ou expansão da infraestrutura.
+- **1.2 Armazenamento seguro em nuvem**: documentos persistidos no Google Cloud Storage com criptografia em trânsito e em repouso.
 
-- **Controle de Permissões e Perfis de Acesso**: perfis por cargo/setor/equipe, com possibilidade de bloqueio ou prioridade de uso em situações específicas.
+- **1.3 Versionamento automático**: histórico de versões anteriores mantido para rastrear alterações ao longo do tempo.
 
-- **Integração com Ferramentas Corporativas**: sincronização com calendários (Google Workspace) para evitar conflitos, além de notificações automáticas em canais como Slack.
+---
 
-- **Flexibilidade para Diferentes Ambientes**: funcionamento adaptado para coworking interno, salas de reunião, hubs de inovação e escritórios satélites, escalável para múltiplas unidades da empresa.
+## 🎯 OE2 — Garantir isolamento inviolável entre seleções
 
-###  Métodos e Tecnologias
+- **2.1 Row-level filtering obrigatório**: toda query ao banco inclui filtro por `selection_id` — impossível contornar em código.
 
-O desenvolvimento da solução seguirá uma metodologia ágil, utilizando tecnologias modernas e já consolidadas na infraestrutura da empresa, garantindo eficiência, confiabilidade e facilidade de manutenção.
+- **2.2 Controle de acesso por perfil**: TECHNICAL_STAFF vê apenas sua seleção; ORGANIZER vê documentação burocrática; AUDITOR vê apenas logs.
+
+- **2.3 Testes de isolamento automatizados**: validação contínua que nenhum utilizador acessa dados de seleção não autorizada.
+
+---
+
+## 🎯 OE3 — Implementar auditoria completa
+
+- **3.1 Logs imutáveis de auditoria**: registo de LOGIN, LOGOUT, UPLOAD, DOWNLOAD, DELETE, APPROVE, REJECT, ACCESS_DENIED com timestamp e IP.
+
+- **3.2 Painel do auditor**: interface para filtrar e analisar logs por período, tipo de acção e utilizador.
+
+- **3.3 Alertas de anomalia**: detecção de padrões anormais (tentativas de acesso cruzado, múltiplas falhas de login).
+
+---
+
+## 🎯 OE4 — Apoiar decisões de conformidade
+
+- **4.1 Status de documentação**: visibilidade do estado de cada documento (PENDENTE, APROVADO, REJEITADO) no dashboard.
+
+- **4.2 Relatórios estruturados**: métricas de cobertura documentar (ex: % de seleções com laudos médicos submetidos).
+
+- **4.3 Conformidade com LGPD**: criptografia, acesso restrito e logs estruturados para demonstrar conformidade regulatória.
+
+---
+
+## 🎯 OE5 — Proporcionar autonomia às comissões técnicas
+
+- **5.1 Interface autoatendimento**: comissões técnicas fazem upload, visualizam status e baixam documentos sem intermediários.
+
+- **5.2 Notificações automáticas**: confirmação de recebimento, alertas de aprovação/rejeição enviadas automaticamente.
+
+- **5.3 Aprovação de laudos**: organizador aprova/rejeita laudos médicos com comentários estruturados.
+
+---
+
+## Extra — Integrações Corporativas
+
+- **Notificações em Slack**: alertas de aprovações, rejeições e acessos anormais para os responsáveis.
+
+---
+
+### Métodos e Tecnologias
+
+O desenvolvimento segue metodologia ágil com 8 sprints de 1 semana cada, entregando funcionalidade incrementalmente. A stack foi escolhida por simplicidade, segurança e alinhamento com a infraestrutura disponível.
 
 #### Stack Tecnológico
 
 <CardGrid>
-  <Card title="Vue.js" icon="vue">
-    **Framework Frontend Moderno**
+  <Card title="Vue 3 + TypeScript" icon="vuejs">
+    **Interface Moderna e Type-Safe**
     
-    - Facilidade de uso e curva de aprendizado rápida
-    - Interface moderna e responsiva
-    - Simplicidade de manutenção
-    - Performance otimizada
+    - Reatividade nativa com Composition API
+    - Tipagem estática evita erros runtime
+    - State management via Pinia
+    - Componentes reutilizáveis e testáveis
   </Card>
   
-  <Card title="Python + Django REST Framework" icon="python">
-    **API Robusta e Escalável**
+  <Card title="Flask + Python" icon="python">
+    **API Leve e Segura**
     
-    - Linguagem já consolidada na Softex
-    - Facilidade na geração de relatórios
-    - Amplo ecossistema de bibliotecas
-    - Recursos avançados para análise de dados
+    - Autenticação stateless com JWT
+    - Validação rigorosa no servidor
+    - ORM com SQLAlchemy para queries tipadas
+    - Migrations com Alembic para versionamento de schema
   </Card>
   
   <Card title="PostgreSQL" icon="database">
     **Banco de Dados Confiável**
     
-    - Já consolidado na infraestrutura da empresa
-    - Confiabilidade e robustez
-    - Recursos avançados para consultas
-    - Otimizado para relatórios complexos
+    - UUID nativo para identificadores
+    - Enums para tipos de documentos e status
+    - Foreign keys para garantir integridade referencial
+    - Full-text search para logs
   </Card>
   
-  <Card title="Docker" icon="container">
-    **Containerização e Deploy**
+  <Card title="Google Cloud Storage" icon="cloud">
+    **Persistência de Ficheiros**
     
-    - Empacotamento padronizado
-    - Redução de problemas de compatibilidade
-    - Agilidade no processo de deploy
-    - Experiência consolidada na empresa
+    - Armazenamento redundante e durável
+    - Criptografia automática em repouso
+    - Links temporários assinados para download
+    - Escalabilidade automática
   </Card>
   
-  <Card title="Git + GitHub" icon="github">
-    **Versionamento e Colaboração**
+  <Card title="Docker + GitHub Actions" icon="container">
+    **CI/CD e Deploy**
     
-    - Controle de versão robusto
-    - Issues e Projects para organização
-    - Colaboração em equipe
-    - Acompanhamento de desenvolvimento
+    - Ambientes isolados (dev, staging, produção)
+    - Testes automatizados em cada PR
+    - Deploy contínuo em Google Cloud Run
+    - Logs centralizados
   </Card>
 </CardGrid>
 
 #### Integrações Corporativas
 
 <CardGrid>
-  <Card title="Google Calendar" icon="calendar">
-    **Sincronização de Reservas**
+  <Card title="Google Cloud Run" icon="cloud">
+    **Deploy Serverless**
     
-    - Bloqueios automáticos
-    - Atualizações em tempo real
-    - Cancelamentos sincronizados
-    - Integração nativa com workspace
+    - Escalabilidade automática sob carga
+    - Pay-per-use (custos otimizados)
+    - Suporte nativo a containerização
+    - Uptime garantido 99%
   </Card>
   
-  <Card title="Slack" icon="slack">
-    **Comunicação e Lembretes**
+  <Card title="Cloud SQL (PostgreSQL)" icon="database">
+    **Banco Gerenciado**
     
-    - Confirmações de agendamento
-    - Lembretes automáticos
-    - Notificações em tempo real
-    - Integração com equipes
+    - Backups automáticos diários
+    - Replicação de alta disponibilidade
+    - Patches de segurança automáticos
+    - Conformidade com SLA corporativo
   </Card>
   
-  <Card title="Google Workspace SSO" icon="shield">
-    **Autenticação Segura**
+  <Card title="GitHub Pages + Astro" icon="doc">
+    **Documentação Acessível**
     
-    - Single Sign-On integrado
-    - Ambiente organizacional unificado
-    - Segurança corporativa
-    - Gerenciamento centralizado de usuários
+    - Documentação técnica versionada
+    - Deploy automático via Actions
+    - SEO otimizado
+    - Acesso público para referência
   </Card>
 </CardGrid>
 
-## Metodologia de Desenvolvimento
+#### Metodologia de Desenvolvimento
 
 <CardGrid>
-  <Card title="Sprints" icon="clock">
-    **Desenvolvimento Iterativo**
+  <Card title="Sprints Semanais" icon="clock">
+    **Ciclos Curtos e Incrementais**
     
-    - Ciclos de 2 semanas
-    - Revisões regulares
-    - Feedback contínuo
-    - Entregas incrementais
+    - 8 semanas, 1 sprint/semana
+    - Entrega de funcionalidade real a cada semana
+    - Demonstração ao final de cada sprint
+    - Feedback incorporado imediatamente
   </Card>
   
-  <Card title="GitHub Projects" icon="kanban">
-    **Gestão de Tarefas**
+  <Card title="Pair Programming" icon="users">
+    **Aprendizado em Equipa**
     
-    - Backlog organizado
-    - Categorização por prioridade
-    - Atribuição de responsáveis
-    - Acompanhamento de progresso
+    - Rotação de pares entre frentes (BE, FE, DO)
+    - Conhecimento distribuído
+    - Revisão de código contínua
+    - Mentor-aprendiz em cada par
   </Card>
   
-  <Card title="Code Review" icon="search">
-    **Qualidade de Código**
+  <Card title="Code Review Rigoroso" icon="search">
+    **Qualidade Garantida**
     
-    - Revisões obrigatórias
-    - Testes automatizados
-    - Documentação atualizada
-    - Padrões de qualidade
+    - Todo código passa por PR aprovado
+    - Testes unitários obrigatórios
+    - Linting e type-check automatizados
+    - Segurança verificada (isolamento, validação)
+  </Card>
+
+  <Card title="Automatização CI/CD" icon="zap">
+    **Deploy Confiável**
+    
+    - Testes rodam em todo PR
+    - Build falho bloqueia merge
+    - Deploy automático de main
+    - Rollback rápido se necessário
   </Card>
 </CardGrid>
 
-## Benefícios da Abordagem
+---
+
+### Arquitetura e Design de Segurança
+
+#### Camadas de Isolamento
 
 <CardGrid>
-  <Card title="Integração" icon="link">
-    **Tecnologias Consolidadas**
+  <Card title="Autenticação" icon="shield">
+    **JWT Stateless**
     
-    - Stack já conhecido pela empresa
-    - Redução de curva de aprendizado
-    - Suporte interno disponível
+    - Token contém: user_id, role, selection_id, exp
+    - Expiração máxima: 60 minutos
+    - Hash de senha: bcrypt com custo ≥10
+    - Sem sessões de servidor (escalável)
   </Card>
   
-  <Card title="Eficiência" icon="zap">
-    **Otimização do Negócio**
+  <Card title="Autorização" icon="lock">
+    **Row-Level Filtering**
     
-    - Stack otimizado para o domínio
-    - Desenvolvimento acelerado
-    - Manutenção simplificada
+    - Toda query inclui `WHERE selection_id = [user's selection]`
+    - Decorator `@require_auth` obrigatório
+    - Testes de isolamento bloqueiam PRs
+    - Impossível contornar em código
   </Card>
   
-  <Card title="Escalabilidade" icon="trending-up">
-    **Crescimento Sustentável**
+  <Card title="Auditoria" icon="logs">
+    **Logs Imutáveis**
     
-    - Arquitetura preparada para expansão
-    - Processo automatizado
-    - Deploy confiável
+    - AuditLog nunca pode ser editado/deletado
+    - Cada ação registada: user_id, action, timestamp, IP
+    - Rastreamento de acesso negado
+    - Base para investigações de conformidade
+  </Card>
+
+  <Card title="Conformidade" icon="badge">
+    **LGPD e Regulatório**
+    
+    - Dados pessoais criptografados em trânsito
+    - Restrição de acesso por menor privilégio
+    - Direito ao esquecimento via soft-delete
+    - Auditoria para prova de conformidade
   </Card>
 </CardGrid>
 
-###  Viabilidade da Solução
+---
+
+### Viabilidade da Solução
 
 #### Viabilidade Técnica
-Tecnologias definidas (Vue.js, Python/DRF, PostgreSQL, Docker em AWS) são maduras e bem documentadas; Python facilita integrações e geração de relatórios; arquitetura por APIs permite evolução. 
+Stack escolhida (Vue 3, Flask, PostgreSQL, GCS, Google Cloud Run) é madura e bem documentada. Python facilita processamento de documentos; isolamento por row-level filtering é pattern consolidado em sistemas multi-tenant; JWT escalável sem estado servidor.
 
-**Riscos**: mapa interativo (UI/UX + tempo de backend), permissões granulares (modelagem/segurança), responsividade/PWA (testes multiplataforma). 
+**Riscos principais**: implementação correcta de isolamento (mitigado por testes automatizados), integração GCS (documentada, com SDKs robustos), migração de storage local para cloud (arquitectura preparada desde o início).
 
-**Conclusão**: viável com time full-stack e integração de APIs.
+**Conclusão**: altamente viável com equipa full-stack e foco rigoroso em testes de segurança.
 
 #### Viabilidade de Prazo
-Meta de MVP até início de novembro com escopo claro e sprints quinzenais. 
+MVP (autenticação + upload + listagem + isolamento + logs básicos) entregável em 6 semanas (S9–S13); semanas 14 em demonstração e ajustes finais.
 
-**Risco principal**: mapa interativo e permissões podem alongar cronograma se não priorizados desde o início. 
+**Riscos**: subestimar complexidade de isolamento, falta de testes desde o início. **Mitigação**: testes de isolamento obrigatórios em S9; revisão de segurança em cada PR.
 
-**Conclusão**: viável com planejamento de sprints e foco no essencial do MVP.
+**Conclusão**: viável se disciplina de testes for mantida rigorosamente.
 
 #### Viabilidade Financeira
-Evita contratação de ferramenta externa (economia estimada R$ 10–20 mil/ano); uso de AWS já disponível reduz custo inicial; projeto universitário reduz custo de desenvolvimento. 
+Deploy no Google Cloud (Cloud Run + Cloud SQL) com custo estimado ~R$ 100–200/mês em operação. Desenvolvimento é universitário (reduza custos de mão de obra). Alternativa comercial (Jira, Box, etc.) custaria R$ 5–10 mil/mês.
 
-**Custos potenciais**: horas de desenvolvimento, manutenção evolutiva e variação de custo AWS conforme uso. 
-
-**Conclusão**: alto custo-benefício.
+**Conclusão**: ROI positivo dentro de 2–3 meses.
 
 #### Viabilidade de Mercado
-Necessidade já comprovada internamente (58 posições de coworking e 6 salas); solução aderente às políticas da organização e replicável em outras unidades. 
+Necessidade comprovada: seleções nacionais precisam de ferramenta segura para gestão de documentos oficiais. Solução é replicável a outras federações e entidades que gerem recursos críticos.
 
-**Conclusão**: alinhada à demanda, com potencial de expansão.
+**Conclusão**: alinhada à demanda real e com potencial de expansão.
 
 #### Sustentabilidade
-Stack amplamente suportada, código sob domínio da Softex, implantação padronizada via Docker e escala em nuvem (AWS). 
+Stack amplamente suportada (Python, Vue, PostgreSQL), código sob controlo total (sem vendor lock-in), deploy padronizado via Docker, escala automática em Google Cloud.
 
 **Conclusão**: sustentável e escalável no longo prazo.
 
-## Conclusão Geral
-A ferramenta de gestão de coworking e salas de reunião é tecnicamente viável, financeiramente vantajosa, executável dentro do prazo e atende à demanda real da Softex. O maior desafio será garantir o desenvolvimento do mapa interativo e do sistema de permissões dentro do cronograma, mas, com uma abordagem ágil e priorização correta, o projeto tem alto potencial de sucesso e retorno sobre investimento positivo.
+#### Conformidade Regulatória
+Auditoria imutável e completa permite demonstrar conformidade com LGPD, GDPR e regulações desportivas. Isolamento garantido protege privacidade de dados sensíveis (documentos médicos, passaportes).
 
-##  Impacto da Solução
+**Conclusão**: desenhado para conformidade desde o início.
+
+---
+
+### Impacto da Solução
 
 <CardGrid>
   <Card title="Operacional" icon="settings">
-    **Eficiência do Processo**
+    **Eficiência de Processos**
     
-    - Redução do tempo de agendamento
-    - Eliminação de conflitos de reserva
-    - Confirmação imediata e automática
-    - Prevenção de duplicidades
+    - Eliminação de conflitos de acesso
+    - Rastreamento automático de documentos
+    - Redução de tempo administrativo
+    - Conformidade garantida por design
   </Card>
   
-  <Card title="Experiência do Usuário" icon="user">
-    **Autonomia e Conveniência**
+  <Card title="Segurança" icon="shield">
+    **Proteção de Dados**
     
-    - Disponibilidade em tempo real
-    - Planejamento antecipado
-    - Menos interrupções
-    - Processo autoatendimento
+    - Isolamento inviolável entre seleções
+    - Auditoria completa de qualquer acesso
+    - Criptografia em trânsito e repouso
+    - Impossibilidade de acesso não autorizado
   </Card>
   
-  <Card title="Gestão e Relatórios" icon="chart">
-    **Visibilidade Estratégica**
+  <Card title="Autonomia" icon="user">
+    **Empoderamento de Equipas**
     
-    - Métricas de ocupação
-    - Padrões de uso identificados
-    - Otimização do espaço físico
-    - Base para decisões gerenciais
+    - Comissões técnicas auto-servisse
+    - Visibilidade em tempo real
+    - Aprovações estruturadas e rápidas
+    - Redução de dependências
   </Card>
   
-  <Card title="Integração Corporativa" icon="link">
-    **Ecossistema Unificado**
+  <Card title="Conformidade" icon="badge">
+    **Regularidade Comprovada**
     
-    - Sincronização com Google Calendar
-    - Notificações via Slack
-    - SSO integrado
-    - Processo oficial consolidado
-  </Card>
-  
-  <Card title="Custo-benefício" icon="dollar-sign">
-    **Economia e Produtividade**
-    
-    - Economia de R$ 10-20 mil/ano
-    - Liberação de tempo administrativo
-    - Redução de retrabalho
-    - ROI positivo comprovado
+    - Logs para auditoria externa
+    - Rastreamento de consentimentos
+    - Prova de custódia de documentos
+    - Redução de risco regulatório
   </Card>
   
   <Card title="Escalabilidade" icon="trending-up">
     **Crescimento Sustentável**
     
-    - Arquitetura preparada para expansão
-    - Replicação em outras unidades
-    - Deploy padronizado
-    - Evolução contínua
+    - Suporta múltiplas seleções
+    - Arquitectura preparada para expansão
+    - Deploy automático
+    - Custos crescem proporcionalmente ao uso
+  </Card>
+
+  <Card title="Inovação" icon="sparkles">
+    **Base para Evolução**
+    
+    - Logs estruturados para IA/ML
+    - APIs abertas para integrações
+    - Notificações via Slack
+    - Possibilidade de mobile app futura
   </Card>
 </CardGrid>
+
+---
+
+### Conclusão
+
+O FIFA Team Hub é tecnicamente viável, financeiramente eficiente, executável dentro do prazo de 8 semanas e endereça uma necessidade real de segurança e auditoria na gestão de documentos de seleções nacionais.
+
+O maior desafio — garantir isolamento absoluto e imutabilidade de logs — foi mitigado através de:
+- **Arquitectura deliberada**: row-level filtering obrigatório em todas as queries
+- **Testes rigorosos**: validação contínua de isolamento bloqueador de PRs
+- **Código seguro**: validação no servidor, nunca no cliente; criptografia em múltiplas camadas
+- **Equipa dedicada**: pair programming em cada frente garante conhecimento distribuído
+
+Com foco em testes de segurança desde a S9 e disciplina em code review, o projeto tem **alto potencial de sucesso** e entrega de um sistema que será modelo de referência para outras instituições que gerem documentação crítica.

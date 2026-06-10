@@ -1,128 +1,126 @@
 ---
 title: Contexto e Necessidades
-description: Cenário atual do cliente e do negócio
+description: Cenário atual e do negócio do FIFA Team Hub
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components'
 
 ## Introdução ao Negócio e Contexto
 
-A **Softex** (Associação para Promoção da Excelência do Software Brasileiro) é uma entidade sem fins lucrativos dedicada ao fortalecimento do setor de tecnologia e software no Brasil. Com mais de 25 anos de atuação, é reconhecida como a principal articuladora de programas estratégicos de tecnologia e inovação.
+O **FIFA Team Hub** é um sistema de gestão e auditoria para seleções nacionais, desenvolvido para centralizar documentação oficial, registros operacionais e processos administrativos utilizados por comissões técnicas, organizadores e auditores. 
 
 ### Áreas de Atuação
 
 <CardGrid>
-  <Card title="Fomento ao Empreendedorismo" icon="star">
-    **Startups e Inovação**
+  <Card title="Upload e Gestão Documental" icon="star">
+    **Centralização Segura**
     
-    - Apoio a empresas em estágio inicial
-    - Programas de aceleração
-    - Conexão com investidores
+    - Armazenamento em nuvem (GCS)
+    - Suporte a múltiplos formatos
+    - Envio vinculado por seleção
   </Card>
   
-  <Card title="Capacitação e Certificação" icon="book">
-    **Desenvolvimento de Talentos**
+  <Card title="Isolamento de Dados (Multi-tenant)" icon="shield">
+    **Segurança Absoluta**
     
-    - Certificação de profissionais
-    - Programas de capacitação
-    - Formação especializada em TI
+    - Filtro estrito por seleção
+    - Bloqueio de acesso cruzado
+    - Proteção de dados estratégicos
   </Card>
   
-  <Card title="Internacionalização" icon="globe">
-    **Expansão Global**
+  <Card title="Rastreabilidade e Auditoria" icon="eye">
+    **Logs Imutáveis**
     
-    - Apoio à exportação
-    - Conexões internacionais
-    - Mercados externos
+    - Registro automático de ações
+    - Monitoramento por auditores
+    - Logs detalhados de eventos
   </Card>
   
-  <Card title="Transformação Digital" icon="laptop">
-    **Modernização Setorial**
+  <Card title="Fluxos Administrativos" icon="laptop">
+    **Operação Técnica**
     
-    - Digitalização de processos
-    - Adoção de tecnologias
-    - Inovação empresarial
+    - Gestão de convocações e passaportes
+    - Aprovação de laudos médicos
+    - Roteiros e táticas de jogo
   </Card>
 </CardGrid>
 
-### Modelo de Trabalho Híbrido
+### Modelo de Trabalho Colaborativo
 
-A Softex opera em **modelo híbrido**, combinando atividades presenciais e remotas, o que exige:
+A equipe de desenvolvimento opera sob a metodologia Scrum e um modelo altamente colaborativo com rotação constante de pares (Pair Programming), o que exige:
 
-- **Coordenação eficiente** de recursos físicos
-- **Gestão de salas de reunião** para alinhamentos e videoconferências
-- **Controle de estações de trabalho** não fixas (coworking interno)
-- **Integração** com Google Workspace e Slack
-- **Compliance** com políticas internas e governança
+- **Desenvolvimento coletivo** da arquitetura do sistema
+- **Rotação contínua** de membros sem papéis técnicos fixos
+- **Garantia de qualidade** rigorosa através de Code Reviews
+- **Rastreabilidade e governança** de código via Git Flow
 
 ## Identificação da Oportunidade
 
 ### Problema Atual
 
 <CardGrid>
-  <Card title="Gestão Manual" icon="file">
-    **Processo Fragmentado**
+  <Card title="Vulnerabilidade e Isolamento" icon="lock">
+    **Risco de Vazamento**
     
-    - Planilhas desatualizadas
-    - Calendários não integrados
-    - Comunicação por mensagens
+    - Falta de barreiras entre seleções
+    - Acesso a táticas confidenciais
+    - Vulnerabilidade em dados médicos
   </Card>
   
-  <Card title="Conflitos de Reserva" icon="alert">
-    **Duplicação de Agendamentos**
+  <Card title="Processo Fragmentado" icon="alert">
+    **Desorganização Documental**
     
-    - Reservas simultâneas
-    - Falta de sincronização
-    - Retrabalho administrativo
+    - Canais de envio informais
+    - Dificuldade de rastreamento
+    - Perda de histórico de versões
   </Card>
   
-  <Card title="Baixa Visibilidade" icon="eye">
-    **Ocupação Desconhecida**
+  <Card title="Inexistência de Auditoria" icon="close">
+    **Falta de Compliance**
     
-    - Dados não centralizados
-    - Dificuldade no planejamento
-    - Decisões sem embasamento
+    - Ações sem registro no sistema
+    - Impossibilidade de verificar acessos
+    - Falta de controle de privilégios
   </Card>
 </CardGrid>
 
 ### Análise de Causas e Efeitos
 
-![Diagrama Ishikawa - Causas do Problema](./../../../assets/diagrama-ishikawa.png)
-[Link para o diagrama no Canva](https://www.canva.com/design/DAGzEg3Z9Ro/GjPasH6fVHmBAdKcDYdPmA/edit?utm_content=DAGzEg3Z9Ro&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
+![Rotatividade dos Membros durante as semanas](../../../assets/rotacao_equipe_fifa.png)
 
 ### Oportunidade de Solução
 
 <CardGrid>
-  <Card title="Gestão Inteligente" icon="cpu">
-    **Baseada em Dados**
+  <Card title="Isolamento Garantido" icon="cpu">
+    **Estrutura Multi-tenant**
     
-    - Processo centralizado
-    - Registros confiáveis
-    - Rastreabilidade completa
+    - Filtros por ID no backend
+    - Bloqueio automatizado de URLs
+    - Segurança de dados via JWT
   </Card>
   
-  <Card title="Modelo Híbrido" icon="users">
+  <Card title="Centralização Operacional" icon="users">
     **Previsibilidade**
     
-    - Reservas centralizadas
-    - Fluidez no escritório
-    - Redução de incertezas
+    - Painel único para comissões
+    - Fluxo direto de aprovações
+    - Histórico e controle de versões
   </Card>
   
-  <Card title="Otimização" icon="trending-up">
-    **Espaço Físico**
+  <Card title="Auditoria Nativa" icon="trending-up">
+    **Rastreabilidade Total**
     
-    - Dados operacionais
-    - Indicadores gerenciais
-    - Decisões embasadas
+    - Logs imutáveis automáticos
+    - Painel dedicado para auditores
+    - Compliance técnico rígido
   </Card>
   
-  <Card title="Produtividade" icon="lightning">
-    **Eficiência Interna**
+  <Card title="Infraestrutura Segura" icon="lightning">
+    **Escalabilidade e Nuvem**
     
-    - Menos tempo manual
-    - Automação de processos
-    - Foco em atividades-fim
+    - Deploy automatizado no GCP
+    - Isolamento de mídia no Cloud Storage
+    - Ambiente reproduzível via Docker
   </Card>
 </CardGrid>
 
@@ -131,40 +129,40 @@ A Softex opera em **modelo híbrido**, combinando atividades presenciais e remot
 ### Desafios Técnicos
 
 <CardGrid>
-  <Card title="Integração" icon="link">
-    **Sistema Centralizado**
+  <Card title="Isolamento em Query" icon="link">
+    **Segurança a Nível de Banco**
     
-    - Tempo real
-    - Evitar duplicidade
-    - Performance otimizada
+    - Injeção obrigatória de cláusula WHERE
+    - Tratamento stateless de sessões
+    - Criptografia de senhas com bcrypt
   </Card>
   
-  <Card title="Compatibilidade" icon="shield">
-    **Sistemas Existentes**
+  <Card title="Infraestrutura GCP" icon="shield">
+    **Deploy e Integração**
     
-    - Não comprometer infraestrutura
-    - Integração suave
-    - Manutenção simplificada
+    - Orquestração entre Cloud Run e SQL
+    - Upload direto para o Cloud Storage
+    - Pipelines de CI/CD sem quebras
   </Card>
 </CardGrid>
 
 ### Desafios de Adoção
 
 <CardGrid>
-  <Card title="Mudança Cultural" icon="refresh">
-    **Adaptação Digital**
+  <Card title="Controle de Perfis" icon="refresh">
+    **Adaptação de Escopos (RBAC)**
     
-    - Treinamento da equipe
-    - Suporte contínuo
-    - Gradual implementação
+    - Adaptação técnica e médica (Technical Staff)
+    - Validação burocrática (Organizer)
+    - Fiscalização restrita (Auditor)
   </Card>
   
-  <Card title="Familiarização" icon="book">
-    **Capacitação**
+  <Card title="Prazos e Cobertura" icon="book">
+    **Qualidade Técnica**
     
-    - Ferramentas de automação
-    - Processos digitais
-    - Boas práticas
+    - Cobertura de testes superior a 60%
+    - Conformidade rígida com a LGPD
+    - Acessibilidade WCAG nível A
   </Card>
 </CardGrid>
 
@@ -173,44 +171,37 @@ A Softex opera em **modelo híbrido**, combinando atividades presenciais e remot
 ### Público-Alvo Interno
 
 <CardGrid>
-  <Card title="Colaboradores Híbridos" icon="user">
-    **Usuários Finais**
+  <Card title="Technical Staff" icon="user">
+    **Comissão Técnica e Médica**
     
-    - Previsibilidade de reservas
-    - Praticidade no agendamento
-    - Clareza de disponibilidade
+    - Upload de laudos e táticas
+    - Substituição e reenvio de arquivos
+    - Acesso restrito aos dados da seleção
   </Card>
   
-  <Card title="Gestores e Líderes" icon="users">
-    **Coordenadores de Equipe**
+  <Card title="Organizer" icon="users">
+    **Organizadores do Evento**
     
-    - Organização de encontros
-    - Coordenação de agendas
-    - Otimização de tempo
+    - Visão geral de convocações/passaportes
+    - Aprovação e rejeição de laudos médicos
+    - Inclusão de comentários de recusa
   </Card>
   
-  <Card title="Áreas Administrativas" icon="settings">
-    **Governança do Espaço**
+  <Card title="Auditor" icon="settings">
+    **Auditores de Sistema**
     
-    - Padronização de regras
-    - Fiscalização de uso
-    - Redução de carga operacional
-  </Card>
-  
-  <Card title="Alta Gestão" icon="chart">
-    **Visão Estratégica**
-    
-    - Indicadores de ocupação
-    - Dados para decisões
-    - Otimização de custos
+    - Monitoramento do painel de logs
+    - Filtragem avançada de eventos
+    - Fiscalização contra acessos negados
   </Card>
 </CardGrid>
 
 ## Benefícios Esperados
 
-- **Redução de conflitos** de reserva em 90%
-- **Economia de tempo** administrativo de 60%
-- **Visibilidade completa** da ocupação
-- **Decisões baseadas** em dados reais
-- **Integração** com ecossistema corporativo
-- **Compliance** com políticas internas
+<ul class="softex-flow">
+  <li><strong>Eliminação total (100%)</strong> de acessos indevidos entre seleções distintas através de isolamento lógico.</li>
+  <li><strong>Rastreabilidade de 100%</strong> de eventos críticos (Login, Upload, Download, Delete) com salvamento em logs imutáveis.</li>
+  <li><strong>Redução drástica do tempo</strong> de validação de documentos burocráticos e médicos pelos Organizadores.</li>
+  <li><strong>Segurança aprimorada</strong> de dados sensíveis e passaportes em estrito compliance com a LGPD e HTTPS.</li>
+  <li><strong>Ambiente de execução portátil</strong> e escalável, permitindo adicionar novas seleções sem alterações no código fonte.</li>
+</ul>

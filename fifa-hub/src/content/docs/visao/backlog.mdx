@@ -1,0 +1,330 @@
+---
+title: Backlog do Produto
+description: Backlog, histórias de usuário e priorização com MoSCoW
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components'
+
+## Backlog Geral
+
+> No contexto do FIFA Team Hub, o **Product Backlog** é uma lista dinâmica e priorizada de funcionalidades que guia a equipa para entregar valor incremental a comissões técnicas, organizadores e auditores. O backlog evolui com feedback de uso real, testes de segurança e mudanças regulatórias.
+
+## Características da Solução
+[🔗 Ver na Solução Proposta](/visao/solucao#características-da-solução)
+
+| **ID** | **Característica** | **Descrição** | **Objetivos Específicos** | **User Stories** |
+|--------|-------------------|---------------|---------------------------|------------------|
+| <span id="c01">**[C01](/visao/solucao#centralizar-gestão-de-documentos)**</span> | Upload e gestão de documentos | Upload de convocações, passaportes, laudos médicos, relatórios táticos e esquemas de jogadas com versionamento automático. | [OE1](/visao/solucao#oe1--centralizar-gestão-de-documentos), [OE2](/visao/solucao#oe2--garantir-isolamento-absoluto-entre-seleções), [OE3](/visao/solucao#oe3--criar-trilha-de-auditoria-completa) | [US-006](#us-006), [US-007](#us-007), [US-008](#us-008), [US-009](#us-009), [US-013](#us-013), [US-017](#us-017) |
+| <span id="c02">**[C02](/visao/solucao#oe2--garantir-isolamento-absoluto-entre-seleções)**</span> | Isolamento inviolável entre seleções | Row-level filtering obrigatório em todas as queries, controle de acesso por perfil, testes de isolamento automatizados. | [OE2](/visao/solucao#oe2--garantir-isolamento-absoluto-entre-seleções) | [US-005](#us-005), [US-012](#us-012) |
+| <span id="c03">**[C03](/visao/solucao#oe3--criar-trilha-de-auditoria-completa)**</span> | Logs imutáveis e auditoria completa | Registo de LOGIN, UPLOAD, DOWNLOAD, DELETE, APPROVE, REJECT, ACCESS_DENIED com timestamp, IP e trilha completa. | [OE3](/visao/solucao#oe3--criar-trilha-de-auditoria-completa) | [US-015](#us-015), [US-016](#us-016) |
+| <span id="c04">**[C04](/visao/solucao#oe4--acelerar-decisões-de-compliance)**</span> | Status e conformidade documentar | Visualização de status de documentos (PENDENTE, APROVADO, REJEITADO), aprovação estruturada de laudos médicos. | [OE4](/visao/solucao#oe4--acelerar-decisões-de-compliance) | [US-010](#us-010), [US-014](#us-014) |
+| <span id="c05">**[C05](/visao/solucao#oe5--apoiar-autonomia-das-comissões-técnicas)**</span> | Autenticação e gestão de seleções | Cadastro de usuários, autenticação JWT, gestão de seleções, redirecionamento por perfil, conformidade LGPD. | [OE5](/visao/solucao#oe5--apoiar-autonomia-das-comissões-técnicas) | [US-001](#us-001), [US-002](#us-002), [US-003](#us-003), [US-004](#us-004), [US-011](#us-011) |
+
+---
+
+## Histórias de Usuário
+
+### Tabela de User Stories
+
+| **US** | **C** | **RF** | **Declaração** | **Objetivos Específicos** | **Critérios** | **Benefício/Valor** |
+|--------|--------|--------|----------------|---------------------------|---------------|---------------------|
+| <span id="us-001">**US-001**</span> | [C05](#c05) | RF-01 | Como **Auditor**, quero cadastrar novos usuários com e-mail, senha provisória e perfil. | [OE5](/visao/solucao#oe5--apoiar-autonomia-das-comissões-técnicas) | [Ver](#us-001--cadastrar-novos-usuários) | Garantir que apenas utilizadores autorizados acessem o sistema. |
+| <span id="us-002">**US-002**</span> | [C05](#c05) | RF-02 | Como **novo utilizador**, quero ser obrigado a trocar a senha provisória no primeiro acesso. | [OE5](/visao/solucao#oe5--apoiar-autonomia-das-comissões-técnicas) | [Ver](#us-002--obrigar-troca-de-senha) | Evitar uso indevido de senhas provisórias e reforçar segurança inicial. |
+| <span id="us-003">**US-003**</span> | [C05](#c05) | RF-03 | Como **utilizador**, quero me autenticar com e-mail e senha recebendo um token de sessão. | [OE5](/visao/solucao#oe5--apoiar-autonomia-das-comissões-técnicas) | [Ver](#us-003--autenticar-com-credenciais) | Garantir acesso seguro e stateless à plataforma. |
+| <span id="us-004">**US-004**</span> | [C05](#c05) | RF-04 | Como **utilizador autenticado**, quero ser redirecionado ao dashboard correto conforme meu perfil. | [OE5](/visao/solucao#oe5--apoiar-autonomia-das-comissões-técnicas) | [Ver](#us-004--redirecionar-por-perfil) | Garantir que cada perfil acesse diretamente suas funcionalidades. |
+| <span id="us-005">**US-005**</span> | [C02](#c02) | RF-05 | Como **sistema**, quero restringir ações e dados com base no perfil RBAC. | [OE2](/visao/solucao#oe2--garantir-isolamento-absoluto-entre-seleções) | [Ver](#us-005--controle-de-acesso-por-perfil) | Impedir que utilizadores realizem ações além de seu escopo. |
+| <span id="us-006">**US-006**</span> | [C01](#c01) | RF-06 | Como **Technical Staff**, quero fazer upload de documentos associados à minha seleção. | [OE1](/visao/solucao#oe1--centralizar-gestão-de-documentos) | [Ver](#us-006--upload-de-documentos) | Centralizar submissão oficial de documentos de forma rastreável. |
+| <span id="us-007">**US-007**</span> | [C01](#c01) | RF-07 | Como **Technical Staff**, quero substituir um documento por nova versão preservando histórico. | [OE1](/visao/solucao#oe1--centralizar-gestão-de-documentos) | [Ver](#us-007--reenvio-de-versões) | Permitir correção de documentos sem perda de rastreabilidade. |
+| <span id="us-008">**US-008**</span> | [C01](#c01) | RF-08 | Como **utilizador autenticado**, quero visualizar apenas documentos da minha seleção. | [OE1](/visao/solucao#oe1--centralizar-gestão-de-documentos) | [Ver](#us-008--listagem-de-documentos) | Facilitar acesso rápido sem exposição de dados de outras seleções. |
+| <span id="us-009">**US-009**</span> | [C01](#c01) | RF-09 | Como **utilizador da seleção**, quero baixar um documento por link temporário seguro. | [OE1](/visao/solucao#oe1--centralizar-gestão-de-documentos) | [Ver](#us-009--download-com-link-temporário) | Garantir que ficheiros sensíveis não fiquem expostos permanentemente. |
+| <span id="us-010">**US-010**</span> | [C04](#c04) | RF-10 | Como **atleta**, quero visualizar o status de cada documento (PENDENTE, APROVADO, REJEITADO). | [OE4](/visao/solucao#oe4--acelerar-decisões-de-compliance) | [Ver](#us-010--visualização-de-status) | Dar visibilidade sobre a situação documentar da seleção. |
+| <span id="us-011">**US-011**</span> | [C05](#c05) | RF-11 | Como **Organizer**, quero cadastrar uma seleção com nome, código FIFA e bandeira. | [OE5](/visao/solucao#oe5--apoiar-autonomia-das-comissões-técnicas) | [Ver](#us-011--cadastro-de-seleção) | Preparar o ambiente isolado de cada seleção antes das operações. |
+| <span id="us-012">**US-012**</span> | [C02](#c02) | RF-12 | Como **sistema**, quero garantir isolamento absoluto entre seleções. | [OE2](/visao/solucao#oe2--garantir-isolamento-absoluto-entre-seleções) | [Ver](#us-012--isolamento-inviolável) | Assegurar confidencialidade total entre seleções participantes. |
+| <span id="us-013">**US-013**</span> | [C01](#c01) | RF-13 | Como **Medical Staff**, quero fazer upload de laudos médicos vinculados a um atleta. | [OE1](/visao/solucao#oe1--centralizar-gestão-de-documentos) | [Ver](#us-013--upload-de-laudos-médicos) | Digitalizar avaliação médica de forma rastreável. |
+| <span id="us-014">**US-014**</span> | [C04](#c04) | RF-14 | Como **Medical Staff**, quero aprovar ou rejeitar laudos médicos com comentário. | [OE4](/visao/solucao#oe4--acelerar-decisões-de-compliance) | [Ver](#us-014--aprovação-de-laudos) | Garantir que apenas atletas com laudos validados participem. |
+| <span id="us-015">**US-015**</span> | [C03](#c03) | RF-15 | Como **sistema**, quero registrar automaticamente todo evento auditável. | [OE3](/visao/solucao#oe3--criar-trilha-de-auditoria-completa) | [Ver](#us-015--registo-de-eventos) | Manter rastreabilidade completa de todas as operações. |
+| <span id="us-016">**US-016**</span> | [C03](#c03) | RF-16 | Como **Auditor**, quero visualizar e filtrar o histórico completo de eventos. | [OE3](/visao/solucao#oe3--criar-trilha-de-auditoria-completa) | [Ver](#us-016--visualização-de-logs) | Permitir investigação de incidentes e verificação de conformidade. |
+| <span id="us-017">**US-017**</span> | [C01](#c01) | RF-17 | Como **Technical Staff**, quero fazer upload de documentos técnicos visíveis só à minha seleção. | [OE1](/visao/solucao#oe1--centralizar-gestão-de-documentos) | [Ver](#us-017--upload-de-documentos-técnicos) | Proteger informações táticas confidenciais contra acesso externo. |
+| <span id="us-018">**US-018**</span> | [C01](#c01) | RF-18 | Como **sistema**, quero armazenar todos os ficheiros no Cloud Storage. | [OE1](/visao/solucao#oe1--centralizar-gestão-de-documentos) | [Ver](#us-018--armazenamento-em-gcs) | Garantir escalabilidade e segurança de documentos sensíveis. |
+
+---
+
+## Critérios de Aceitação de User Stories
+
+### US-001 — Cadastrar novos utilizadores
+**[↑ Voltar para US-001](#us-001)** | **Característica:** [C05 - Autenticação e gestão](#c05) | **Requisito:** RF-01
+
+- O sistema permite que Auditor cadastre utilizadores com nome, e-mail, senha provisória e perfil
+- E-mail duplicado é rejeitado com HTTP 409
+- Senha é armazenada como hash bcrypt (nunca em texto plano)
+- Senha provisória é exibida apenas ao Auditor que cadastrou
+
+### US-002 — Obrigar troca de senha no primeiro acesso
+**[↑ Voltar para US-002](#us-002)** | **Característica:** [C05 - Autenticação e gestão](#c05) | **Requisito:** RF-02
+
+- Sistema bloqueia acesso ao dashboard até troca de senha
+- Nova senha deve ter no mínimo 8 caracteres
+- Senha provisória é invalidada imediatamente após troca
+- Login com senha provisória retorna status que força redirecionamento para troca
+
+### US-003 — Autenticar com credenciais
+**[↑ Voltar para US-003](#us-003)** | **Característica:** [C05 - Autenticação e gestão](#c05) | **Requisito:** RF-03
+
+- Credenciais inválidas retornam HTTP 401 sem revelar qual campo está errado
+- Token JWT contém: user_id, role, selection_id, exp
+- Token expira em 60 minutos
+- Requisições pós-expiração retornam 401 e redirecionam para login
+
+### US-004 — Redirecionar por perfil
+**[↑ Voltar para US-004](#us-004)** | **Característica:** [C05 - Autenticação e gestão](#c05) | **Requisito:** RF-04
+
+- TECHNICAL_STAFF é redirecionado para dashboard de documentos da sua seleção
+- ORGANIZER é redirecionado para visão de documentação burocrática geral
+- AUDITOR é redirecionado para painel de logs de auditoria
+
+### US-005 — Controle de acesso por perfil (RBAC)
+**[↑ Voltar para US-005](#us-005)** | **Característica:** [C02 - Isolamento entre seleções](#c02) | **Requisito:** RF-05
+
+- Acesso fora do escopo retorna HTTP 403
+- TECHNICAL_STAFF: acessa apenas documentos da própria seleção
+- ORGANIZER: visualiza CONVOCACAO e PASSAPORTE de todas as seleções
+- AUDITOR: acessa somente painel de logs, não acessa documentos
+- Toda violação gera entrada no AuditLog com action=ACCESS_DENIED
+
+### US-006 — Upload de documentos
+**[↑ Voltar para US-006](#us-006)** | **Característica:** [C01 - Upload e gestão de documentos](#c01) | **Requisito:** RF-06
+
+- Apenas TECHNICAL_STAFF pode fazer upload
+- Tipos aceitos: CONVOCACAO, PASSAPORTE, LAUDO_MEDICO, RELATORIO_TATICO, ESQUEMA_JOGADAS
+- Formatos aceitos: PDF, JPG, PNG, DOCX, máximo 10 MB
+- selection_id é preenchido automaticamente pelo sistema
+- Upload gera registo em AuditLog com action=UPLOAD
+
+### US-007 — Reenvio de versões
+**[↑ Voltar para US-007](#us-007)** | **Característica:** [C01 - Upload e gestão de documentos](#c01) | **Requisito:** RF-07
+
+- Versão anterior é marcada como histórica (não excluída)
+- Reenvio gera registo em AuditLog com action=REUPLOAD
+- Apenas o autor original do documento pode reenviar
+- Histórico completo é mantido para rastreabilidade
+
+### US-008 — Listagem de documentos
+**[↑ Voltar para US-008](#us-008)** | **Característica:** [C01 - Upload e gestão de documentos](#c01) | **Requisito:** RF-08
+
+- Listagem exibe apenas documentos da seleção do utilizador
+- Ordenação padrão: created_at DESC
+- Listagem exibe: nome, tipo, responsável, data/hora, status
+- ORGANIZER vê apenas CONVOCACAO e PASSAPORTE de todas as seleções
+- Filtro por selection_id é aplicado no backend, nunca no frontend
+
+### US-009 — Download com link temporário
+**[↑ Voltar para US-009](#us-009)** | **Característica:** [C01 - Upload e gestão de documentos](#c01) | **Requisito:** RF-09
+
+- Link temporário é válido por no máximo 15 minutos
+- Link expira após o primeiro acesso (o que ocorrer primeiro)
+- Download gera registo em AuditLog com action=DOWNLOAD
+- Tentativa de acesso com link expirado retorna HTTP 410
+
+### US-010 — Visualização de status
+**[↑ Voltar para US-010](#us-010)** | **Característica:** [C04 - Status e conformidade](#c04) | **Requisito:** RF-10
+
+- Status inicial de todo documento é PENDENTE
+- Estados possíveis: PENDENTE, APROVADO, REJEITADO
+- Mudança de status é refletida no próximo carregamento da página
+- Documentos REJEITADO exibem o comentário do Organizer
+- Alterações geram notificação visual ao utilizador
+
+### US-011 — Cadastro de seleção
+**[↑ Voltar para US-011](#us-011)** | **Característica:** [C05 - Autenticação e gestão](#c05) | **Requisito:** RF-11
+
+- Organizer cadastra seleção com nome completo, código FIFA e bandeira (opcional)
+- Código FIFA é único, contém 3 letras maiúsculas (ex: BRA, ARG, GER)
+- Duplicata de código retorna HTTP 409
+- Bandeira, se enviada, é armazenada no Cloud Storage
+- Todo cadastro requer ao menos 1 utilizador Auditor vinculado
+
+### US-012 — Isolamento inviolável
+**[↑ Voltar para US-012](#us-012)** | **Característica:** [C02 - Isolamento entre seleções](#c02) | **Requisito:** RF-12
+
+- Toda query ao banco inclui filtro obrigatório por selection_id
+- Acesso via URL direta a documento de outra seleção retorna HTTP 403
+- Toda tentativa de acesso indevido gera registo com action=ACCESS_DENIED
+- Testes de isolamento são executados e aprovados antes de cada release
+- Nenhum cenário permite cross-selection access
+
+### US-013 — Upload de laudos médicos
+**[↑ Voltar para US-013](#us-013)** | **Característica:** [C01 - Upload e gestão de documentos](#c01) | **Requisito:** RF-13
+
+- Medical Staff faz upload de laudos vinculados a um atleta específico
+- Tipo LAUDO_MEDICO segue as mesmas regras de upload do RF-06
+- Upload registra: user_id, selection_id, nome do jogador (opcional), timestamp
+- Status inicial é PENDENTE
+
+### US-014 — Aprovação de laudos
+**[↑ Voltar para US-014](#us-014)** | **Característica:** [C04 - Status e conformidade](#c04) | **Requisito:** RF-14
+
+- Medical Staff aprova ou rejeita laudos com status PENDENTE
+- Rejeição sem comentário retorna HTTP 400
+- Comentário é obrigatório apenas na rejeição
+- Mudança de status gera registo em AuditLog com action=APPROVE ou REJECT
+- Atleta recebe notificação no próximo acesso
+
+### US-015 — Registo de eventos
+**[↑ Voltar para US-015](#us-015)** | **Característica:** [C03 - Logs imutáveis e auditoria](#c03) | **Requisito:** RF-15
+
+- Sistema registra automaticamente: LOGIN, LOGOUT, UPLOAD, DOWNLOAD, DELETE, APPROVE, REJECT, ACCESS_DENIED
+- Cada registo contém: user_id, action, resource_id, status (SUCCESS/FAILURE), ip_address, timestamp
+- Registos são criados mesmo em caso de falha da ação principal
+- AuditLog é imutável — nenhum perfil pode editar ou excluir
+
+### US-016 — Visualização de logs
+**[↑ Voltar para US-016](#us-016)** | **Característica:** [C03 - Logs imutáveis e auditoria](#c03) | **Requisito:** RF-16
+
+- Auditor acessa painel de logs e visualiza histórico completo
+- Filtros disponíveis: tipo de ação, utilizador, seleção, período
+- Listagem exibe: utilizador, ação, recurso, data/hora, IP, resultado
+- Conteúdo dos documentos nunca é exposto nos logs
+- Filtros podem ser combinados para análise detalhada
+
+### US-017 — Upload de documentos técnicos
+**[↑ Voltar para US-017](#us-017)** | **Característica:** [C01 - Upload e gestão de documentos](#c01) | **Requisito:** RF-17
+
+- Types RELATORIO_TATICO e ESQUEMA_JOGADAS seguem as mesmas regras de upload
+- Tipos técnicos nunca aparecem na listagem do Organizer
+- Acesso por outro utilizador retorna HTTP 403
+- Restrição é aplicada tanto no backend quanto na apresentação
+
+### US-018 — Armazenamento em GCS
+**[↑ Voltar para US-018](#us-018)** | **Característica:** [C01 - Upload e gestão de documentos](#c01) | **Requisito:** RF-18
+
+- Nenhum ficheiro é armazenado no servidor da aplicação
+- Todos os ficheiros são armazenados no Google Cloud Storage
+- URL do GCS nunca é exposta diretamente ao cliente
+- Apenas links temporários assinados são fornecidos (RF-09)
+- Falha no GCS durante upload retorna HTTP 503 sem persistir metadados incompletos
+
+---
+
+## Priorização Backlog (MoSCoW)
+
+> O **método MoSCoW** classifica funcionalidades em quatro categorias para ajudar a equipa a focar no essencial para o sucesso do projeto.
+
+### Critérios de Classificação
+
+<CardGrid>
+  <Card title="Must Have (Deve ter)" icon="check">
+    Se ausente, falha o objetivo principal do projeto. A solução não entrega seu valor essencial sem estas funcionalidades.
+  </Card>
+
+  <Card title="Should Have (Deveria ter)" icon="star">
+    Alto valor agregado, tempo de implementação aceitável e melhora significativa da experiência do utilizador.
+  </Card>
+
+  <Card title="Could Have (Poderia ter)" icon="plus">
+    Melhorias boas de ter, mas não críticas. Implementadas se tempo e recursos permitirem.
+  </Card>
+
+  <Card title="Won't Have (Não terá agora)" icon="x">
+    Fora do escopo deste MVP ou sprint. Reavaliadas em versões futuras com feedback de uso real.
+  </Card>
+</CardGrid>
+
+### Pontuação de Esforço (Story Points)
+
+A pontuação vai de **0 a 20**, sendo:
+
+- **0–5**: Simples → Implementação em 2 dias
+- **8–13**: Médio → Implementação em 5 dias
+- **15–20**: Complexo → Implementação em 10 dias
+
+### Must Have
+
+| **User Story** | **RF** | **Justificativa** | **Story Points** |
+|---|---|---|---|
+| US-001 — Cadastro de usuários | RF-01 | Core de qualquer sistema: sem cadastro, não há acesso. | 5 |
+| US-002 — Troca de senha obrigatória | RF-02 | Segurança crítica: força utilizadores a definir senha própria. | 3 |
+| US-003 — Autenticação com JWT | RF-03 | Base de toda a segurança: sem autenticação, isolamento não funciona. | 8 |
+| US-004 — Redirecionamento por perfil | RF-04 | UX essencial: cada perfil precisa ver seu contexto correto. | 3 |
+| US-005 — Controle RBAC | RF-05 | Segurança crítica: restrição de acesso é obrigatória. | 8 |
+| US-006 — Upload de documentos | RF-06 | Core do produto: sem upload, não há funcionalidade. | 13 |
+| US-008 — Listagem de documentos | RF-08 | Core do produto: sem visualização, upload é inútil. | 8 |
+| US-012 — Isolamento inviolável | RF-12 | Segurança crítica: RF determinante, testes em cada release. | 13 |
+| US-015 — Registo de eventos | RF-15 | Auditoria obrigatória: conformidade LGPD depende disso. | 8 |
+| US-018 — Armazenamento em GCS | RF-18 | Arquitetura obrigatória: preparação para produção. | 8 |
+
+**Total Must Have: 10 user stories | 81 story points**
+
+### Should Have
+
+| **User Story** | **RF** | **Justificativa** | **Story Points** |
+|---|---|---|---|
+| US-007 — Reenvio de versões | RF-07 | Alto valor: permite correção sem perda de rastreabilidade. | 5 |
+| US-009 — Download com link temporário | RF-09 | Segurança aprimorada: expõe ficheiros apenas temporariamente. | 5 |
+| US-010 — Visualização de status | RF-10 | Transparência para o utilizador: mostra estado documentar. | 3 |
+| US-011 — Cadastro de seleção | RF-11 | Preparação: necessário para inicializar ambiente. | 5 |
+| US-013 — Upload de laudos médicos | RF-13 | Cobertura de caso de uso específico: laudos separados. | 5 |
+| US-014 — Aprovação de laudos | RF-14 | Conformidade: aprovação estruturada e auditável. | 5 |
+| US-016 — Visualização de logs | RF-16 | Funcionalidade crítica: auditor precisa investigar incidentes. | 5 |
+| US-017 — Upload de documentos técnicos | RF-17 | Proteção de documentação tática: restrição de acesso. | 3 |
+
+**Total Should Have: 8 user stories | 36 story points**
+
+### Could Have
+
+*Nenhuma user story classificada como Could Have no MVP.*
+
+### Won't Have
+
+| **Funcionalidade** | **Justificativa** |
+|---|---|
+| Notificações por Slack/E-mail | Melhora comunicação mas não é crítica ao funcionamento. Implementada em versão futura. |
+| Relatórios analíticos avançados | Análise profunda de padrões pode aguardar fase 2 com dados reais. |
+| Mobile app nativa | Responsividade web atende MVP; app nativa reavaliada após feedback. |
+| Integração SSO (Google Workspace) | Autenticação manual funciona para MVP; SSO pode vir em v2. |
+
+---
+
+## MVP — Produto Mínimo Viável
+
+> O **MVP** do FIFA Team Hub foi definido com base nas funcionalidades **Must Have** e **Should Have**, garantindo que comissões técnicas possam fazer upload, que o isolamento seja inviolável e que auditores possam rastrear tudo.
+
+### Escopo do MVP
+
+<CardGrid>
+  <Card title="✅ No MVP" icon="check">
+    **18 User Stories incluídas:**
+    
+    - **Must Have (10 US):** US-001, US-002, US-003, US-004, US-005, US-006, US-008, US-012, US-015, US-018
+    - **Should Have (8 US):** US-007, US-009, US-010, US-011, US-013, US-014, US-016, US-017
+  </Card>
+
+  <Card title="⏸️ Pós-MVP" icon="hourglass">
+    **Funcionalidades não incluídas:**
+    
+    - Notificações automáticas
+    - Relatórios analíticos
+    - Mobile app
+    - Integração SSO
+    - Alertas de anomalia
+  </Card>
+</CardGrid>
+
+**Total MVP: 18 User Stories | 117 Story Points**
+
+**Cronograma Estimado:**
+- **S9 (Semana 9):** Autenticação (US-001–US-005) — 27 pts
+- **S10 (Semana 10):** Upload e Listagem (US-006–US-009, US-017) — 34 pts
+- **S11 (Semana 11):** Cloud Storage (US-018) + Laudos (US-013–US-014) — 23 pts
+- **S12 (Semana 12):** Logs e Auditoria (US-015, US-016) + Seleções (US-011) — 15 pts
+- **S13 (Semana 13):** Deploy e hardening
+- **S14 (Semana 14):** Demonstração final
+
+---
+
+## Histórico de Versão
+
+| Data | Versão | Descrição | Autor(es) |
+|------|--------|-----------|-----------|
+| 10/06/2026 | 1.0 | Criação do backlog do produto FIFA Team Hub com 18 user stories, características e priorização MoSCoW. | Equipe |
+| 10/06/2026 | 1.1 | Definição do MVP com 18 user stories, cronograma de sprints e story points. | Equipe |
+| 10/06/2026 | 1.2 | Alinhamento com requisitos detalhados (RF-01 a RF-18), critérios de aceitação completos e justificativas de priorização. | Equipe |

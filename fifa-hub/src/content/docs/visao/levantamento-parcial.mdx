@@ -1,6 +1,6 @@
 ---
 title: Requisitos do Sistema
-description: Requisitos funcionais e não funcionais do Sistema de Gestão de Salas e Coworking
+description: Requisitos funcionais, não funcionais e externos do FIFA Team Hub
 ---
 
 import requisitosFigma from '../../../assets/requisitos.jpeg';
@@ -9,149 +9,228 @@ import requisitosFigma from '../../../assets/requisitos.jpeg';
 ## Requisitos Funcionais
 
 <div class="softex-process">
-> Os requisitos funcionais definem **o que o sistema deve fazer** para atender às necessidades dos usuários
+> Os requisitos funcionais definem **o que o sistema deve fazer** para atender às necessidades dos usuários .
 </div>
 
-### RF01 – Cadastrar usuários <span class="badge badge--alta">Alta</span>
+### Objetivo — Autenticação e Gestão de Acesso
+
+#### <span id="rf-001--cadastro-de-usuario-pelo-auditor">RF-001 — Cadastro de usuário pelo Auditor</span> <span class="badge badge--critica">Crítica</span>
 
 <ul class="softex-list">
-  <li>O sistema deverá permitir que os usuários se cadastrem utilizando o e-mail corporativo da Softex</li>
-  <li>O sistema deverá validar se o e-mail informado pertence ao domínio da empresa</li>
+  <li>Permitir que um usuário com perfil AUDITOR cadastre novos usuários informando nome, e-mail, senha provisória e tipo de perfil (TECHNICAL_STAFF, ORGANIZER ou AUDITOR) .</li>
+  <li>O cadastro é rejeitado se o e-mail já estiver registrado no sistema, retornando mensagem de conflito .</li>
+  <li>A senha provisória é armazenada como hash — nunca em texto plano — e exibida apenas ao AUDITOR criador .</li>
 </ul>
 
-### RF02 – Visualizar mapa interativo da planta baixa <span class="badge badge--critica">Crítica</span>
+#### <span id="rf-002--geracao-de-senha-temporaria-no-primeiro-acesso">RF-002 — Geração de senha temporária no primeiro acesso</span> <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>Exigir automaticamente a troca da senha temporária no primeiro acesso bem-sucedido de qualquer perfil .</li>
+  <li>Bloquear o acesso ao dashboard até que a troca de senha seja concluída com no mínimo 8 caracteres .</li>
+  <li>Invalidar a senha temporária imediatamente após a troca concluída .</li>
+</ul>
+
+#### <span id="rf-003--autenticacao-de-usuario-com-e-mail-e-senha">RF-003 — Autenticação de usuário com e-mail e senha</span> <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>Autenticar o usuário mediante e-mail e senha válidos, emitindo um token de sessão com validade máxima de 60 minutos .</li>
+  <li>Credenciais inválidas devem retornar erro genérico HTTP 401 sem revelar qual campo está incorreto .</li>
+  <li>O token deve carregar de forma stateless os dados: user_id, role, selection_id e exp .</li>
+</ul>
+
+#### <span id="rf-004--redirecionamento-para-o-dashboard-da-selecao-apos-login">RF-004 — Redirecionamento após login</span> <span class="badge badge--alta">Alta</span>
 
 <div class="softex-process">
-> **Funcionalidades principais:**
+> **Redirecionar o usuário imediatamente com base em seu perfil logado:**
 </div>
-
-<ul class="softex-list">
-  <li>O sistema deverá exibir um mapa interativo da planta baixa do coworking</li>
-  <li>O usuário deverá conseguir identificar salas e estações disponíveis em tempo real</li>
-</ul>
-
-### RF03 – Reservar salas e cadeiras <span class="badge badge--critica">Crítica</span>
-
-<div class="fases-container">
-  <div class="fase-item">
-    <h4>Reserva Completa</h4>
-    <p>O sistema deverá permitir a reserva de salas e cadeiras em tempo real, registrando horário de início, horário de término e finalidade da reserva.</p>
-  </div>
-  
-  <div class="fase-item">
-    <h4>Confirmação Visual</h4>
-    <p>O sistema deverá permitir que o usuário visualize e confirme a reserva antes de finalizá-la.</p>
-  </div>
-</div>
-
-### RF04 – Visualizar detalhamento de reservas <span class="badge badge--media">Média</span>
-
-<div class="softex-process">
-> Ao clicar em uma sala, o sistema deverá exibir:
-</div>
-
-<ul class="softex-list">
-  <li>**Usuário responsável** pela reserva</li>
-  <li>**Horário de início e término**</li>
-  <li>**Descrição breve** do uso</li>
-</ul>
-
-### RF05 – Filtrar busca e visualização <span class="badge badge--media">Média</span>
-
-<ul class="softex-list">
-  <li>O sistema deverá permitir filtrar reservas por sala.</li>
-  <li>O O sistema deverá permitir filtrar reservas por horário.</li>
-  <li>O sistema deverá permitir filtrar reservas por dias da semana.</li>
-</ul>
-
-### RF06 – Editar e cancelar reservas <span class="badge badge--alta">Alta</span>
 
 <ul class="softex-flow">
-  <li>O sistema deverá permitir que os usuários editem ou cancelem reservas já realizadas</li>
-  <li>O sistema deverá respeitar regras de permissões para edição e cancelamento</li>
+  <li>**TECHNICAL_STAFF:** Redirecionado para o dashboard de documentos da sua própria seleção .</li>
+  <li>**ORGANIZER:** Redirecionado para a visão geral de documentação burocrática de todas as seleções .</li>
+  <li>**AUDITOR:** Redirecionado diretamente para o painel de logs de auditoria do sistema .</li>
 </ul>
 
-### RF07 – Notificar e alertar usuários <span class="badge badge--critica">Crítica</span>
-
-<div class="softex-process">
-> **Sistema de notificações:**
-</div>
+#### <span id="rf-005--controle-de-acesso-por-perfil-rbac">RF-005 — Controle de acesso por perfil (RBAC)</span> <span class="badge badge--critica">Crítica</span>
 
 <ul class="softex-list">
-  <li>O sistema deverá enviar notificações de confirmação de reservas via e-mail corporativo ou alertas internos</li>
-  <li>O sistema deverá alertar sobre conflitos de reservas e sobre reservas próximas do horário de início</li>
+  <li>Restringir o acesso a funcionalidades e dados de forma que o TECHNICAL_STAFF manipule apenas os documentos de sua própria seleção .</li>
+  <li>Permitir que o ORGANIZER visualize apenas documentos CONVOCACAO e PASSAPORTE de todas as seleções e realize aprovação de laudos .</li>
+  <li>Impedir o perfil AUDITOR de visualizar o conteúdo de qualquer documento, limitando-o estritamente aos metadados dos logs .</li>
+  <li>Qualquer tentativa de violação de escopo deve retornar HTTP 403 e salvar um registro automático em AuditLog .</li>
 </ul>
 
-### RF08 – Gerar relatórios e histórico de ocupação <span class="badge badge--media">Média</span>
+### Objetivo — Upload e Gestão de Documentos
 
-<div class="fases-container">
-  <div class="fase-item">
-    <h4>Relatórios de Ocupação</h4>
-    <p>O sistema deverá gerar relatórios de ocupação por sala.</p>
-  </div>
-  
-  <div class="fase-item">
-    <h4>Estatísticas de Uso</h4>
-    <p>O sistema deverá apresentar estatísticas de horários mais utilizados.</p>
-  </div>
-  
-  <div class="fase-item">
-    <h4>Histórico Individual</h4>
-    <p>O sistema deverá disponibilizar o histórico de reservas por usuário.</p>
-  </div>
-</div>
+#### <span id="rf-006--upload-de-documento-com-vinculacao-a-selecao">RF-006 — Upload de documento com vinculação à seleção</span> <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>Permitir ao TECHNICAL_STAFF fazer upload de arquivos associando-os obrigatoriamente à sua seleção, ao seu usuário e a um tipo predefinido .</li>
+  <li>Tipos aceitos: CONVOCACAO, PASSAPORTE, LAUDO_MEDICO, RELATORIO_TATICO, ESQUEMA_JOGADAS .</li>
+  <li>Formatos aceitos: PDF, JPG, PNG, DOCX, com tamanho máximo delimitado em 10 MB por arquivo .</li>
+  <li>O preenchimento do campo selection_id deve ocorrer de forma automática pelo backend .</li>
+</ul>
+
+#### <span id="rf-007--reenvio-de-documento-ja-cadastrado">RF-007 — Reenvio de documento já cadastrado</span> <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>Permitir ao TECHNICAL_STAFF substituir um documento enviado por uma nova versão, marcando o arquivo anterior como versão antiga sem o excluir .</li>
+  <li>Restringir essa ação apenas ao mesmo usuário individual que realizou o upload original do arquivo .</li>
+</ul>
+
+#### <span id="rf-008--listagem-de-documentos-filtrada-por-selecao">RF-008 — Listagem de documentos filtrada por seleção</span> <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>Exibir ao usuário os documentos pertencentes à sua seleção, ordenados por data de envio decrescente .</li>
+  <li>Apresentar em tela o nome do arquivo, tipo, responsável pelo upload, data/hora e status .</li>
+  <li>Garantir que a aplicação do filtro por selection_id ocorra estritamente no backend .</li>
+</ul>
+
+#### <span id="rf-009--disponibilizacao-do-documento-ao-proprio-usuario">RF-009 — Disponibilização de link de download</span> <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>Gerar um link temporário de download para o arquivo solicitado, acessível somente por usuários da mesma seleção .</li>
+  <li>O link gerado deve expirar obrigatoriamente após 15 minutos ou após o primeiro acesso .</li>
+  <li>Retornar o status HTTP 410 caso haja qualquer tentativa de acesso por meio de link expirado .</li>
+</ul>
+
+#### <span id="rf-010--visualizacao-do-status-de-aceitacao-ou-recusa-de-documento">RF-010 — Visualização do status do documento</span> <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>Definir o status inicial de todo documento enviado no sistema como PENDENTE .</li>
+  <li>Refletir em tempo real (ou no próximo carregamento) a alteração de status efetuada pelo ORGANIZER para o TECHNICAL_STAFF .</li>
+  <li>Exibir de forma clara o comentário de justificativa caso o documento passe para o status REJEITADO .</li>
+</ul>
+
+### Objetivo — Gestão Global de Seleções
+
+#### <span id="rf-011--cadastro-de-selecao-com-codigo-fifa">RF-011 — Cadastro de seleção com código FIFA</span> <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>Permitir que o AUDITOR cadastre uma seleção informando nome completo, código FIFA único de 3 letras e imagem da bandeira .</li>
+  <li>Aceitar estritamente letras maiúsculas no código FIFA (Ex: BRA, ARG, GER) e bloquear duplicatas com HTTP 409 .</li>
+  <li>Exigir que todo cadastro de nova seleção contenha pelo menos 1 usuário AUDITOR vinculado .</li>
+</ul>
+
+#### <span id="rf-012--isolamento-total-de-dados-entre-selecoes">RF-012 — Isolamento total de dados entre seleções</span> <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-flow">
+  <li>Garantir o isolamento lógico impedindo acessos a dados, documentos ou metadados de seleções alheias .</li>
+  <li>Injetar filtro obrigatório de selection_id em toda e qualquer consulta realizada ao banco de dados .</li>
+  <li>Retornar HTTP 403 e registrar um evento de ACCESS_DENIED no log caso haja tentativa de acesso direto via URL customizada .</li>
+</ul>
+
+### Objetivo — Submissão e Validação de Laudos Médicos
+
+#### <span id="rf-013--upload-de-laudo-medico-pelo-medical-staff">RF-013 — Upload de laudo médico</span> <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>Permitir ao TECHNICAL_STAFF o upload de arquivos do tipo LAUDO_MEDICO vinculado opcionalmente a um jogador específico da delegação .</li>
+  <li>Salvar o registro registrando o identificador do usuário, identificador da seleção, timestamp e nome do atleta .</li>
+</ul>
+
+#### <span id="rf-014--aprovacao-or-rejeicao-de-laudo-medico-pelo-organizer">RF-014 — Avaliação de laudos pelo Organizer</span> <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>Permitir que o ORGANIZER aprove ou rejeite laudos com status PENDENTE .</li>
+  <li>Exigir um comentário obrigatório em caso de rejeição técnica (retornar HTTP 400 se enviado em branco) .</li>
+  <li>Disparar uma notificação visual interna para o TECHNICAL_STAFF no seu próximo acesso ao sistema .</li>
+</ul>
+
+### Objetivo — Logs e Monitoria de Auditoria
+
+#### <span id="rf-015--registro-automatico-de-eventos-auditaveis">RF-015 — Registro automático de eventos auditáveis</span> <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>Registrar automaticamente no AuditLog as ações: LOGIN, LOGOUT, UPLOAD, REUPLOAD, DOWNLOAD, DELETE, APPROVE, REJECT e ACCESS_DENIED .</li>
+  <li>Armazenar em cada log: user_id, action, resource_id, status (SUCCESS/FAILURE), ip_address e timestamp .</li>
+  <li>Garantir a integridade do banco: registros de logs são totalmente imutáveis, impossibilitando edições ou exclusões .</li>
+</ul>
+
+#### <span id="rf-016--visualizacao-e-filtragem-de-logs-pelo-auditor">RF-016 — Visualização e filtragem de logs pelo Auditor</span> <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>Exibir o histórico completo de eventos de auditoria exclusivamente para o perfil AUDITOR .</li>
+  <li>Permitir a combinação de filtros avançados por tipo de ação, usuário envolvido, seleção e intervalo de datas .</li>
+</ul>
+
 
 ## Requisitos Não Funcionais
 
 <div class="softex-process">
-> Os requisitos não funcionais definem **como o sistema deve funcionar** em termos de qualidade, performance e restrições técnicas
+> Os requisitos não funcionais definem **como o sistema deve funcionar** em termos de qualidade, performance e restrições técnicas 
 </div>
 
-### Requisitos de Produto
+### Requisitos de Produto e Segurança
+
+#### RNF01 – Criptografia de Senhas (bcrypt) <span class="badge badge--critica">Crítica</span>
 
 <ul class="softex-list">
-  <li><strong>Atualização em tempo real</strong> <span class="badge badge--critica">Crítica</span> — O sistema deverá atualizar todas as reservas em tempo real, garantindo consistência entre usuários</li>
-  <li><strong>Controle de permissões</strong> <span class="badge badge--alta">Alta</span> — O sistema deverá controlar permissões de reserva, permitindo que usuários com autoridade máxima definam e alterem quem pode reservar determinadas salas ou estações</li>
-  <li><strong>Disponibilidade</strong> <span class="badge badge--alta">Alta</span> — O sistema deverá apresentar alta disponibilidade (99%) durante o horário de operação do coworking</li>
-  <li><strong>Performance</strong> <span class="badge badge--alta">Alta</span> — O sistema deverá apresentar tempo de resposta inferior a 2 segundos para ações críticas (reserva e cancelamento)</li>
+  <li>Armazenar todas as senhas utilizando criptografia de hash bcrypt com fator de custo mínimo igual a 10 .</li>
+  <li>Garantir que nenhuma senha seja exposta em texto plano ou trafegada em endpoints de resposta da API .</li>
 </ul>
 
-### Requisitos Organizacionais
+#### RNF02 – Isolamento de Consultas Relacionais <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>Garantir via arquitetura/ORM que toda consulta de documentos inclua a cláusula WHERE vinculada ao selection_id do usuário .</li>
+</ul>
+
+#### RNF03 – Desempenho e Tempo de Resposta <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>Responder a requisições de listagem de documentos e fluxos de autenticação em menos de 500ms para cargas de até 100 registros .</li>
+</ul>
+
+#### RNF04 – Disponibilidade do Ambiente <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>Manter uma taxa de disponibilidade de uptime mínima de 99% na infraestrutura durante os períodos críticos de avaliação .</li>
+</ul>
+
+#### RNF05 – Cobertura Absoluta de Logs de Auditoria <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>Garantir o registro de 100% das operações mapeadas em AuditLog, registrando o evento mesmo em cenários com falha da operação principal (status=FAILURE) .</li>
+</ul>
+
+### Requisitos Organizacionais e Tecnológicos
 
 <div class="softex-process">
-> **Stack tecnológico definido:**
+> **Stack tecnológico homologado e definido para o projeto:**
 </div>
 
 <ul class="softex-flow">
-  <li>O sistema deverá possuir front-end desenvolvido em <strong>Vue.js</strong></li>
-  <li>O sistema deverá possuir back-end desenvolvido em <strong>Python com Django REST Framework (DRF)</strong></li>
-  <li>O sistema deverá utilizar banco de dados <strong>PostgreSQL</strong></li>
-  <li>O sistema deverá utilizar <strong>Git</strong> e repositório no <strong>GitHub</strong> para versionamento de código</li>
-  <li>O sistema deverá ser empacotado e implantado utilizando <strong>Docker</strong> em ambiente <strong>AWS</strong></li>
+  <li>**RNF06** — Frontend Camada de Interface: **Vue 3**</li>
+  <li>**RNF07** — Backend Camada de Negócio: **Flask (Python 3.13+)**</li>
+  <li>**RNF08** — Banco de Dados e Mapeamento ORM: **PostgreSQL com SQLAlchemy + Alembic**</li>
+  <li>**RNF09** — Mecanismo de Segurança de Sessão: **Python-jose + jsonwebtoken (JWT Stateless com expiração de 60min)**</li>
+  <li>**RNF10** — Portabilidade e Empacotamento: **Docker e Docker Compose para inicialização em comando único**</li>
 </ul>
 
-### Requisitos Externos
+### Requisitos Externos e Restrições Invioláveis
 
-<div class="fases-container">
-  <div class="fase-item">
-    <h4>Compatibilidade</h4>
-    <p>O sistema deverá ser compatível com os navegadores <strong>Chrome</strong>, <strong>Firefox</strong> e <strong>Edge</strong>.</p>
-  </div>
-  
-  <div class="fase-item">
-    <h4>Responsividade</h4>
-    <p>O sistema deverá ser adaptável para dispositivos <strong>desktop</strong> e <strong>mobile</strong>.</p>
-  </div>
-</div>
-
-<div class="softex-process">
-> **Conformidade e acessibilidade:**
-</div>
+#### RE01 – Infraestrutura de Nuvem Obrigatória (Google Cloud Platform) <span class="badge badge--critica">Crítica</span>
 
 <ul class="softex-list">
-  <li>O sistema deverá atender às diretrizes de acessibilidade <strong>WCAG</strong>, permitindo navegação por teclado e alto contraste de cores</li>
-  <li>O sistema deverá estar em conformidade com a <strong>LGPD</strong>, criptografando dados sensíveis e solicitando consentimento para uso de informações pessoais</li>
+  <li>Realizar o deploy completo da aplicação no ecossistema GCP utilizando Cloud Run para os serviços, Cloud SQL para o banco relacional e Cloud Storage para arquivos .</li>
+  <li>Proibir terminantemente a persistência de arquivos locais no disco do servidor da aplicação; mídias devem ser guardadas exclusivamente no Cloud Storage .</li>
 </ul>
+
+#### RE02 – Governança de Código e Integração Contínua (CI/CD) <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>Manter todo o repositório hospedado no GitHub, com proteção ativa na branch main e uso de Conventional Commits .</li>
+  <li>Executar de maneira automática via GitHub Actions a esteira de lint, testes unitários e bloqueio de Pull Requests com cobertura de testes inferior a 60% .</li>
+</ul>
+
+#### RE03 – Conformidade Legal e Segurança de Trânsito <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>Garantir conformidade total com a Lei Geral de Proteção de Dados (LGPD - Lei 13.709/2018) para a manipulação de dados pessoais e médicos .</li>
+  <li>Forçar o uso restrito do protocolo HTTPS em produção para criptografia de dados em trânsito entre cliente e servidor .</li>
+  <li>Atender aos critérios mínimos de acessibilidade WCAG 2.1 nível A, incluindo navegação por teclado e contraste adequado .</li>
+</ul>
+
 
 ### Mapa de requisitos (Figma)
 
@@ -160,9 +239,19 @@ import requisitosFigma from '../../../assets/requisitos.jpeg';
   style={{ border: '1px solid #ddd', borderRadius: '8px', width: '100%', height: '640px' }}
   loading="lazy"
   referrerPolicy="no-referrer"
-  src="https://www.figma.com/embed?embed_host=astro&url=https%3A%2F%2Fwww.figma.com%2Fboard%2FNvgFffhUVPQNWu9lsVYpMZ%2FMapa-de-Requisitos%3Fnode-id%3D0-1%26p%3Df%26t%3DBcWzTa9m6j6TULiw-0"
+  src="https://www.figma.com/embed?embed_host=astro&url=https%3A%2F%2Fwww.figma.com%2Fboard%2F9UFtu1E5JWal4UCYHHorY9%2FRequisitos-FIFA-hub%3Fnode-id%3D0-1%26p%3Df%26t%3DJmBJ4TQUHsoxWnk2-0"
   allowFullScreen
 ></iframe>  
 <p style={{ marginTop: '8px' }}>
-  <a href="https://www.figma.com/board/NvgFffhUVPQNWu9lsVYpMZ/Mapa-de-Requisitos?node-id=0-1&p=f&t=BcWzTa9m6j6TULiw-0" target="_blank" rel="noreferrer noopener">Abrir no Figma</a>
+  <a href="https://www.figma.com/board/9UFtu1E5JWal4UCYHHorY9/Requisitos-FIFA-hub?node-id=0-1&p=f&t=JmBJ4TQUHsoxWnk2-0" target="_blank" rel="noreferrer noopener">Abrir no Figma</a>
 </p>
+
+
+## Histórico de Versão
+
+| Data | Versão | Descrição | Autor(es) | Revisor(es) |
+|------|--------|-----------|-----------|-------------|
+| 29/05/2026 | 1.0 | Levantamento inicial dos Requisitos Funcionais (RF-01 a RF-10). | Todos | Todos |
+| 31/05/2026 | 1.5 | Inclusão das regras de Isolamento de Seleções e Laudos Médicos (RF-11 a RF-14). | Júlia Campos, Caio Felipe | Todos |
+| 01/06/2026 | 2.0 | Mapeamento das restrições e Requisitos Externos (RE-01 a RE-06) Adicionando Requisitos Não Funcionais (RNF-01 a RNF-10) e Logs de Auditoria (RF-15 e RF-16). | Júlia Campos, Caio Felipe | Todos |
+| 07/06/2026 | 3.0 | Refatoração completa e validação de critérios de aceitação para homologação do portal Astro. | Júlia Campos, Caio Felipe | Todos |
