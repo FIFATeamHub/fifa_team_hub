@@ -105,7 +105,7 @@ class Document(db.Model):
 
     uploaded_by = db.Column(
         db.UUID(as_uuid=True),
-        db.ForeignKey("user.id"),
+        db.ForeignKey("users.id"),
         nullable=False
     )
 
@@ -140,7 +140,7 @@ class AuditLog(db.Model):
 
     user_id = db.Column(
         db.UUID(as_uuid=True),
-        db.ForeignKey("user.id"),
+        db.ForeignKey("users.id"),
         nullable=False
     )
 
