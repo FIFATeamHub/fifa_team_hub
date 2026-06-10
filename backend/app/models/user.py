@@ -32,7 +32,6 @@ class User(db.Model):
         unique=True,
         nullable=False
     )
-
     password_hash = db.Column(
         db.generate_password_hash(),
         nullable=False
