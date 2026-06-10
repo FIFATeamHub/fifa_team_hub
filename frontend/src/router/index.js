@@ -2,9 +2,11 @@ import { createRouter, createWebHistory } from 'vue-router'
 import homeView from '../views/homeView.vue'
 import teamView from '../views/teamView.vue'
 import loginView from '../views/loginView.vue'
+import registerView from '../views/registerView.vue'
 import dashboardView from '../views/dashboardView.vue'
 import uploadView from '../views/uploadView.vue'
 import auditView from '../views/auditView.vue'
+import noAcessView from '../views/403View.vue'
 import { useAuthStore } from '../stores/auth'
 
 
@@ -27,6 +29,11 @@ const router = createRouter({
       component: loginView
     },
     {
+      path: '/cadastro',
+      name: 'cadastro',
+      component: registerView
+    },
+    {
       path: '/dashboard',
       name: 'dashboard',
       meta: {requiresAuth: true},
@@ -43,18 +50,35 @@ const router = createRouter({
       name: 'audit',
       meta: {requiresAuth: true},
       component: auditView
+    },
+    {
+      path: '/403error',
+      name: '403',
+      meta: {requiresAuth: true},
+      component: noAcessView
     }
   ]
 })
 
-router.beforeEach((to,from,next) => {
+
+
+router.beforeEach((to) => {
   const authStore = useAuthStore()
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next({name: 'login'})
-  } else{
-    next()
+    return { name: 'login' }
   }
+
+  if (to.name == 'audit'){
+    const userRole = authStore.user?.role
+
+    if(userRole !== "AUDITOR"){
+      return {name : "403"}
+    }
+  }
+
+  return true
+
 })
 
 export default router

@@ -6,7 +6,41 @@ Este documento descreve a estrutura de dados, as regras de negócio para isolame
 
 ## 📊 1. Definição das Entidades Principais
 
-Para atender aos requisitos mínimos do sistema, o banco de dados foi modelado com foco na integridade referencial e auditoria. Abaixo estão os campos principais das quatro entidades fundamentais:
+Para atender aos requisitos mínimos do sistema, o banco de dados foi modelado com foco na integridade referencial e auditoria. Abaixo está o diagrama de relacionamento e os campos principais das quatro entidades fundamentais:
+
+```mermaid
+erDiagram
+    Selection ||--o{ User : "possui membros"
+    Selection ||--o{ Document : "é dono dos"
+    User ||--o{ Document : "faz upload dos"
+    User ||--o{ AuditLog : "gera eventos de"
+
+    Selection {
+        uuid id PK
+        string name
+        string code
+    }
+    User {
+        uuid id PK
+        string email
+        string password_hash
+        enum role
+        uuid selection_id FK
+    }
+    Document {
+        uuid id PK
+        enum type
+        string storage_url
+        uuid uploaded_by FK
+        uuid selection_id FK
+    }
+    AuditLog {
+        uuid id PK
+        enum action
+        uuid user_id FK
+        uuid resource_id
+    }
+```
 
 ### 🔹 Seleção (`Selection`)
 
