@@ -4,6 +4,8 @@ from flask import request, jsonify
 from app.models.user import User
 from app.services.auth import decodificar_token
 
+from jose import JWTError
+
 
 def token_required(f):
     @wraps(f)
@@ -21,11 +23,12 @@ def token_required(f):
 
         token = partes[1]
 
-        # Decodifica e valida o token
-        payload = decodificar_token(token)
-        if payload is None:
+        # Decodifica e valida o token - agora com exceção se inválido
+        try:
+            payload = decodificar_token(token)
+        except JWTError:
             return jsonify({"error": "Token inválido ou expirado"}), 401
-
+        
         # Busca o usuário no banco pelo sub (user_id)
         current_user = User.query.get(payload["sub"])
         if current_user is None:

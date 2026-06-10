@@ -34,7 +34,7 @@ class User(db.Model):
     )
 
     password_hash = db.Column(
-        db.generate_password_hash(),
+        db.String(255),
         nullable=False
     )
 
