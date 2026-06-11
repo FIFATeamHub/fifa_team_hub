@@ -1,7 +1,6 @@
 from flask import request, jsonify
 
 from app.routes.schema import RegisterSchema, LoginSchema
-
 from app.config.database import db
 from app.models.user import User
 from app.models.enums.user_role import UserRole
@@ -10,16 +9,12 @@ from app.services.auth import hash_senha, verificar_senha, gerar_token
 
 def register():
     dados = request.get_json()
-
-    # Valida campos obrigatórios
-    campos = ["email", "password", "role"]
-
+    
     register_schema = RegisterSchema()
     erros = register_schema.validate(dados)
 
     if erros:
         return jsonify({"error": erros}), 400
-
 
     # Valida se role é um valor válido do enum
     try:
@@ -38,7 +33,7 @@ def register():
         password_hash=hash_senha(dados["password"]),
         full_name=dados["full_name"],
         role=role,
-        selection_id=dados.get("selection_id")  # opcional
+        selection_id=dados.get("selection_id")
     )
 
     db.session.add(novo_user)
@@ -47,6 +42,7 @@ def register():
     return jsonify({
         "id": str(novo_user.id),
         "email": novo_user.email,
+        "full_name": novo_user.full_name,
         "role": novo_user.role.value,
         "selection_id": str(novo_user.selection_id) if novo_user.selection_id else None
     }), 201
@@ -65,7 +61,7 @@ def login():
     erros = login_schema.validate(dados) #Verificação automática de emails
 
     if erros:
-        return jsonify({"error": erros}), 400
+        return jsonify({"error": "Formato de e-mail inválido. Verifique se digitou corretamente (ex: faltou o .com?)"}), 400
 
 
     try:
@@ -91,6 +87,7 @@ def me(current_user):
     return jsonify({
     "id": str(current_user.id),
     "email": current_user.email,
+    "full_name": current_user.full_name,
     "role": current_user.role.value,
     "selection_id": str(current_user.selection_id) if current_user.selection_id else None
 }), 200
