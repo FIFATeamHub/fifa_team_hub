@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 <template>
     <div class = "body">
 
@@ -22,6 +23,7 @@
 </template>
 
 <script lang="ts">
+/* eslint-disable vue/multi-word-component-names */
 
 export default{
     name : "navbar"

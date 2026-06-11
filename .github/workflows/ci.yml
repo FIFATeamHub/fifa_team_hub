@@ -30,6 +30,10 @@ jobs:
           JWT_ALGORITHM: HS256
           JWT_EXPIRE_MINUTES: 60
         run: python -m pytest backend/tests/ -v
+      - name: Install dependencies
+        run: |
+          pip install -r backend/requirements.txt
+          pip install pytest
 
   frontend-lint:
     runs-on: ubuntu-latest

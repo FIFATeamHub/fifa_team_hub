@@ -80,7 +80,7 @@
 </template>
 
 
-<script setup>
+<script setup lang="ts">
 import { onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
@@ -98,7 +98,7 @@ onMounted(async () => {
   if (authStore.token && !authStore.user) {
     try {
       await authStore.fetchMe()
-    } catch (err) {
+    } catch {
       authStore.logout()
       router.push('/login')
     }

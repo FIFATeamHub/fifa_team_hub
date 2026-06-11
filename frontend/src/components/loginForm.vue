@@ -36,6 +36,7 @@
 <script setup lang="ts">
 
 import { ref } from 'vue'
+ 
 import { useAuthStore } from '../stores/auth'
 import { RouterLink } from 'vue-router'      
 
@@ -53,7 +54,7 @@ async function handleSubmit() {
   try {
     
     await authStore.login({ email: email.value, password: password.value })
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     if (error.status === 401) {
       errorMessage.value = 'E-mail ou senha incorretos'
