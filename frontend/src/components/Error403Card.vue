@@ -11,7 +11,7 @@
 
 </template>
 
-<script>
+<script lang="ts">
 
 import baseCard from './baseCard.vue';
 import { useRoute } from 'vue-router';
