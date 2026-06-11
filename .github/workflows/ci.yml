@@ -29,7 +29,7 @@ jobs:
           JWT_SECRET_KEY: ci-secret-key-for-tests
           JWT_ALGORITHM: HS256
           JWT_EXPIRE_MINUTES: 60
-        run: pytest backend/tests/ -v
+        run: python -m pytest backend/tests/ -v
 
   frontend-lint:
     runs-on: ubuntu-latest
