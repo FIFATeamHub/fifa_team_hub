@@ -45,3 +45,7 @@ class Document(db.Model):
         db.DateTime,
         server_default=db.func.now()
     )
+    deleted_at = db.Column(
+        db.DateTime,
+        nullable = True
+    )
