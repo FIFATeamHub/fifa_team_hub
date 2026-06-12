@@ -29,7 +29,7 @@
 
             <!-- Barra de Progresso (só durante o upload)-->
              <div v-if="isLoading" class="progresso-container">
-                <div class="progresso-barra":style="{width: uploadProgress + '%'}"></div>
+                <div class="progresso-barra" :style="{width: uploadProgress + '%'}"></div>
                 <span>{{ uploadProgress }}%</span>
              </div>
 
@@ -49,69 +49,82 @@
         </div>
     </div>
 </template>
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { uploadDocument } from '@/services/documentService.js'
-// --- Props recebidas do componente pai (Dashboard) ---
-const props = defineProps({
-  isOpen:    Boolean,
-  onClose:   Function,
-  onSuccess: Function,
-})
-// --- Estado interno do modal ---
-const selectedFile     = ref(null)    // arquivo escolhido pelo usuário
-const selectedType     = ref('')      // tipo selecionado no <select>
-const uploadProgress   = ref(0)       // progresso de 0 a 100
-const isLoading        = ref(false)   // true enquanto o upload está rolando
-const errorMessage     = ref('')      // mensagem de erro exibida no modal
-// --- Botão "Enviar" só fica ativo se arquivo E tipo estiverem preenchidos ---
-const isFormValid = computed(() => 
+
+// Props com tipagem correta para TypeScript
+const props = defineProps<{
+  isOpen: boolean
+  onClose?: () => void
+  onSuccess?: (doc: unknown) => void
+}>()
+
+const selectedFile     = ref<File | null>(null)
+const selectedType     = ref('')
+const uploadProgress   = ref(0)
+const isLoading        = ref(false)
+const errorMessage     = ref('')
+
+const isFormValid = computed(() =>
   selectedFile.value !== null && selectedType.value !== ''
 )
-// --- Chamado quando o usuário escolhe um arquivo ---
-function handleFileChange(event) {
-  const arquivo = event.target.files[0]
+
+// "event: Event" diz ao TypeScript qual é o tipo do parâmetro
+function handleFileChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const arquivo = input.files?.[0]
   errorMessage.value = ''
-  // Regra de negócio: tamanho máximo 10 MB (10 * 1024 * 1024 bytes)
+
   if (arquivo && arquivo.size > 10 * 1024 * 1024) {
     errorMessage.value = 'O ficheiro excede o limite de 10 MB.'
     selectedFile.value = null
     return
   }
-  selectedFile.value = arquivo || null
+
+  selectedFile.value = arquivo ?? null
 }
-// --- Chamado ao clicar em "Enviar" ---
+
 async function handleSubmit() {
-  if (!isFormValid.value) return
-  isLoading.value    = true
-  errorMessage.value = ''
+  if (!isFormValid.value || !selectedFile.value) return
+
+  isLoading.value     = true
+  errorMessage.value  = ''
   uploadProgress.value = 0
+
   const formData = new FormData()
-  formData.append('file', selectedFile.value)
+  formData.append('file', selectedFile.value)   // agora TypeScript sabe que não é null
   formData.append('doc_type', selectedType.value)
+
   try {
-    const resposta = await uploadDocument(formData, (progressEvent) => {
+    const resposta = await uploadDocument(formData, (progressEvent: { loaded: number; total: number }) => {
       uploadProgress.value = Math.round(
         (progressEvent.loaded * 100) / progressEvent.total
       )
     })
-    // Sucesso: avisa o pai com o documento retornado e fecha o modal
-    props.onSuccess(resposta.data)
-    props.onClose()
+
+    props.onSuccess?.(resposta.data)   // ?. evita erro se props for undefined
+    props.onClose?.()
+
   } catch (erro) {
-    const status = erro.response?.status
-    // Mapeia o código de erro HTTP para mensagem legível
-    const mensagens = {
+    // TypeScript não sabe o tipo do erro no catch — fazemos um cast
+    const err = erro as { response?: { status?: number } }
+    const status = err.response?.status
+
+    const mensagens: Record<number, string> = {
       403: 'Não tem permissão para enviar documentos.',
       413: 'O ficheiro excede o limite permitido pelo servidor.',
       415: 'Formato de ficheiro não suportado pelo servidor.',
     }
-    errorMessage.value = mensagens[status] ?? 'Erro ao enviar documento. Tente novamente.'
+
+    errorMessage.value = (status !== undefined ? mensagens[status] : undefined) ?? 'Erro ao enviar documento. Tente novamente.'
+
   } finally {
     isLoading.value = false
   }
 }
 </script>
+
 <style scoped>
 /* Fundo escuro que cobre a tela toda */
 .modal-overlay {

@@ -103,7 +103,7 @@
 </template>
 
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
@@ -116,8 +116,13 @@ const router    = useRouter()
 const { can }   = usePermissions()
 
 // --- Estado local do Dashboard ---
-const isModalOpen = ref(false)      // controla se o modal está aberto
-const documentos  = ref([])         // lista reativa de documentos
+interface Documento {
+  id: string
+  filename: string
+  type: string
+}
+const isModalOpen = ref(false)
+const documentos  = ref<Documento[]>([])
 
 const efetuarLogout = () => {
   authStore.logout()
@@ -125,15 +130,15 @@ const efetuarLogout = () => {
 }
 
 // Chamada pelo modal ao completar upload com sucesso
-function aoReceberDocumento(novoDoc) {
-  documentos.value.unshift(novoDoc)  // adiciona no TOPO sem recarregar
+function aoReceberDocumento(novoDoc: unknown) {
+  documentos.value.unshift(novoDoc as Documento)
 }
 
 onMounted(async () => {
   if (authStore.token && !authStore.user) {
     try {
       await authStore.fetchMe()
-    } catch (err) {
+    } catch {
       authStore.logout()
       router.push('/login')
     }
