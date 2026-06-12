@@ -105,7 +105,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useAuthStore } from '../stores/auth'
+import { useAuthStore } from '@/stores/auth.js'
 import { useRouter } from 'vue-router'
 import protectedContent from '@/components/protectedContent.vue'
 import UploadDocumentModal from '@/components/documents/UploadDocumentModal.vue'
