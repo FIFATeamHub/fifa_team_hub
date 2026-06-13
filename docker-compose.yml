@@ -35,11 +35,18 @@ services:
       - "5000:5000"
     env_file:
       - .env
+    environment:
+      STORAGE_BACKEND: ${STORAGE_BACKEND}
+      LOCAL_STORAGE_PATH: ${LOCAL_STORAGE_PATH}
+      MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB}
+      ALLOWED_EXTENSIONS: ${ALLOWED_EXTENSIONS}
     volumes:
-      - ./backend:/app 
+      - ./backend:/app
+      - ./backend/storage/uploads:/app/storage/uploads 
     depends_on:
       postgres:
         condition: service_healthy 
+    
 
 
 

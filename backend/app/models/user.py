@@ -4,7 +4,6 @@ from werkzeug.security import generate_password_hash #Gera a senha em hash para 
 
 from sqlalchemy import Enum # type: ignore[import]
 from sqlalchemy.orm import Mapped,registry
-
 from app.config.database import db # type: ignore[import]
 from app.models.enums.user_role import UserRole
 from app.models.enums.user_role import TypeDocument
@@ -33,7 +32,7 @@ class User(db.Model):
         nullable=False
     )
     password_hash = db.Column(
-        db.generate_password_hash(),
+        db.String(255),
         nullable=False
     )
 
@@ -67,5 +66,4 @@ class User(db.Model):
 
 def senha_para_hash(value):
     return generate_password_hash(value)
-
 table_registry = registry()
