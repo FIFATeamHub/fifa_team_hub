@@ -1,6 +1,6 @@
 import magic
 from flask import jsonify
-from app.models.enums.user_role import TypeDocument
+from app.models.enums.user_role import TypeDocument, DocStatus
 
 
 ALLOWED_MIME_TYPES = {
@@ -12,7 +12,7 @@ ALLOWED_MIME_TYPES = {
 
 MAX_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
 
-def validar_arquivo_seguranca(arquivo_fisico):
+def validate_file(arquivo_fisico):
 
     #Retorna (True, None) se estiver limpo, ou (False, dicionário_de_erro) se violar regras.
    
@@ -47,25 +47,38 @@ def validar_arquivo_seguranca(arquivo_fisico):
 
 
 
+
 def validate_upload_permission(user_role, doc_type_enum):
     """
     Valida se a ROLE do usuário possui permissão para realizar o UPLOAD do TypeDocument.
     Retorna uma tupla: (bool: permitido, string: status_inicial_do_documento)
     """
-    # TECHNICAL_STAFF -> CONVOCACAO, RELATORIO_TATICO, PASSAPORTE
-    if user_role == "TECHNICAL_STAFF":
-        if doc_type_enum.name in ["CONVOCACAO", "RELATORIO_TATICO", "PASSAPORTE"]:
-            return True, "APPROVED"
 
-    # MEDICAL_STAFF -> LAUDO_MEDICO, PASSAPORTE
+    if user_role == "AUDITOR":
+        if doc_type_enum == TypeDocument.PASSPORT:
+            return True, DocStatus.APPROVED.value
+
+
+    elif user_role == "TECHNICAL_STAFF":
+        if doc_type_enum.name in ["CONVOCADO", "RELATORIO_TATICO"]:
+            return True, DocStatus.APPROVED.value
+        
+        # Passaporte do Technical Staff entra como PENDING
+        if doc_type_enum == TypeDocument.PASSPORT:
+            return True, DocStatus.PENDING.value
+
+
     elif user_role == "MEDICAL_STAFF":
-        if doc_type_enum.name in ["LAUDO_MEDICO", "PASSAPORTE"]:
-            return True, "APPROVED"
+        if doc_type_enum.name in ["LAUDO_MEDICO"]:
+            return True, DocStatus.APPROVED.value
+        
+        # Passaporte do Medical Staff entra como PENDING
+        if doc_type_enum == TypeDocument.PASSPORT:
+            return True, DocStatus.PENDING.value
 
-    # ATHLETE -> PASSAPORTE, LAUDO_MEDICO (Forçado para avaliação em PENDING)
     elif user_role == "ATHLETE":
         if doc_type_enum.name in ["PASSAPORTE", "LAUDO_MEDICO"]:
-            return True, "PENDING"
+            return True, DocStatus.PENDING.value
 
-    # Qualquer outra combinação ou perfil (ex: ORGANIZER, AUDITOR) não pode fazer upload
+    # Qualquer outra combinação não permitida
     return False, None
