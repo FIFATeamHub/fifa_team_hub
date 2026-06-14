@@ -73,32 +73,72 @@
           </div>
 
         </protectedContent>
+                <!-- Botão visível apenas para TECHNICAL_STAFF -->
+        <div v-if="can('upload:documents')" class="secao-upload">
+          <button @click="isModalOpen = true" class="btn-upload">
+            📄 Enviar Documento
+          </button>
+
+          <!-- Lista de documentos enviados nessa sessão -->
+          <div v-if="documentos.length > 0" class="lista-documentos">
+            <h3>Documentos enviados</h3>
+            <ul>
+              <li v-for="doc in documentos" :key="doc.id">
+                <span>{{ doc.filename }}</span>
+                <span class="doc-tipo">{{ doc.type }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
 
       </main>
 
     </div>
+        <!-- Modal de Upload (renderizado aqui, controlado pelo isModalOpen) -->
+    <UploadDocumentModal
+      :isOpen="isModalOpen"
+      :onClose="() => isModalOpen = false"
+      :onSuccess="aoReceberDocumento"
+    />
 </template>
 
 
-<script setup>
-import { onMounted } from 'vue'
-import { useAuthStore } from '../stores/auth'
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth.js'
 import { useRouter } from 'vue-router'
 import protectedContent from '@/components/protectedContent.vue'
+import UploadDocumentModal from '@/components/documents/UploadDocumentModal.vue'
+import { usePermissions } from '@/composables/usePermissions'
 
 const authStore = useAuthStore()
-const router = useRouter()
+const router    = useRouter()
+const { can }   = usePermissions()
+
+// --- Estado local do Dashboard ---
+interface Documento {
+  id: string
+  filename: string
+  type: string
+}
+const isModalOpen = ref(false)
+const documentos  = ref<Documento[]>([])
 
 const efetuarLogout = () => {
   authStore.logout()
   router.push('/login')
 }
 
+// Chamada pelo modal ao completar upload com sucesso
+function aoReceberDocumento(novoDoc: unknown) {
+  documentos.value.unshift(novoDoc as Documento)
+}
+
 onMounted(async () => {
   if (authStore.token && !authStore.user) {
     try {
       await authStore.fetchMe()
-    } catch (err) {
+    } catch {
       authStore.logout()
       router.push('/login')
     }
