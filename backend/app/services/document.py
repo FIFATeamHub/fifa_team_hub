@@ -1,5 +1,6 @@
 import magic
 from flask import jsonify
+from app.models.enums.user_role import TypeDocument
 
 
 ALLOWED_MIME_TYPES = {
@@ -42,3 +43,29 @@ def validar_arquivo_seguranca(arquivo_fisico):
 
 
     return True, {"file_size_kb": int(tamanho_bytes / 1024), "mime_type": mime_tipo_real}
+
+
+
+
+def validate_upload_permission(user_role, doc_type_enum):
+    """
+    Valida se a ROLE do usuário possui permissão para realizar o UPLOAD do TypeDocument.
+    Retorna uma tupla: (bool: permitido, string: status_inicial_do_documento)
+    """
+    # TECHNICAL_STAFF -> CONVOCACAO, RELATORIO_TATICO, PASSAPORTE
+    if user_role == "TECHNICAL_STAFF":
+        if doc_type_enum.name in ["CONVOCACAO", "RELATORIO_TATICO", "PASSAPORTE"]:
+            return True, "APPROVED"
+
+    # MEDICAL_STAFF -> LAUDO_MEDICO, PASSAPORTE
+    elif user_role == "MEDICAL_STAFF":
+        if doc_type_enum.name in ["LAUDO_MEDICO", "PASSAPORTE"]:
+            return True, "APPROVED"
+
+    # ATHLETE -> PASSAPORTE, LAUDO_MEDICO (Forçado para avaliação em PENDING)
+    elif user_role == "ATHLETE":
+        if doc_type_enum.name in ["PASSAPORTE", "LAUDO_MEDICO"]:
+            return True, "PENDING"
+
+    # Qualquer outra combinação ou perfil (ex: ORGANIZER, AUDITOR) não pode fazer upload
+    return False, None

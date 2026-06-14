@@ -3,7 +3,8 @@ from app.config.database import db
 from app.models.document import Document
 from app.models.audit_log import AuditLog
 from app.models.enums.user_role import TypeDocument, LogAction
-from app.services.document import validate_file
+from app.services.document import validate_file, validate_upload_permission
+
 from uuid import UUID
 from datetime import datetime, timezone
 
@@ -39,12 +40,6 @@ def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event,
 
 def upload_document(current_user):
 
-    ###################################
-
-    # Analisar lógica de role
-
-    ###################################
-
     momento_requisicao = datetime.now(timezone.utc)
 
 
@@ -70,6 +65,20 @@ def upload_document(current_user):
         erro_msg = f"O valor '{tipo_texto}' não é um tipo de documento válido do Enum"
         register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, erro_msg)
         return jsonify({"error": erro_msg, "details": erro_msg}), 422
+    
+
+    ###################################
+    # LÓGICA DE ROLE INTEGRADA COM SUCESSO
+    ###################################
+    # Cruza a role do current_user com o enum obtido da requisição
+    # Agora importada e chamada diretamente como função, seguindo o padrão pythônico
+    
+    permitido, status_documento = validate_upload_permission(current_user.role, tipo_documento_enum)
+
+    if not permitido:
+        erro_msg = f"Acesso negado. O perfil '{current_user.role}' não tem permissão para fazer upload de '{tipo_documento_enum.name}'."
+        register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, erro_msg)
+        return jsonify({"error": "Acesso negado.", "details": erro_msg}), 403
     
 
     sucesso, metadados_seguranca = validate_file(arquivo_fisico) # Chama a função no service que valida o MIME, extensão e tamanho
@@ -98,6 +107,7 @@ def upload_document(current_user):
             type=tipo_documento_enum,
             filename="provisorio", 
             storage_url="provisorio",
+            status=status_documento,
             created_at=momento_requisicao
         )
 

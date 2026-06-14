@@ -41,6 +41,12 @@ class Document(db.Model):
         nullable=False
     )
 
+    status = db.Column(  # ADICIONEI O CAMPO DE STATUS DO DOCUMENTO
+        db.String(50),
+        nullable=False,
+        default="PENDING"
+    )
+
     created_at = db.Column(
         db.DateTime,
         server_default=db.func.now()
