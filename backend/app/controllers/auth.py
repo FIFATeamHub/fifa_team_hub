@@ -1,20 +1,21 @@
 from flask import request, jsonify
 
-from app.routes.schema import RegisterSchema, LoginSchema
+import re #importa o regex
+
 from app.config.database import db
 from app.models.user import User
 from app.models.enums.user_role import UserRole
-from backend.app.services.auth_service import hash_senha, verificar_senha, gerar_token
+from app.services.auth import hash_senha, verificar_senha, gerar_token
 
 
 def register():
     dados = request.get_json()
-    
-    register_schema = RegisterSchema()
-    erros = register_schema.validate(dados)
 
-    if erros:
-        return jsonify({"error": erros}), 400
+    # Valida campos obrigatórios
+    campos = ["email", "password", "full_name", "role"]
+    for campo in campos:
+        if not dados.get(campo):
+            return jsonify({"error": f"Campo '{campo}' é obrigatório"}), 400
 
     # Valida se role é um valor válido do enum
     try:
@@ -33,7 +34,7 @@ def register():
         password_hash=hash_senha(dados["password"]),
         full_name=dados["full_name"],
         role=role,
-        selection_id=dados.get("selection_id")
+        selection_id=dados.get("selection_id")  # opcional
     )
 
     db.session.add(novo_user)
@@ -57,12 +58,8 @@ def login():
     if not email or not password:
         return jsonify({"error": "Email e password são obrigatórios"}), 400
 
-    login_schema = LoginSchema()
-    erros = login_schema.validate(dados) #Verificação automática de emails
-
-    if erros:
+    if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
         return jsonify({"error": "Formato de e-mail inválido. Verifique se digitou corretamente (ex: faltou o .com?)"}), 400
-
 
     try:
         # Busca user por email
@@ -85,10 +82,13 @@ def login():
 def me(current_user):
     # Retorna dados do usuário autenticado (injetado pelo middleware)
     return jsonify({
-    "id": str(current_user.id),
-    "email": current_user.email,
-    "full_name": current_user.full_name,
-    "role": current_user.role.value,
-    "selection_id": str(current_user.selection_id) if current_user.selection_id else None
-}), 200
+        "id": str(current_user.id),
+        "email": current_user.email,
+        "full_name": current_user.full_name,
+        "role": current_user.role.value,
+        "selection_id": str(current_user.selection_id) if current_user.selection_id else None,
+        "is_active": current_user.is_active,
+        "created_at": current_user.created_at.isoformat() if current_user.created_at else None
+    }), 200
+
 
