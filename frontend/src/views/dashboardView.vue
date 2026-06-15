@@ -11,6 +11,8 @@
 
       <main class="conteudo-principal">
 
+        <DocumentsList />
+
         <protectedContent permission="view:logs">
 
           <div class="card-alerta-vazio">
@@ -110,6 +112,7 @@ import { useRouter } from 'vue-router'
 import protectedContent from '@/components/protectedContent.vue'
 import UploadDocumentModal from '@/components/documents/UploadDocumentModal.vue'
 import { usePermissions } from '@/composables/usePermissions'
+import DocumentsList from '@/components/documents/documentsList.vue'
 
 const authStore = useAuthStore()
 const router    = useRouter()
