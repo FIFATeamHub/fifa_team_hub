@@ -33,7 +33,7 @@ class User(db.Model):
         nullable=False
     )
     password_hash = db.Column(
-        generate_password_hash("senha_recebida"),
+        db.String(255), 
         nullable=False
     )
 
@@ -66,3 +66,5 @@ class User(db.Model):
     )
 
 table_registry = registry()
+def set_password(self, password):
+    self.password_hash = generate_password_hash(password)
