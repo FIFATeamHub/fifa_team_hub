@@ -1,12 +1,13 @@
-from flask import request, jsonify
+from flask import request, jsonify, Blueprint
 
 from app.routes.schema import RegisterSchema, LoginSchema
 from app.config.database import db
 from app.models.user import User
 from app.models.enums.user_role import UserRole
-from backend.app.services.auth_service import hash_senha, verificar_senha, gerar_token
 
+auth_bp = Blueprint("auth", __name__)
 
+@auth_bp.route("/register", methods=["POST"])
 def register():
     dados = request.get_json()
     
@@ -47,7 +48,7 @@ def register():
         "selection_id": str(novo_user.selection_id) if novo_user.selection_id else None
     }), 201
 
-
+@auth_bp.route("/login", methods=["POST"])
 def login():
     dados = request.get_json()
 
@@ -81,7 +82,7 @@ def login():
         print(f"Erro no login: {e}") # Isso vai pro terminal
         return jsonify({"error": "Erro interno no servidor"}), 500
 
-
+@auth_bp.route("/me", methods=["GET"])
 def me(current_user):
     # Retorna dados do usuário autenticado (injetado pelo middleware)
     return jsonify({

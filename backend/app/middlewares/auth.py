@@ -2,7 +2,7 @@ from functools import wraps
 from flask import request, jsonify
 
 from app.models.user import User
-from backend.app.services.auth_service import decodificar_token
+from app.services.auth_service import decode_token
 
 
 def token_required(f):
@@ -22,7 +22,7 @@ def token_required(f):
         token = partes[1]
 
         # Decodifica e valida o token
-        payload = decodificar_token(token)
+        payload = decode_token(token)
         if payload is None:
             return jsonify({"error": "Token inválido ou expirado"}), 401
 
