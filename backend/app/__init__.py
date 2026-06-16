@@ -1,13 +1,15 @@
 import os
 
+from app.extensions import cors #haabilitar o cors
+
 from dotenv import load_dotenv
 from flask import Flask # type: ignore[import]
 from flask_migrate import Migrate # type: ignore[import]
 
 
 from app.config.database import db # type: ignore[import]
+from app.extensions import cors
 
-from flask_jwt_extended import JWTManager
 
 load_dotenv()
 
@@ -25,18 +27,32 @@ def create_app():
 
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
-
-    jwt = JWTManager(app) #inicializar
-
-    app.register_blueprint(auth_bp, url_prefix='/auth')
+    #CORS permite que o navegador do cliente faça requisições ao backend mesmo que frontend e backend estejam em origens diferentes.
+    
+    cors.init_app(
+        app,
+        resources={
+            r"/*": {
+                "origins": [
+                    "http://localhost:5173",
+                    "http://127.0.0.1:5173",
+                    "http://localhost:5000",
+                    "http://127.0.0.1:5000",
+                ]
+            }
+        },
+    )
 
     db.init_app(app)
     migrate.init_app(app, db)
 
-    @app.get("/health")
-    def health():
-        return {"status": "ok"}, 200
+    cors.init_app(app)
+
+    # Registra os blueprints
+    from app.routes.auth import auth_bp
+    from app.routes.health import health_bp
+
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(health_bp)
 
     return app
-    

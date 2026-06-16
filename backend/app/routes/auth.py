@@ -1,57 +1,23 @@
-from flask import Blueprint, request, jsonify
-from werkzeug.security import generate_password_hash
-from app.models import User
-from app import db
-from app.routes.schema import RegisterSchema
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import Blueprint
 
-auth_bp = Blueprint('auth', __name__)
-register_schema = RegisterSchema()
+from app.controllers.auth import register, login, me
+from app.middlewares.auth import token_required
 
-@auth_bp.route('/register', methods=['POST'])
-def register():
-    errors = register_schema.validate(request.json)
-    if errors:
-        return jsonify({"error": errors}), 400
+auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
-    data = request.json
-    
-    existing_user = User.query.filter_by(email=data['email']).first()
 
-    if existing_user:
-        return jsonify({"error": "Email já cadastrado"}), 409
+@auth_bp.post("/register")
+def route_register():
+    return register()
 
-    hashed_password = generate_password_hash(data['password'])
-    
-    new_user = User(
-        email=data['email'],
-        password_hash=hashed_password,
-        role=data['role'],
-        selection_id=data.get('selection_id'),
-        full_name=data['full_name']
-    )
-    
-    db.session.add(new_user)
-    db.session.commit()
 
-    return jsonify({
-        "id": new_user.id,
-        "email": new_user.email,
-        "role": new_user.role
-    }), 201
+@auth_bp.post("/login")
+def route_login():
+    return login()
 
-@auth_bp.route('/me', methods=['GET'])
-@jwt_required()
-def me():
-    current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
 
-    if not user:
-        return jsonify({"error": "Usuário não encontrado"}), 404
-
-    return jsonify({
-        "id": user.id,
-        "email": user.email,
-        "role": user.role,
-        "selection_id": user.selection_id
-    }), 200
+@auth_bp.get("/me")
+@token_required
+def route_me(current_user):
+    # current_user injetado pelo decorator token_required
+    return me(current_user)
