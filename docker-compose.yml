@@ -28,10 +28,6 @@ services:
 
   # --- SERVIÇO DO BACKEND ---
   backend:
-    environment:
-    - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-    - JWT_ALGORITHM=${JWT_ALGORITHM}
-    - JWT_EXPIRE_MINUTES=${JWT_EXPIRE_MINUTES}
     build: ./backend 
     container_name: fifa_backend
     restart: unless-stopped
@@ -40,6 +36,9 @@ services:
     env_file:
       - .env
     environment:
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES}
       STORAGE_BACKEND: ${STORAGE_BACKEND}
       LOCAL_STORAGE_PATH: ${LOCAL_STORAGE_PATH}
       MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB}

@@ -28,7 +28,7 @@ const filteredDocuments = computed(() => {
 
         docs = docs.filter(doc =>
             doc.doc_type === 'PASSAPORTE' ||
-            doc.doc_type === 'CONVOCACAO'
+            doc.doc_type === 'CONVOCADO'
         )
 
     }
@@ -133,41 +133,43 @@ function handleView(doc: Documento) {
 
         <p v-else-if="documents.length === 0">Nenhum documento foi encontrado.</p>
 
-        <table v-else>
+        <div v-if="!loading && !error && documents.length > 0">
+
+            <div class="filtros">
+
+                <select v-model="selectedType">
+
+                    <option value="">
+                        Todos os tipos
+                    </option>
+
+                    <option value="PASSAPORTE">
+                        Passaporte
+                    </option>
+
+                    <option value="CONVOCADO">
+                        Convocação
+                    </option>
+
+                    <option value="LAUDO_MEDICO">
+                        Laudo Médico
+                    </option>
+
+                    <option value="RELATORIO_TATICO">
+                        Relatório Tático
+                    </option>
+
+                </select>
+
+                <p>Filtro selecionado: {{ selectedType }}</p>
+
+                <button @click="selectedType = ''">Limpar filtros</button>
+
+            </div>
+
+        <table>
 
             <thead>
-
-                <div class="filtros">
-    
-                    <select v-model="selectedType">
-    
-                        <option value="">
-                            Todos os tipos
-                        </option>
-    
-                        <option value="PASSAPORTE">
-                            Passaporte
-                        </option>
-    
-                        <option value="CONVOCADO">
-                            Convocação
-                        </option>
-    
-                        <option value="LAUDO_MEDICO">
-                            Laudo Médico
-                        </option>
-    
-                        <option value="RELATORIO_TATICO">
-                            Relatório Tático
-                        </option>
-    
-                    </select>
-    
-                    <p>Filtro selecionado: {{ selectedType }}</p>
-    
-                    <button @click="selectedType = ''">Limpar filtros</button>
-    
-                </div>
 
                 <tr>
                     <th>Nome</th>
@@ -275,6 +277,8 @@ function handleView(doc: Documento) {
         </button>
 
     </div>
+
+</div>
 
 </template>
 

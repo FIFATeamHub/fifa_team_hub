@@ -112,7 +112,7 @@ import { useRouter } from 'vue-router'
 import protectedContent from '@/components/protectedContent.vue'
 import UploadDocumentModal from '@/components/documents/UploadDocumentModal.vue'
 import { usePermissions } from '@/composables/usePermissions'
-import DocumentsList from '@/components/documents/documentsList.vue'
+import DocumentsList from '@/components/documents/DocumentsList.vue'
 
 const authStore = useAuthStore()
 const router    = useRouter()
