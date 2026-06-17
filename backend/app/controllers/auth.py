@@ -1,19 +1,22 @@
-from flask import request, jsonify
+from flask import request, jsonify, Blueprint
 
+from app.routes.schema import RegisterSchema, LoginSchema
 from app.config.database import db
 from app.models.user import User
 from app.models.enums.user_role import UserRole
-from app.services.auth import hash_senha, verificar_senha, gerar_token
+from backend.app.services.auth_service import hash_senha, verificar_senha, gerar_token
 
+auth_bp = Blueprint("auth", __name__)
 
+@auth_bp.route("/register", methods=["POST"])
 def register():
     dados = request.get_json()
+    
+    register_schema = RegisterSchema()
+    erros = register_schema.validate(dados)
 
-    # Valida campos obrigatórios
-    campos = ["email", "password", "full_name", "role"]
-    for campo in campos:
-        if not dados.get(campo):
-            return jsonify({"error": f"Campo '{campo}' é obrigatório"}), 400
+    if erros:
+        return jsonify({"error": erros}), 400
 
     # Valida se role é um valor válido do enum
     try:
@@ -32,7 +35,7 @@ def register():
         password_hash=hash_senha(dados["password"]),
         full_name=dados["full_name"],
         role=role,
-        selection_id=dados.get("selection_id")  # opcional
+        selection_id=dados.get("selection_id")
     )
 
     db.session.add(novo_user)
@@ -46,7 +49,7 @@ def register():
         "selection_id": str(novo_user.selection_id) if novo_user.selection_id else None
     }), 201
 
-
+@auth_bp.route("/login", methods=["POST"])
 def login():
     dados = request.get_json()
 
@@ -56,31 +59,38 @@ def login():
     if not email or not password:
         return jsonify({"error": "Email e password são obrigatórios"}), 400
 
-    # Busca user por email
-    user = User.query.filter_by(email=email).first()
+    login_schema = LoginSchema()
+    erros = login_schema.validate(dados) #Verificação automática de emails
 
-    # Credenciais inválidas — mesma mensagem para email e senha errados (segurança)
-    if not user or not verificar_senha(password, user.password_hash):
-        return jsonify({"error": "Credenciais inválidas"}), 401
-
-    token = gerar_token(user)
-
-    return jsonify({
-        "access_token": token,
-        "token_type": "bearer"
-    }), 200
+    if erros:
+        return jsonify({"error": "Formato de e-mail inválido. Verifique se digitou corretamente (ex: faltou o .com?)"}), 400
 
 
+    try:
+        # Busca user por email
+        user = User.query.filter_by(email=email.lower()).first()
+        # Credenciais inválidas
+        if not user or not verificar_senha(password, user.password_hash):
+            return jsonify({"error": "Credenciais inválidas"}), 401
+        token = gerar_token(user)
+        return jsonify({
+            "access_token": token,
+            "token_type": "bearer"
+        }), 200
+    except Exception as e:
+        # Se QUALQUER coisa der errado (banco cair, erro de digitação no código), 
+        # a gente captura aqui para não dar erro 500 seco no navegador.
+        print(f"Erro no login: {e}") # Isso vai pro terminal
+        return jsonify({"error": "Erro interno no servidor"}), 500
+
+@auth_bp.route("/me", methods=["GET"])
 def me(current_user):
     # Retorna dados do usuário autenticado (injetado pelo middleware)
     return jsonify({
-        "id": str(current_user.id),
-        "email": current_user.email,
-        "full_name": current_user.full_name,
-        "role": current_user.role.value,
-        "selection_id": str(current_user.selection_id) if current_user.selection_id else None,
-        "is_active": current_user.is_active,
-        "created_at": current_user.created_at.isoformat() if current_user.created_at else None
-    }), 200
-
+    "id": str(current_user.id),
+    "email": current_user.email,
+    "full_name": current_user.full_name,
+    "role": current_user.role.value,
+    "selection_id": str(current_user.selection_id) if current_user.selection_id else None
+}), 200
 
