@@ -4,7 +4,7 @@ from app.models.document import Document
 from app.models.audit_log import AuditLog
 from app.models.enums.user_role import TypeDocument, LogAction
 from app.services.document import validate_file, validate_upload_permission
-
+import uuid
 from uuid import UUID
 from datetime import datetime, timezone
 
@@ -102,21 +102,23 @@ def upload_document(current_user):
         nome_original = arquivo_fisico.filename
         extensao = nome_original.split('.')[-1].lower()
 
+        id_exclusivo_doc = uuid.uuid4()
+
+        # 2. Monte o nome único usando o UUID gerado
+        extensao = nome_original.rsplit('.', 1)[1].lower() if '.' in nome_original else 'pdf'
+        nome_unico_arquivo = f"{id_exclusivo_doc}.{extensao}"
+        caminho_armazenamento = f"backend/storage/uploads/{current_user.id}/{nome_unico_arquivo}"
+
         novo_documento = Document(
             selection_id=current_user.selection_id,
             uploaded_by=current_user.id,
             type=tipo_documento_enum,
-            filename="provisorio", 
-            storage_url="provisorio",
+            filename=nome_unico_arquivo, 
+            storage_url=caminho_armazenamento,
             status=status_documento,
             created_at=momento_requisicao
         )
 
-        nome_unico_arquivo = f"{novo_documento.id}.{extensao}"
-        caminho_armazenamento = f"backend/storage/uploads/{current_user.selection_id}/{nome_unico_arquivo}"
-
-        novo_documento.filename = nome_unico_arquivo
-        novo_documento.storage_url = caminho_armazenamento
 
         db.session.add(novo_documento)
         db.session.flush()
