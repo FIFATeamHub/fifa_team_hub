@@ -17,7 +17,7 @@ class Document(db.Model):
     selection_id = db.Column(
         db.UUID(as_uuid=True),
         db.ForeignKey("selection.id"),
-        nullable=False
+        nullable=True                       # COLOQUEI TRUE PARA TESTE / ALTERAR DEPOIS
     )
 
     uploaded_by = db.Column(

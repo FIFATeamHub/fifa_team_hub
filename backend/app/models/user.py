@@ -33,7 +33,7 @@ class User(db.Model):
         nullable=False
     )
     password_hash = db.Column(
-        db.generate_password_hash(),
+        db.String(255),
         nullable=False
     )
 

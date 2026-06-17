@@ -16,18 +16,19 @@ def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event,
 
     try :
 
-        log_falha = AuditLog(
-            user_id = user_id_e,
-            action=action_e,
-            resource_id = resource_id_e,
-            ip_address = request.remote_addr or "0.0.0.0",
-            status = status_e,
-            details = details_e,
-            created_at=date_event
-
-        )
-
-        db.session.add(log_falha)
+        with db.session.begin_nested():
+            log_falha = AuditLog(
+                user_id = user_id_e,
+                action = action_e,
+                resource_id = resource_id_e,
+                ip_address = request.remote_addr or "0.0.0.0",
+                status = status_e,
+                details = details_e,
+                created_at = date_event
+            )
+            db.session.add(log_falha)
+        
+        # Commita a transação global para garantir a persistência imediata
         db.session.commit()
 
     except Exception as log_err:
