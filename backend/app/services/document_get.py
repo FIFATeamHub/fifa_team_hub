@@ -20,20 +20,20 @@ class DocumentService:
 
         # 2. Aplica a árvore estrita de permissões (RBAC)
         if user_role == "ORGANIZER":
-            query = query.filter(Document.doc_type.in_(["PASSAPORTE", "CONVOCACAO"]))
+            query = query.filter(Document.type.in_(["PASSPORT", "CONVOCADO"]))
 
         elif user_role == "AUDITOR":
             query = query.filter(
                 Document.selection_id == selection_id,
-                Document.doc_type.in_(["PASSAPORTE", "LAUDO_MEDICO"])
+                Document.type.in_(["PASSPORT", "LAUDO_MEDICO"])
             )
 
         elif user_role == "TECHNICAL_STAFF":
             query = query.filter(
                 Document.selection_id == selection_id,
                 or_(
-                    Document.doc_type.in_(["CONVOCACAO", "LAUDO_MEDICO", "RELATORIO_TATICO", "ESQUEMA_JOGADAS"]),
-                    and_(Document.doc_type == "PASSAPORTE", Document.user_id == user_id)
+                    Document.type.in_(["CONVOCADO", "LAUDO_MEDICO", "RELATORIO_TATICO", "ESQUEMA_JOGADAS"]),
+                    and_(Document.type == "PASSPORT", Document.user_id == user_id)
                 )
             )
 
@@ -41,17 +41,17 @@ class DocumentService:
             query = query.filter(
                 Document.selection_id == selection_id,
                 or_(
-                    Document.doc_type == "LAUDO_MEDICO",
-                    and_(Document.doc_type == "PASSAPORTE", Document.user_id == user_id)
+                    Document.type == "LAUDO_MEDICO",
+                    and_(Document.type == "PASSPORT", Document.user_id == user_id)
                 )
             )
 
-        elif user_role == "ATHLETE":
+        elif user_role == "ATHELETE":
             query = query.filter(
                 Document.selection_id == selection_id,
                 or_(
-                    Document.doc_type.in_(["CONVOCACAO", "LAUDO_MEDICO", "RELATORIO_TATICO", "ESQUEMA_JOGADAS"]),
-                    and_(Document.doc_type == "PASSAPORTE", Document.user_id == user_id)
+                    Document.type.in_(["CONVOCADO", "LAUDO_MEDICO", "RELATORIO_TATICO", "ESQUEMA_JOGADAS"]),
+                    and_(Document.type == "PASSPORT", Document.user_id == user_id)
                 )
             )
         else:
@@ -60,7 +60,7 @@ class DocumentService:
 
         # 3. Suporte ao Filtro de URL Dinâmico (?doc_type=X)
         if doc_type_filter:
-            query = query.filter(Document.doc_type == doc_type_filter)
+            query = query.filter(Document.type == doc_type_filter)
 
         # 4. Ordenação Padrão exigida (Mais recentes primeiro)
         query = query.order_by(Document.created_at.desc())
@@ -91,9 +91,9 @@ class DocumentService:
         
         # --- Caso do ORGANIZER ---
         if user_role == "ORGANIZER":
-            if document.doc_type in ["PASSAPORTE", "CONVOCACAO"]:
+            if document.type in ["PASSPORT", "CONVOCADO"]:
                 return document, None
-            return None, f"ORGANIZER tentou acessar tipo restrito: {document.doc_type}"
+            return None, f"ORGANIZER tentou acessar tipo restrito: {document.type}"
 
         # --- Caso dos demais perfis vinculados a uma seleção ---
         else:
@@ -103,23 +103,23 @@ class DocumentService:
 
             # Trava Secundária: Validação por tipo permitido dentro da seleção
             if user_role == "AUDITOR":
-                if document.doc_type in ["PASSAPORTE", "LAUDO_MEDICO"]:
+                if document.type in ["PASSPORT", "LAUDO_MEDICO"]:
                     return document, None
                 return None, "AUDITOR tentou acessar tipo não autorizado"
 
-            elif user_role in ["TECHNICAL_STAFF", "ATHLETE"]:
+            elif user_role in ["TECHNICAL_STAFF", "ATHELETE"]:
                 # Vê os documentos táticos/gerais do time OU o seu PRÓPRIO passaporte
-                if document.doc_type in ["CONVOCACAO", "LAUDO_MEDICO", "RELATORIO_TATICO", "ESQUEMA_JOGADAS"]:
+                if document.type in ["CONVOCADO", "LAUDO_MEDICO", "RELATORIO_TATICO", "ESQUEMA_JOGADAS"]:
                     return document, None
-                elif document.doc_type == "PASSAPORTE" and document.user_id == user_id:
+                elif document.type == "PASSPORT" and document.user_id == user_id:
                     return document, None
                 return None, "TECHNICAL_STAFF/ATHLETE tentou acessar passaporte de terceiro ou tipo inválido"
 
             elif user_role == "MEDICAL_STAFF":
                 # Vê LAUDO_MEDICO do time OU o seu PRÓPRIO passaporte
-                if document.doc_type == "LAUDO_MEDICO":
+                if document.type == "LAUDO_MEDICO":
                     return document, None
-                elif document.doc_type == "PASSAPORTE" and document.user_id == user_id:
+                elif document.type == "PASSPORT" and document.user_id == user_id:
                     return document, None
                 return None, "MEDICAL_STAFF tentou acessar passaporte de terceiro ou documento tático"
 
