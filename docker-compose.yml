@@ -1,65 +1,46 @@
 services:
-  postgres:
-    image: postgres:15-alpine
-
-    container_name: fifa_team_hub_db
-
-    restart: unless-stopped
-
-    environment:
-
-      POSTGRES_DB: fifa_team_hub
-      POSTGRES_USER: fifa_user
-      POSTGRES_PASSWORD: fifa_password
-
+  fake-gcs:
+    image: fsouza/fake-gcs-server:latest
     ports:
-      - "15432:5432"
-
+      - "4443:4443"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
-
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    
-
-  # --- SERVIÇO DO BACKEND ---
-  backend:
+      - ./fake-gcs-data:/data
     environment:
-    - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-    - JWT_ALGORITHM=${JWT_ALGORITHM}
-    - JWT_EXPIRE_MINUTES=${JWT_EXPIRE_MINUTES}
-    build: ./backend 
-    container_name: fifa_backend
-    restart: unless-stopped
+      PORT: 4443
+      STORAGE_EMULATOR_HOST: http://fake-gcs:4443
+
+  backend:
+    build: ./backend
+    environment:
+      STORAGE_BACKEND: gcs
+      GCS_BUCKET_NAME: fifa-team-hub-documents
+      GCP_PROJECT_ID: test-project
+      GOOGLE_CLOUD_PROJECT: test-project
+      STORAGE_EMULATOR_HOST: http://fake-gcs:4443
+    depends_on:
+      - postgres
+      - fake-gcs
+    volumes:
+      - ./backend:/app
     ports:
       - "5000:5000"
-    env_file:
-      - .env
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: fifa_team_hub
     volumes:
-      - ./backend:/app 
-    depends_on:
-      postgres:
-        condition: service_healthy 
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
 
-
-
-  # --- SERVIÇO DO FRONTEND ---
   frontend:
-    build: ./frontend 
-    container_name: fifa_frontend
+    build: ./frontend
     ports:
       - "5173:5173"
     volumes:
       - ./frontend:/app
-      - /app/node_modules
-    env_file:
-      - .env
-
-
 
 volumes:
   postgres_data:

@@ -4,7 +4,7 @@ from app.routes.schema import RegisterSchema, LoginSchema
 from app.config.database import db
 from app.models.user import User
 from app.models.enums.user_role import UserRole
-from backend.app.services.auth_service import hash_senha, verificar_senha, gerar_token
+from app.services.auth_service import hash_password, verify_password, create_access_token
 
 auth_bp = Blueprint("auth", __name__)
 
