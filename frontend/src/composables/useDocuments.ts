@@ -4,7 +4,7 @@ import { computed, ref } from 'vue'
 export interface Documento {
   id: string
   original_name: string
-  type: string
+  doc_type: string
   file_size_kb: number
   status: string
   uploaded_by_name: string
