@@ -11,6 +11,7 @@ class TypeDocument(str,Enum):
     PASSPORT = "PASSPORT"
     CONVOCADO = "CONVOCADO"
     LAUDO_MEDICO = "LAUDO_MEDICO"
+    RELATORIO_TATICO = "RELATORIO_TATICO"
 
 class LogAction(str,Enum):
     LOGIN = "LOGIN"

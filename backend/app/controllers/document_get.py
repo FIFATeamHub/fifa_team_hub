@@ -35,7 +35,7 @@ def list_documents(current_user):  # Injetado pelo seu token_required
         data_list.append({
             "id": str(doc.id),
             "original_name": doc.original_name,
-            "type": doc.type,
+            "doc_type": doc.type,
             "file_size_kb": doc.file_size_kb,
             "status": doc.status,
             "uploaded_by_name": doc.uploader.name if hasattr(doc, "uploader") else "Desconhecido",
@@ -86,7 +86,7 @@ def get_document_by_id(current_user, document_id):
     return jsonify({
         "id": str(document.id),
         "original_name": document.original_name,
-        "type": document.type,
+        "doc_type": document.type,
         "file_size_kb": document.file_size_kb,
         "status": document.status,
         "uploaded_by_name": document.uploader.name if hasattr(document, "uploader") else "Desconhecido",
