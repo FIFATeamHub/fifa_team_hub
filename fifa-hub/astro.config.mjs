@@ -37,25 +37,36 @@ export default defineConfig({
 					label: "Visões de Produto e de Projeto",
 					items: [
 						{
-							label: "Contexto e Necessidades",
+							label: "Contexto",
 							slug: "visao/cenario",
 						},
 						{
-							label: "Solução Proposta",
+							label: "Solução",
 							slug: "visao/solucao",
 						},
-					
 						{
-							label: "Requisitos do Sistema",
-							slug: "visao/levantamento-parcial",
-						},
-						{
-							label: "Cronograma e Entregas",
-							slug: "visao/cronograma",
+							label: "Processo de Engenharia de Software",
+							slug: "visao/processo-sw",
 						},
 						{
 							label: "Comunicação e Colaboração",
 							slug: "visao/interacao",
+						},
+						{
+							label: "Cronograma",
+							slug: "visao/cronograma",
+						},
+						{
+							label: "Processo de Engenharia de Requisitos",
+							slug: "visao/engenharia-requisitos",
+						},
+						{
+							label: "Requisitos de Software",
+							slug: "visao/levantamento-parcial",
+						},
+						{
+							label: "Backlog",
+							slug: "visao/backlog",
 						},
 					],
 				},
@@ -65,16 +76,6 @@ export default defineConfig({
 						{
 							label: "Unidade 1",
 							slug: "licoes/unidade-1",
-						},
-					],
-				},
-			
-				{
-					label: "Entregas",
-					items: [
-						{
-							label: "Unidade 1",
-							slug: "entregas/unidade-1",
 						},
 					],
 				},
