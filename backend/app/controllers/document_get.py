@@ -1,5 +1,9 @@
 from flask import jsonify, request
 from app.services.document_get import DocumentService
+from app.models.enums.user_role import  LogAction
+from app.controllers.document_upload import register_audit_log
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 
 
@@ -26,6 +30,9 @@ def list_documents(current_user):  # Injetado pelo seu token_required
 
     # Se o perfil for inválido ou não autorizado, o service retorna None
     if paginated_result is None:
+        fuso_sp = ZoneInfo("America/Sao_Paulo") 
+        momento_requisicao = datetime.now(fuso_sp)
+        register_audit_log(current_user.id, LogAction.ACCESS_DENIED , "FAILURE", "00000000-0000-0000-0000-000000000000" ,momento_requisicao, "Acesso negado. Perfil inválido.")
         return jsonify({"error": "Acesso negado. Perfil inválido."}), 403
 
     # 3. FORMATAÇÃO DO JSON DE RETORNO (Higienização de dados)
@@ -60,6 +67,9 @@ def list_documents(current_user):  # Injetado pelo seu token_required
 
 
 def get_document_by_id(current_user, document_id):
+
+    fuso_sp = ZoneInfo("America/Sao_Paulo") 
+    momento_requisicao = datetime.now(fuso_sp)
     """
     Endpoint GET /documents/{document_id}
     Consome o Service para buscar e validar a segurança do arquivo solicitado.
@@ -75,7 +85,7 @@ def get_document_by_id(current_user, document_id):
     if error_reason is not None:
         # REGISTRO NO AUDIT LOG (Obrigatório pela US-012)
         # Se você tiver a função, você a executa passando o motivo real (error_reason) no campo 'details'
-        # register_audit_log(user_id=current_user.id, action="ACCESS_DENIED", details=error_reason)
+        register_audit_log(current_user.id, LogAction.ACCESS_DENIED , "FAILURE", document_id,momento_requisicao, error_reason)
         
         print(f"[AUDIT LOG - ACCESS_DENIED]: {error_reason}") # Apenas ilustrativo por enquanto
         
@@ -89,7 +99,7 @@ def get_document_by_id(current_user, document_id):
         "doc_type": document.type,
         # "file_size_kb": document.file_size_kb,
         "status": document.status,
-        "uploaded_by_name": str(document.uploaded_by) if hasattr(document, "uploader") else "Desconhecido",
+        # "uploaded_by_name": str(document.uploaded_by) if hasattr(document, "uploader") else "Desconhecido",
         "selection_code": str(document.selection_id) if document.selection_id else None,
         "created_at": document.created_at.isoformat() + "Z" if document.created_at else None
     }), 200

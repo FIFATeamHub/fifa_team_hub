@@ -8,6 +8,7 @@ from werkzeug.utils import secure_filename
 import uuid
 from uuid import UUID
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 
 UUID_ZERADO = UUID("00000000-0000-0000-0000-000000000000") # UTILIZADO QUANDO OCORRER ERRO, PARA REGISTRAR O LOG DE FALHA
@@ -42,7 +43,8 @@ def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event,
 
 def upload_document(current_user):
 
-    momento_requisicao = datetime.now(timezone.utc)
+    fuso_sp = ZoneInfo("America/Sao_Paulo") 
+    momento_requisicao = datetime.now(fuso_sp)
 
 
     if 'file' not in request.files:
@@ -117,7 +119,7 @@ def upload_document(current_user):
             selection_id=current_user.selection_id,
             uploaded_by=current_user.id,
             type=tipo_documento_enum,
-            filename=nome_unico_arquivo, 
+            # filename=nome_unico_arquivo, 
             original_name= nome_original_limpo,
             storage_url=caminho_armazenamento,
             status=status_documento,
