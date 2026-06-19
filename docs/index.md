@@ -1,0 +1,1 @@
+* [Documentação de Autenticação (Endpoints e Sessão)](api-auth.md)

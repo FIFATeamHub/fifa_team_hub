@@ -1,40 +1,47 @@
 
-<template>
-  <form @submit.prevent="handleSubmit">
-    <input type="email" v-model="email" required>
-    
-    <input type="password" v-model="password" required>
-    
-    <p>{{ errorMessage }}</p>
 
-    <button type="submit">Entrar</button>
-  </form>
+<template>
+    <div class = "page">
+
+        <LoginForm/>
+
+        <!-- <p>teste</p> -->
+
+    </div>
+
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useAuthStore } from '../stores/auth'
-import { useRouter } from 'vue-router'      
 
-const authStore = useAuthStore()
-const router = useRouter()
+import LoginForm from '@/components/loginForm.vue';
 
-const email = ref('')
-const password = ref('')
-const errorMessage = ref('')
+</script>
 
-async function handleSubmit() {
-  errorMessage.value = ''
+<style scoped>
 
-  try {
-    
-    await authStore.login({ email: email.value, password: password.value })
-    router.push('/dashboard')
+    :global(html),
+    :global(body),
+    :global(#app) {
+        margin: 0;
+        padding: 0; 
+        box-sizing: border-box;
+        
+    }
 
-  } catch (error) {
+    } catch (error) {
     if (error.status === 401) {
       errorMessage.value = 'E-mail ou senha incorretos'
+    } else {
+      errorMessage.value = 'Ocorreu um erro no servidor. Verifique os dados e tente novamente.'
     }
+    console.error(error) // Isso imprime o erro no F12 para você debugar!
   }
+
 }
 </script>
+    .page{
+        background-color: #061c42;
+    }
+
+
+</style>

@@ -2,6 +2,11 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import router from '../router/index'
 
+//importei api
+import api from '../services/api.js'
+
+
+
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
   const token = ref(localStorage.getItem('token'))
@@ -9,6 +14,9 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!token.value)
 
   const apiUrl = import.meta.env.VITE_API_URL
+
+
+
 
   async function login(credenciais) {
     const resposta = await fetch(`${apiUrl}/auth/login`, {
@@ -32,13 +40,50 @@ export const useAuthStore = defineStore('auth', () => {
     // const resposta = await api.post('/auth/login', { email, password }) # IMPLEMENTAR COM AXIOS
     // const dados = resposta.data
 
-    token.value = data.token
-    localStorage.setItem('token', data.token)
+    //sauma - alterar data.token para data.access_token
+    token.value = data.access_token
+    localStorage.setItem('token', data.access_token)
 
     await fetchMe()
 
     router.push("/dashboard")
   }
+
+
+
+  async function register(dadosCadastro){
+
+    try{
+
+        //mudei os nomes das variaves p ingles para alinhas com o backend
+        const resposta = await api.post('/auth/register', {
+            full_name: dadosCadastro.nome,
+            email: dadosCadastro.email,
+            password: dadosCadastro.password,
+            role: dadosCadastro.cargo,
+            selection_id: dadosCadastro.selection
+        })
+        
+        return resposta.data  
+    }
+    catch (erro) {
+      if (erro.response) {
+        const status = erro.response.status
+        const mensagemPadrao = erro.response.data?.message || erro.response.data?.error || 'Erro ao realizar cadastro.'
+
+        throw {
+          status,
+          message: status === 409 ? 'Este email já está cadastrado.' : mensagemPadrao,
+        }
+      }
+
+      throw erro
+    }
+
+
+  }
+
+
 
   const logout = () => {
  
@@ -48,6 +93,10 @@ export const useAuthStore = defineStore('auth', () => {
  
   localStorage.removeItem('token')
 }
+
+
+
+
 
   async function fetchMe() {
     const res = await fetch(`${apiUrl}/auth/me`, {
@@ -65,6 +114,6 @@ export const useAuthStore = defineStore('auth', () => {
     return user.value
   }
 
-  return { user, token, isAuthenticated, login, logout, fetchMe }
+  return { user, token, isAuthenticated, login, logout, fetchMe, register }
 
 })

@@ -28,6 +28,10 @@ services:
 
   # --- SERVIÇO DO BACKEND ---
   backend:
+    environment:
+    - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    - JWT_ALGORITHM=${JWT_ALGORITHM}
+    - JWT_EXPIRE_MINUTES=${JWT_EXPIRE_MINUTES}
     build: ./backend 
     container_name: fifa_backend
     restart: unless-stopped
@@ -50,7 +54,7 @@ services:
     ports:
       - "5173:5173"
     volumes:
-      - ./frontend:/src
+      - ./frontend:/app
       - /app/node_modules
     env_file:
       - .env
