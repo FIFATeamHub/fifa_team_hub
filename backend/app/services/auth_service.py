@@ -17,4 +17,4 @@ def create_access_token(data):
     return jwt.encode(to_encode, os.getenv().JWT_SECRET_KEY, algorithm="HS256") #Gera o JWT (header.payload.assinatura)
 
 def decode_token(token):
-    return jwt.decode(token, os.getenv().JWT_SECRET_KEY, algorithms=["HS256"])
+    return jwt.decode(token, os.getenv("JWT_SECRET_KEY"), algorithms=["HS256"])

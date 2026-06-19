@@ -34,12 +34,12 @@ def list_documents(current_user):  # Injetado pelo seu token_required
     for doc in paginated_result.items:
         data_list.append({
             "id": str(doc.id),
-            "original_name": doc.original_name,
-            "doc_type": doc.type,
-            "file_size_kb": doc.file_size_kb,
+            "original_name": doc.original_name,   #Mudado de doc.original_name para doc.filename
+            "doc_type": doc.type.value if hasattr(doc.type, "value") else str(doc.type), # Trata o Enum de forma segura
+            "storage_url": doc.storage_url, # Adicionado conforme o Model
             "status": doc.status,
-            "uploaded_by_name": doc.uploader.name if hasattr(doc, "uploader") else "Desconhecido",
-            "selection_code": doc.selection.code if hasattr(doc, "selection") else None,
+            "uploaded_by_id": str(doc.uploaded_by), # Mapeado diretamente do relacionamento/FK do Model
+            "selection_id": str(doc.selection_id) if doc.selection_id else None,
             "created_at": doc.created_at.isoformat() + "Z" if doc.created_at else None
         })
 
@@ -87,9 +87,9 @@ def get_document_by_id(current_user, document_id):
         "id": str(document.id),
         "original_name": document.original_name,
         "doc_type": document.type,
-        "file_size_kb": document.file_size_kb,
+        # "file_size_kb": document.file_size_kb,
         "status": document.status,
-        "uploaded_by_name": document.uploader.name if hasattr(document, "uploader") else "Desconhecido",
-        "selection_code": document.selection.code if hasattr(document, "selection") else None,
+        "uploaded_by_name": str(document.uploaded_by) if hasattr(document, "uploader") else "Desconhecido",
+        "selection_code": str(document.selection_id) if document.selection_id else None,
         "created_at": document.created_at.isoformat() + "Z" if document.created_at else None
     }), 200

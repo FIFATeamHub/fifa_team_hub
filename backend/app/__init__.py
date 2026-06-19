@@ -20,6 +20,7 @@ def create_app():
 
     app = Flask(__name__)
 
+
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -51,9 +52,8 @@ def create_app():
     from app.routes.documents import document_bp
     from app.routes.health import health_bp
 
-    app.register_blueprint(auth_bp)
     app.register_blueprint(document_bp)
     app.register_blueprint(health_bp)
-    app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(auth_bp)
     
     return app

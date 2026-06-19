@@ -31,9 +31,14 @@ class Document(db.Model):
         nullable=False
     )
 
-    filename = db.Column(
+    filename = db.Column(     # NOME COM O ID -> ENCRIPITADO
         db.String(255),
         nullable=False
+    )
+
+    original_name = db.Column(    # NOME NORMAL -> ENVIADO PELO USUÁRIO
+        db.String(255), 
+        nullable=True
     )
 
     storage_url = db.Column(

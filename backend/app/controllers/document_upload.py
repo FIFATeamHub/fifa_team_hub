@@ -4,6 +4,7 @@ from app.models.document import Document
 from app.models.audit_log import AuditLog
 from app.models.enums.user_role import TypeDocument, LogAction
 from app.services.document import validate_file, validate_upload_permission
+from werkzeug.utils import secure_filename
 import uuid
 from uuid import UUID
 from datetime import datetime, timezone
@@ -100,6 +101,9 @@ def upload_document(current_user):
     try:
 
         nome_original = arquivo_fisico.filename
+
+        nome_original_limpo = secure_filename(nome_original)
+
         extensao = nome_original.split('.')[-1].lower()
 
         id_exclusivo_doc = uuid.uuid4()
@@ -114,6 +118,7 @@ def upload_document(current_user):
             uploaded_by=current_user.id,
             type=tipo_documento_enum,
             filename=nome_unico_arquivo, 
+            original_name= nome_original_limpo,
             storage_url=caminho_armazenamento,
             status=status_documento,
             created_at=momento_requisicao
@@ -141,7 +146,7 @@ def upload_document(current_user):
 
         return jsonify({
             "id": str(novo_documento.id),
-            "original_name": nome_original,
+            "original_name": nome_original_limpo,
             "doc_type": novo_documento.type.value,
             "file_size_kb": tamanho_kb,
             "status": "PENDING",
