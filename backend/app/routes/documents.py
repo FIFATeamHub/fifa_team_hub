@@ -1,5 +1,6 @@
 from flask import Blueprint
 from app.controllers.document_get import list_documents, get_document_by_id
+from app.controllers.document_upload import upload_document
 from app.middlewares.auth import token_required
 
 
@@ -18,3 +19,10 @@ def route_list_documents(current_user):
 @token_required
 def route_get_document_by_id(current_user, document_id):
     return get_document_by_id(current_user, document_id)
+
+
+
+@document_bp.post("/upload")
+@token_required
+def upload_documento(current_user):
+    return upload_document(current_user)

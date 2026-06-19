@@ -5,6 +5,7 @@ from app.extensions import cors #haabilitar o cors
 from dotenv import load_dotenv
 from flask import Flask # type: ignore[import]
 from flask_migrate import Migrate # type: ignore[import]
+from app.controllers.auth import auth_bp
 
 from app.config.database import db # type: ignore[import]
 from app.extensions import cors
@@ -21,6 +22,8 @@ def create_app():
 
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    
     
     #CORS permite que o navegador do cliente faça requisições ao backend mesmo que frontend e backend estejam em origens diferentes.
     
@@ -51,5 +54,6 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(document_bp)
     app.register_blueprint(health_bp)
-
+    app.register_blueprint(auth_bp, url_prefix="/auth")
+    
     return app

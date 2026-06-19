@@ -20,3 +20,10 @@ class LogAction(str,Enum):
     UPLOAD = "UPLOAD"
     DOWNLOAD = "DOWNLOAD"
     ACCESS_DENIED = "ACCESS_DENIED"
+
+
+class DocStatus(str,Enum):
+
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
