@@ -17,7 +17,7 @@ class Document(db.Model):
     selection_id = db.Column(
         db.UUID(as_uuid=True),
         db.ForeignKey("selection.id"),
-        nullable=False
+        nullable=True                       # COLOQUEI TRUE PARA TESTE / ALTERAR DEPOIS
     )
 
     uploaded_by = db.Column(
@@ -39,6 +39,12 @@ class Document(db.Model):
     storage_url = db.Column(
         db.String(255),
         nullable=False
+    )
+
+    status = db.Column(  # ADICIONEI O CAMPO DE STATUS DO DOCUMENTO
+        db.String(50),
+        nullable=False,
+        default="PENDING"
     )
 
     created_at = db.Column(

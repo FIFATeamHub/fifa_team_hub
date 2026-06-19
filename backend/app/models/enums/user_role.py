@@ -11,6 +11,7 @@ class TypeDocument(str,Enum):
     PASSPORT = "PASSPORT"
     CONVOCADO = "CONVOCADO"
     LAUDO_MEDICO = "LAUDO_MEDICO"
+    RELATORIO_TATICO = "RELATORIO_TATICO"
 
 class LogAction(str,Enum):
     LOGIN = "LOGIN"
@@ -19,3 +20,10 @@ class LogAction(str,Enum):
     UPLOAD = "UPLOAD"
     DOWNLOAD = "DOWNLOAD"
     ACCESS_DENIED = "ACCESS_DENIED"
+
+
+class DocStatus(str,Enum):
+
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
