@@ -100,6 +100,6 @@ def get_document_by_id(current_user, document_id):
         # "file_size_kb": document.file_size_kb,
         "status": document.status,
         # "uploaded_by_name": str(document.uploaded_by) if hasattr(document, "uploader") else "Desconhecido",
-        "selection_code": str(document.selection_id) if document.selection_id else None,
+        "selection_id": str(document.selection_id) if document.selection_id else None,
         "created_at": document.created_at.isoformat() + "Z" if document.created_at else None
     }), 200
