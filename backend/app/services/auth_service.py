@@ -12,7 +12,7 @@ def verify_password(plain_pass, hashed_pass):
 
 def create_access_token(data):
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=os.getenv("JWT_EXPIRE_MINUTES")) #Define quando expira o token
+    expire = datetime.now(timezone.utc) + timedelta(minutes=int(os.getenv("JWT_EXPIRE_MINUTES"))) #Define quando expira o token
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, os.getenv("JWT_SECRET_KEY"), algorithm="HS256") #Gera o JWT (header.payload.assinatura)
 
