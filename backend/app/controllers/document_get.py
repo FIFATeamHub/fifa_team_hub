@@ -2,6 +2,8 @@ from flask import jsonify, request
 from app.services.document_get import DocumentService
 from app.models.enums.user_role import  LogAction
 from app.controllers.document_upload import register_audit_log
+from app.services.storage_service import LocalStorageService
+from app.services.storage_factory import get_storage_service
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
@@ -70,29 +72,31 @@ def get_document_by_id(current_user, document_id):
 
     fuso_sp = ZoneInfo("America/Sao_Paulo") 
     momento_requisicao = datetime.now(fuso_sp)
-    """
-    Endpoint GET /documents/{document_id}
-    Consome o Service para buscar e validar a segurança do arquivo solicitado.
-    """
+
+    #Endpoint GET /document/{document_id}
+
     # 1. Delega a busca e a validação de segurança para o Service
     document, error_reason = DocumentService.get_accessible_document(current_user, document_id)
 
-    # 2. Tratamento de Erro - Documento não encontrado no Banco (404)
+
     if error_reason == "NOT_FOUND":
         return jsonify({"error": "Documento não encontrado."}), 404
 
-    # 3. Tratamento de Erro - Bloqueio de Segurança / Invasão (403)
+
     if error_reason is not None:
-        # REGISTRO NO AUDIT LOG (Obrigatório pela US-012)
-        # Se você tiver a função, você a executa passando o motivo real (error_reason) no campo 'details'
+ 
         register_audit_log(current_user.id, LogAction.ACCESS_DENIED , "FAILURE", document_id,momento_requisicao, error_reason)
         
         print(f"[AUDIT LOG - ACCESS_DENIED]: {error_reason}") # Apenas ilustrativo por enquanto
         
-        # Para o usuário externo, retornamos uma mensagem padrão discreta por segurança
-        return jsonify({"error": "Acesso negado."}), 403
 
-    # 4. Sucesso: Higienização e Entrega dos Metadados (Sem vazar o storage_path)
+        return jsonify({"error": "Acesso negado."}), 403
+    
+
+    storage = get_storage_service()
+    url_visualizacao = storage.get_signed_url(document.storage_url, expiration_minutes=15)
+
+
     return jsonify({
         "id": str(document.id),
         "original_name": document.original_name,
@@ -101,5 +105,6 @@ def get_document_by_id(current_user, document_id):
         "status": document.status,
         # "uploaded_by_name": str(document.uploaded_by) if hasattr(document, "uploader") else "Desconhecido",
         "selection_id": str(document.selection_id) if document.selection_id else None,
-        "created_at": document.created_at.isoformat() + "Z" if document.created_at else None
+        "created_at": document.created_at.isoformat() + "Z" if document.created_at else None,
+        "download_url": url_visualizacao
     }), 200
