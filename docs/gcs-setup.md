@@ -52,7 +52,102 @@ O arquivo JSON baixado contém credenciais críticas e **nunca** deve ser enviad
 
 1. Renomeie o arquivo baixado para `fifa-team-hub-key.json`.
 2. Mova o arquivo para a pasta `config/` na raiz do projeto:
-   ```text
-   fifa-team-hub/
-   ├── config/
-   │   └── fifa-team-hub-key.json
+
+```text
+fifa-team-hub/
+├── config/
+│   └── fifa-team-hub-key.json
+```
+
+3. Adicionamos imediatamente a regra de bloqueio no arquivo `.gitignore`:
+
+```
+config/fifa-team-hub-key.json
+```
+
+## 5. Configuração do Ambiente de Desenvolvimento (Docker)
+
+Para que a aplicação local consiga comunicar com a nuvem, o arquivo `.env` deve ser configurado com as variáveis mapeadas para o ambiente que o João irá integrar no Docker:
+
+```bash
+STORAGE_BACKEND=gcs
+GCS_BUCKET_NAME=fifa-team-hub-documents
+GCP_PROJECT_ID=fifa-team-hub
+GOOGLE_APPLICATION_CREDENTIALS=/app/config/fifa-team-hub-key.json
+```
+
+No `docker-compose.yml`, o container do backend receberá estas variáveis e montará o volume de forma isolada e segura em modo "Apenas Leitura" (`:ro`):
+
+```yaml
+services:
+  backend:
+    build: ./backend
+    environment:
+      STORAGE_BACKEND: gcs
+      GCS_BUCKET_NAME: fifa-team-hub-documents
+      GCP_PROJECT_ID: fifa-team-hub
+      GOOGLE_APPLICATION_CREDENTIALS: /app/config/fifa-team-hub-key.json
+    volumes:
+      - ./config/fifa-team-hub-key.json:/app/config/fifa-team-hub-key.json:ro
+```
+
+**Nota para o futuro (Produção):** Quando fizermos o deploy no Cloud Run, este arquivo JSON deixará de ser necessário devido ao Workload Identity, onde o próprio ecossistema do Google injeta as permissões nativamente no container de produção.
+
+## 6. Script e Teste de Conectividade Real
+
+Para validar se as permissões de IAM concedidas à Service Account estavam corretas, desenvolvemos um script de teste end-to-end (`config/test_gcs.py`).
+
+Este script limpa variáveis residuais do sistema, inicializa o cliente oficial da Google apontando para a pasta local `config/` e executa um fluxo completo de gravação e leitura direta de objetos (ignorando restrições de leitura de metadados gerais de infraestrutura).
+
+```python
+import os
+from google.cloud import storage
+
+# Limpa resíduos de ambiente local
+if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
+    del os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
+
+print("--- TESTE DE INTEGRAÇÃO REAL (UPLOAD) ---")
+
+try:
+    # Inicializa o cliente apontando explicitamente para a nossa chave e projeto
+    client = storage.Client.from_service_account_json(
+        "config/fifa-team-hub-key.json",
+        project="fifa-team-hub"
+    )
+    
+    bucket = client.bucket("fifa-team-hub-documents")
+    
+    # Cria a referência de um arquivo temporário dentro do bucket
+    blob = bucket.blob("testes_desenvolvimento/conexao.txt")
+    
+    print("Tentando fazer upload de um arquivo de teste...")
+    blob.upload_from_string("Conexão do FIFA Team Hub realizada com sucesso!")
+    print("✓ UPLOAD CONCLUÍDO!")
+    
+    print("Tentando ler o arquivo do bucket...")
+    conteudo = blob.download_as_string()
+    print(f"✓ DOWNLOAD CONCLUÍDO! Conteúdo: {conteudo.decode('utf-8')}")
+    
+    # Limpeza do bucket para não acumular lixo
+    blob.delete()
+    print("✓ Arquivo de teste removido do bucket.")
+
+except FileNotFoundError:
+    print("❌ ERRO: O arquivo não foi encontrado em 'config/fifa-team-hub-key.json'!")
+except Exception as e:
+    print(f"❌ Falha no teste: {e}")
+```
+
+**Resultado da Execução no Terminal:**
+
+```
+--- TESTE DE INTEGRAÇÃO REAL (UPLOAD) ---
+Tentando fazer upload de um arquivo de teste...
+✓ UPLOAD CONCLUÍDO!
+Tentando ler o arquivo do bucket...
+✓ DOWNLOAD CONCLUÍDO! Conteúdo: Conexão do FIFA Team Hub realizada com sucesso!
+✓ Arquivo de teste removido do bucket.
+```
+
+Conclusão do Teste: O fluxo foi executado com sucesso absoluto. As permissões de escrita, leitura e eliminação de arquivos na nuvem estão totalmente operacionais, validando os critérios de aceitação da issue.
