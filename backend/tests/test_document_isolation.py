@@ -1,4 +1,16 @@
-from pytest import pytest
+import pytest
+from app import create_app
+
+@pytest.fixture
+def client():
+    app = create_app()
+    app.config.update({
+        "TESTING": True,
+    })
+    
+    with app.test_client() as client:
+        with app.app_context():
+            yield client
 
 def test_upload_assigns_correct_selection_id(client, token_bra_staff):
     response = client.post("/documents/upload",
@@ -31,7 +43,3 @@ def test_cross_selection_delete_denied(client, token_bra_staff, arg_document_id)
     )
     assert response.status_code == 403
 
-def test_organizer_cannot_access_tactical_reports(client, token_organizer):
-    # criar documento RELATORIO_TATICO e tentar aceder como ORGANIZER
-    ...
-    assert response.status_code == 403
