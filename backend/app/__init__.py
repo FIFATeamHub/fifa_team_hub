@@ -5,6 +5,7 @@ from app.extensions import cors #haabilitar o cors
 from dotenv import load_dotenv
 from flask import Flask # type: ignore[import]
 from flask_migrate import Migrate # type: ignore[import]
+from app.controllers.auth import auth_bp
 
 
 from app.config.database import db # type: ignore[import]
@@ -52,7 +53,7 @@ def create_app():
     from app.routes.auth import auth_bp
     from app.routes.health import health_bp
 
-    app.register_blueprint(auth_bp)
     app.register_blueprint(health_bp)
-
+    app.register_blueprint(auth_bp, url_prefix="/auth")
+    
     return app
