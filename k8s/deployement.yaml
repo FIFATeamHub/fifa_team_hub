@@ -16,7 +16,7 @@ spec:
       serviceAccountName: fifa-team-hub-ksa
       containers:
       - name: backend
-        image: gcr.io/seu-projeto-gcp/fifa-team-hub:latest
+        image: gcr.io/projeto-fifa/fifa-team-hub:latest
         ports:
         - containerPort: 8080
         env:
@@ -25,7 +25,7 @@ spec:
         - name: GCS_BUCKET_NAME
           value: fifa-team-hub-documents
         - name: GCP_PROJECT_ID
-          value: seu-projeto-gcp
+          value: fifa_team_hub
         resources:
           requests:
             memory: "256Mi"
