@@ -28,6 +28,12 @@ services:
 
   # --- SERVIÇO DO BACKEND ---
   backend:
+    environment:
+    - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    - JWT_ALGORITHM=${JWT_ALGORITHM}
+    - JWT_EXPIRE_MINUTES=${JWT_EXPIRE_MINUTES}
+    # Dentro do Docker, o banco é acessado pelo nome do serviço, não localhost
+    - DATABASE_URL=postgresql://fifa_user:fifa_password@postgres:5432/fifa_team_hub
     build: ./backend 
     container_name: fifa_backend
     restart: unless-stopped
@@ -40,6 +46,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy 
+
 
 
 

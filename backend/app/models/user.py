@@ -37,6 +37,7 @@ class User(db.Model):
         nullable=False
     )
 
+
     role = db.Column(
         Enum(UserRole),
         nullable=False
