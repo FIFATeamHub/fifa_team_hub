@@ -7,8 +7,10 @@ from flask import Flask # type: ignore[import]
 from flask_migrate import Migrate # type: ignore[import]
 from app.controllers.auth import auth_bp
 
+
 from app.config.database import db # type: ignore[import]
 from app.extensions import cors
+
 
 load_dotenv()
 
@@ -17,6 +19,8 @@ from app.models import *
 migrate = Migrate()
 
 def create_app():
+    
+    from app.routes.auth import auth_bp
 
     app = Flask(__name__)
 
