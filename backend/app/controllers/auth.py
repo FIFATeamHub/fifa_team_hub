@@ -1,4 +1,4 @@
-from flask import request, jsonify, Blueprint
+from flask import request, jsonify, Blueprint, g
 
 from app.config.database import db
 from app.models.user import User
@@ -81,14 +81,19 @@ def login():
         print(f"Erro no login: {e}") # Isso vai pro terminal
         return jsonify({"error": "Erro interno no servidor"}), 500
 
-@auth_bp.route("/me", methods=["GET"])
-def me(current_user):
-    # Retorna dados do usuário autenticado (injetado pelo middleware)
-    return jsonify({
-    "id": str(current_user.id),
-    "email": current_user.email,
-    "full_name": current_user.full_name,
-    "role": current_user.role.value,
-    "selection_id": str(current_user.selection_id) if current_user.selection_id else None
-}), 200
 
+def me():
+    # busca o usuario no banco usando o ID guardado pelo require_auth no flask.g
+    user = User.query.get(g.current_user_id)
+    if user is None:
+        return jsonify({"error": "Usuário não encontrado"}), 404
+    
+    return jsonify({
+        "id": str(user.id),
+        "email": user.email,
+        "full_name": user.full_name,
+        "role": user.role.value,
+        "selection_id": str(user.selection_id) if user.selection_id else None,
+        "is_active": user.is_active,
+        "created_at": user.created_at.isoformat() if user.created_at else None
+    }), 200

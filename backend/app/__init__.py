@@ -1,26 +1,27 @@
 import os
 
-from app.extensions import cors #haabilitar o cors
-
 from dotenv import load_dotenv
-from flask import Flask # type: ignore[import]
-from flask_migrate import Migrate # type: ignore[import]
-from app.controllers.auth import auth_bp
+from pathlib import Path
+from flask import Flask  # type: ignore[import]
+from flask_migrate import Migrate  # type: ignore[import]
 
 
 from app.config.database import db # type: ignore[import]
 from app.extensions import cors
+from app.config.database import db  # type: ignore[import]
+from app.extensions import db
 
-
-load_dotenv()
+# O .env está na raiz do projeto, um nível acima de /backend
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 from app.models import *
 
 migrate = Migrate()
 
-def create_app():
+def create_app(test_config=None):
     
     from app.routes.auth import auth_bp
+
 
     app = Flask(__name__)
 
@@ -43,6 +44,9 @@ def create_app():
             }
         },
     )
+
+    if test_config:
+        app.config.update(test_config)
 
     db.init_app(app)
     migrate.init_app(app, db)
