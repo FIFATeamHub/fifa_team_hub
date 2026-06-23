@@ -21,7 +21,7 @@ def require_auth(f):
         try:
             payload = decodificar_token(token)
             g.current_user_id = payload["sub"]
-            g.current_role = payload["role"]
+            g.current_user_role = payload["role"]
             g.current_selection_id = payload["selection_id"]
         
         except ExpiredSignatureError:
@@ -41,7 +41,7 @@ def require_role(*roles):
         @wraps(f)
         def decorated(*args, **kwargs):
             #lê a role do g (preenchido pelo require_auth)
-            if g.current_role not in roles:
+            if g.current_user_role not in roles:
                 return jsonify({"error" : "Acesso negado: permissão insuficiente"}), 403
             return f(*args, **kwargs)
         return decorated
