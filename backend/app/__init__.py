@@ -8,7 +8,6 @@ from flask_migrate import Migrate # type: ignore[import]
 from app.controllers.auth import auth_bp
 
 from app.config.database import db # type: ignore[import]
-from app.extensions import cors
 
 load_dotenv()
 
