@@ -1,10 +1,10 @@
 from flask import request, jsonify, Blueprint, g
 
-from app.routes.schema import RegisterSchema, LoginSchema
 from app.config.database import db
 from app.models.user import User
 from app.models.enums.user_role import UserRole
 from app.services.auth import hash_senha, verificar_senha, gerar_token
+from app.routes.schema import RegisterSchema, LoginSchema
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -53,18 +53,16 @@ def register():
 def login():
     dados = request.get_json()
 
+    schema = LoginSchema()
+    erros = schema.validate(dados)
+    if erros:
+        return jsonify({"error": erros}), 400
+
     email = dados.get("email")
     password = dados.get("password")
 
     if not email or not password:
         return jsonify({"error": "Email e password são obrigatórios"}), 400
-
-    login_schema = LoginSchema()
-    erros = login_schema.validate(dados) #Verificação automática de emails
-
-    if erros:
-        return jsonify({"error": "Formato de e-mail inválido. Verifique se digitou corretamente (ex: faltou o .com?)"}), 400
-
 
     try:
         # Busca user por email
