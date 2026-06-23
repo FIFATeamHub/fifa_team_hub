@@ -16,7 +16,7 @@ class StorageService(ABC):
         pass
        
     @abstractmethod
-    def get_signed_url(self, storage_path: str, expiration_minutes: int = 15) -> str:
+    def get_signed_url(self, storage_path: str, document_id: str = None,expiration_minutes: int = 15) -> str:
         #Gera URL temporária assinada (apenas GCS)
         pass
 
@@ -65,19 +65,11 @@ class LocalStorageService(StorageService):
 
 
 
-    def get_signed_url(self, storage_path: str, expiration_minutes: int = 15) -> str:
-        """
-        Para o ambiente local, não há URL assinada criptograficamente.
-        Retornamos o caminho relativo simulado para o Frontend acessar via rota estática.
-        """
+    def get_signed_url(self, storage_path: str, document_id: str = None, expiration_minutes: int = 15) -> str:
         
-        partes = storage_path.replace("\\", "/").split("/")
-        if len(partes) >= 2:
-            selection_id = partes[-2]
-            filename = partes[-1]
-            return f"/static/uploads/{selection_id}/{filename}"
-        
-        return f"/static/uploads/{os.path.basename(storage_path)}"
+        if document_id:
+            return f"/document/{document_id}/stream"
+        return "/document/unknown/stream"
     
 
 
@@ -123,7 +115,7 @@ class GCSStorageService(StorageService):
 
 
 
-    def get_signed_url(self, storage_path: str, expiration_minutes: int = 15) -> str:
+    def get_signed_url(self, storage_path: str, document_id: str = None,expiration_minutes: int = 15) -> str:
         
         prefixo = f"gs://{self.bucket_name}/"
         if storage_path.startswith(prefixo):
