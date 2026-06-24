@@ -1,4 +1,4 @@
-from pytest import pytest
+import pytest
 
 def test_upload_assigns_correct_selection_id(client, token_bra_staff):
     response = client.post("/documents/upload",

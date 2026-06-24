@@ -75,9 +75,8 @@ async function handleDownload(docId: string, filename: string) {
 
   try {
     await downloadDocument(docId, filename)
-  } catch (error: any) {
-    // Exibe a mensagem de erro na tela se o download falhar
-    downloadError.value = error.message ?? 'Falha no download. Tente novamente .'
+  } catch (error) {
+    downloadError.value = error instanceof Error ? error.message : 'Falha no download. Tente novamente.'
   } finally {
     // Sempre limpa o estado de loading, mesmo se der erro
     loadingDownload.value = null
