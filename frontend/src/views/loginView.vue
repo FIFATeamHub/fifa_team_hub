@@ -15,9 +15,10 @@ import LoginForm from '@/components/loginForm.vue';
         margin: 0;
         padding: 0;
         box-sizing: border-box;
+        
     }
 
-    .page {
+    .page{
         background-color: #061c42;
     }
 </style>
