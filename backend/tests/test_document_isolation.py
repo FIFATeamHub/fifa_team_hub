@@ -43,3 +43,18 @@ def test_cross_selection_delete_denied(client, token_bra_staff, arg_document_id)
     )
     assert response.status_code == 403
 
+def test_organizer_cannot_access_tactical_reports(client, token_organizer):
+    dados_documento = {
+        "tipo": "RELATORIO_TATICO",
+        "titulo": "Análise de Risco",
+        "conteudo": "Estratégia"
+    }
+    resposta_criacao = client.post("/api/documentos", json=dados_documento)
+    id_documento = resposta_criacao.json().get("id")
+    
+    cabecalhos = {
+        "Authorization": f"Bearer {token_organizer}"
+    }
+    response = client.get(f"/api/documentos/{id_documento}", headers=cabecalhos)
+
+    assert response.status_code == 403
