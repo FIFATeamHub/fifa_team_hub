@@ -11,12 +11,14 @@
             </span>
           </td>
           <td>
-            <!-- Botão Download -->
             <button 
               @click="handleDownload(doc.id, doc.original_name)"
               :disabled="loadingDownload === doc.id"
             >
               {{ loadingDownload === doc.id ? 'Baixando...' : 'Baixar' }}
+            </button>
+            <button @click="previewDocument(doc.id)">
+              Visualizar
             </button>
           </td>
         </tr>
@@ -40,4 +42,14 @@ const handleDownload = async (docId: string, filename: string) => {
     loadingDownload.value = null
   }
 }
+
+const previewDocument = async (docId: string) => {
+  try {
+    const url = await getDownloadUrl(docId)
+    window.open(url, '_blank')
+  } catch (error) {
+    console.error('Erro ao abrir visualização:', error)
+  }
+}
+
 </script>
