@@ -1,29 +1,19 @@
-
-
 <template>
-    <div class = "page">
-
+    <div class="page">
         <LoginForm/>
-
-        <!-- <p>teste</p> -->
-
     </div>
-
 </template>
 
-<script setup>
-
+<script setup lang="ts">
 import LoginForm from '@/components/loginForm.vue';
-
 </script>
 
 <style scoped>
-
     :global(html),
     :global(body),
     :global(#app) {
         margin: 0;
-        padding: 0; 
+        padding: 0;
         box-sizing: border-box;
         
     }
@@ -31,6 +21,4 @@ import LoginForm from '@/components/loginForm.vue';
     .page{
         background-color: #061c42
     }
-
-
 </style>
