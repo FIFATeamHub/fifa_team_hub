@@ -32,9 +32,8 @@ class User(db.Model):
         unique=True,
         nullable=False
     )
-
     password_hash = db.Column(
-        db.String(255),
+        db.String(255), 
         nullable=False
     )
 
@@ -67,7 +66,6 @@ class User(db.Model):
         onupdate=db.func.now()
     )
 
-def senha_para_hash(value):
-    return generate_password_hash(value)
-
 table_registry = registry()
+def set_password(self, password):
+    self.password_hash = generate_password_hash(password)

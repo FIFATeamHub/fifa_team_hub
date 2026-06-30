@@ -1,5 +1,6 @@
 from flask import request, jsonify, Blueprint, g
 
+import re
 from app.routes.schema import RegisterSchema, LoginSchema
 from app.config.database import db
 from app.models.user import User
@@ -15,8 +16,16 @@ def register():
     register_schema = RegisterSchema()
     erros = register_schema.validate(dados)
 
-    if erros:
-        return jsonify({"error": erros}), 400
+    # Valida campos obrigatórios
+    campos = ["email", "password", "full_name", "role"]
+    for campo in campos:
+        if not dados.get(campo):
+            return jsonify({"error": f"Campo '{campo}' é obrigatório"}), 400
+        
+    # Cole isto no seu register() logo após validar os campos obrigatórios:
+    email = dados.get("email")
+    if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
+        return jsonify({"error": "Formato de e-mail inválido. Verifique se digitou o '.com'."}), 400
 
     # Valida se role é um valor válido do enum
     try:
@@ -53,18 +62,16 @@ def register():
 def login():
     dados = request.get_json()
 
+    schema = LoginSchema()
+    erros = schema.validate(dados)
+    if erros:
+        return jsonify({"error": erros}), 400
+
     email = dados.get("email")
     password = dados.get("password")
 
     if not email or not password:
         return jsonify({"error": "Email e password são obrigatórios"}), 400
-
-    login_schema = LoginSchema()
-    erros = login_schema.validate(dados) #Verificação automática de emails
-
-    if erros:
-        return jsonify({"error": "Formato de e-mail inválido. Verifique se digitou corretamente (ex: faltou o .com?)"}), 400
-
 
     try:
         # Busca user por email
