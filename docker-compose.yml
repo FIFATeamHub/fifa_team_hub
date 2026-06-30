@@ -32,6 +32,13 @@ services:
     - JWT_SECRET_KEY=${JWT_SECRET_KEY}
     - JWT_ALGORITHM=${JWT_ALGORITHM}
     - JWT_EXPIRE_MINUTES=${JWT_EXPIRE_MINUTES}
+    - STORAGE_BACKEND=${STORAGE_BACKEND}
+    - GCS_BUCKET_NAME=${GCS_BUCKET_NAME}
+    - GCP_PROJECT_ID=${GCP_PROJECT_ID}
+    - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
+
+    # Dentro do Docker, o banco é acessado pelo nome do serviço, não localhost
+    - DATABASE_URL=postgresql://fifa_user:fifa_password@postgres:5432/fifa_team_hub
     build: ./backend 
     container_name: fifa_backend
     restart: unless-stopped
@@ -41,9 +48,11 @@ services:
       - .env
     volumes:
       - ./backend:/app 
+      - ./config/fifa-team-hub-key.json:/app/config/fifa-team-hub-key.json:ro
     depends_on:
       postgres:
         condition: service_healthy 
+
 
 
 

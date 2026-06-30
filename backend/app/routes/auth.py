@@ -1,7 +1,7 @@
 from flask import Blueprint
 
 from app.controllers.auth import register, login, me
-from app.middlewares.auth import token_required
+from app.middlewares.auth_middleware import require_auth
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
