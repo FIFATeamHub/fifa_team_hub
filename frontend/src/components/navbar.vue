@@ -21,12 +21,8 @@
 
 </template>
 
-<script>
-
-export default{
-    name : "navbar"
-}
-
+<script setup lang="ts">
+defineOptions({ name: 'AppNavbar' })
 </script>
 
 <style scoped>

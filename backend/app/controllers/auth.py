@@ -1,10 +1,11 @@
 from flask import request, jsonify, Blueprint, g
 
+import re
+from app.routes.schema import RegisterSchema, LoginSchema
 from app.config.database import db
 from app.models.user import User
 from app.models.enums.user_role import UserRole
 from app.services.auth import hash_senha, verificar_senha, gerar_token
-from app.routes.schema import RegisterSchema, LoginSchema
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -15,8 +16,16 @@ def register():
     register_schema = RegisterSchema()
     erros = register_schema.validate(dados)
 
-    if erros:
-        return jsonify({"error": erros}), 400
+    # Valida campos obrigatórios
+    campos = ["email", "password", "full_name", "role"]
+    for campo in campos:
+        if not dados.get(campo):
+            return jsonify({"error": f"Campo '{campo}' é obrigatório"}), 400
+        
+    # Cole isto no seu register() logo após validar os campos obrigatórios:
+    email = dados.get("email")
+    if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
+        return jsonify({"error": "Formato de e-mail inválido. Verifique se digitou o '.com'."}), 400
 
     # Valida se role é um valor válido do enum
     try:

@@ -11,12 +11,12 @@
 
 </template>
 
-<script>
+<script setup lang="ts">
 
 import baseCard from './baseCard.vue';
-import { useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 
-const router = useRoute()
+const router = useRouter()
 
 function goHome() {
     router.push('/')
