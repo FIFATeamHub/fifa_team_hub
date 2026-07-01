@@ -50,9 +50,11 @@ def create_app(test_config=None):
     from app.routes.auth import auth_bp
     from app.routes.documents import document_bp
     from app.routes.health import health_bp
+    from app.routes.selection import selection_bp
 
     app.register_blueprint(document_bp)
     app.register_blueprint(health_bp)
     app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(selection_bp)
     
     return app
