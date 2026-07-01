@@ -66,7 +66,7 @@ def selection_bra(app):
         db.session.add(selection)
         db.session.commit()
 
-        return selection
+        return selection.id
 
 
 @pytest.fixture
@@ -82,7 +82,7 @@ def selection_arg(app):
         db.session.add(selection)
         db.session.commit()
 
-        return selection
+        return selection.id
 
 
 # ----------------------------------------------------------------------
@@ -99,11 +99,14 @@ def bra_staff(app, selection_bra):
             email="bra.staff@test.com",
             password_hash=hash_password("123456"),
             role=UserRole.TECHNICAL_STAFF,
-            selection_id=selection_bra.id
+            selection_id=selection_bra
         )
 
         db.session.add(user)
         db.session.commit()
+
+        db.session.refresh(user)
+        db.session.expunge(user)
 
         return user
 
@@ -124,6 +127,9 @@ def organizer(app):
         db.session.add(user)
         db.session.commit()
 
+        db.session.refresh(user)
+        db.session.expunge(user)
+
         return user
 
 
@@ -137,11 +143,14 @@ def arg_staff(app, selection_arg):
             email="arg.staff@test.com",
             password_hash=hash_password("123456"),
             role=UserRole.TECHNICAL_STAFF,
-            selection_id=selection_arg.id
+            selection_id=selection_arg
         )
 
         db.session.add(user)
         db.session.commit()
+
+        db.session.refresh(user)
+        db.session.expunge(user)
 
         return user
 
@@ -178,7 +187,7 @@ def arg_document(app, arg_staff, selection_arg):
     with app.app_context():
 
         document = Document(
-            selection_id=selection_arg.id,
+            selection_id=selection_arg,
             uploaded_by=arg_staff.id,
             type=TypeDocument.RELATORIO_TATICO,
             original_name="relatorio.pdf",
@@ -188,6 +197,9 @@ def arg_document(app, arg_staff, selection_arg):
 
         db.session.add(document)
         db.session.commit()
+
+        db.session.refresh(document)
+        db.session.expunge(document)
 
         return document
 

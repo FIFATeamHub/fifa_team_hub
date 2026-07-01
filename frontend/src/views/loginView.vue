@@ -5,10 +5,6 @@
 </template>
 
 <script setup lang="ts">
-<<<<<<< HEAD
-
-=======
->>>>>>> main
 import LoginForm from '@/components/loginForm.vue';
 </script>
 

@@ -1,6 +1,7 @@
 from functools import wraps
 from flask import request, jsonify
 from jose import JWTError, ExpiredSignatureError
+from uuid import UUID
 
 from app.models.user import User
 from app.services.auth import decode_token
@@ -32,7 +33,7 @@ def token_required(f):
         
         
         # Busca o usuário no banco pelo sub (user_id)
-        current_user = User.query.get(payload["sub"])
+        current_user = User.query.get(UUID(payload["sub"]))
         if current_user is None:
             return jsonify({"error": "Usuário não encontrado"}), 401
 
