@@ -12,6 +12,7 @@ class TypeDocument(str,Enum):
     CONVOCADO = "CONVOCADO"
     LAUDO_MEDICO = "LAUDO_MEDICO"
     RELATORIO_TATICO = "RELATORIO_TATICO"
+    ESQUEMA_JOGADAS = "ESQUEMA_JOGADAS"
 
 class LogAction(str,Enum):
     LOGIN = "LOGIN"

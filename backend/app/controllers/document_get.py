@@ -9,13 +9,7 @@ from zoneinfo import ZoneInfo
 
 
 
-def list_documents(current_user):  # Injetado pelo seu token_required
-    """
-    Endpoint GET /documents
-    Coleta parâmetros de busca dinâmicos e paginação da URL e delega ao Service.
-    """
-    # 1. CAPTURA DOS QUERY PARAMETERS DA URL de forma dinâmica
-    # Se o usuário acessar ?doc_type=RELATORIO_TATICO, capturamos aqui
+def list_documents(current_user): 
     doc_type_filter = request.args.get("type")
     
     # Captura a paginação tratando como inteiro e definindo os fallbacks padrão (1 e 10)
@@ -62,10 +56,6 @@ def list_documents(current_user):  # Injetado pelo seu token_required
             "pages": paginated_result.pages
         }
     }), 200
-
-
-
-
 
 
 def get_document_by_id(current_user, document_id):

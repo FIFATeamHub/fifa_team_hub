@@ -1,5 +1,10 @@
 {
   "dependencies": {
+    "lint": "^1.2.2",
+    "type-check": "^0.4.0",
     "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.8"
   }
 }

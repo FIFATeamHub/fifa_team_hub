@@ -39,9 +39,13 @@ export function useDocuments() {
       link.click()
       document.body.removeChild(link)
 
-    } catch (error: any) {
+    } catch (error) {
+      // 1. Removemos o ": any". O TS agora trata o erro como 'unknown'.
+      // 2. Mapeamos a estrutura que esperamos do Axios sem usar a palavra 'any':
+      const apiError = error as { response?: { status: number } }
+
       // 410 = documento foi deletado do GCS
-      if (error.response?.status === 410) {
+      if (apiError.response?.status === 410) {
         console.error('Documento deletado (410 Gone)')
         throw new Error('Este documento foi removido permanentemente.')
       }

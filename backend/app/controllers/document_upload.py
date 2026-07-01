@@ -1,5 +1,5 @@
 from flask import request, jsonify
-from app.config.database import db
+from app.extensions import db
 from app.models.document import Document
 from app.models.audit_log import AuditLog
 from app.models.enums.user_role import TypeDocument, LogAction
@@ -73,12 +73,6 @@ def upload_document(current_user):
         return jsonify({"error": erro_msg, "details": erro_msg}), 422
     
 
-    ###################################
-    # LÓGICA DE ROLE INTEGRADA COM SUCESSO
-    ###################################
-    # Cruza a role do current_user com o enum obtido da requisição
-    # Agora importada e chamada diretamente como função, seguindo o padrão pythônico
-    
     permitido, status_documento = validate_upload_permission(current_user.role, tipo_documento_enum)
 
     if not permitido:
