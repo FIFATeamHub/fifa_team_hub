@@ -1,7 +1,7 @@
 from flask import Blueprint
 
 from app.controllers.auth import register, login, me
-from app.middlewares.auth_middleware import require_auth
+from app.middlewares.auth import token_required
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -17,7 +17,6 @@ def route_login():
 
 
 @auth_bp.get("/me")
-@require_auth
-def route_me():
-    #os dados ficam em flask.g a rota lê g.current_user_id quando precisar
-    return me()
+@token_required
+def route_me(current_user):
+    return me(current_user)

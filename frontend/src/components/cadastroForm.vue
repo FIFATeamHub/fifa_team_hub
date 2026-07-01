@@ -67,7 +67,7 @@
 <script setup lang="ts">
 
 import {ref} from 'vue'
-import {useAuthStore} from '../stores/auth.js'
+import {useAuthStore} from '@/stores/auth.js'
 import { useRouter , RouterLink } from 'vue-router';
 
 const authStore = useAuthStore()
@@ -123,10 +123,10 @@ const lidarComCadastro = async() => {
         }, 2000)
 
     }
-    catch (error) {
-    
-        if (error.message) {
-        errorMessage.value = error.message
+    catch (err) {
+    const error = err as { message?: string }
+    if (error.message) {
+      errorMessage.value = error.message
         } else {
         errorMessage.value = 'Ocorreu um erro ao registrar a conta.'
         }

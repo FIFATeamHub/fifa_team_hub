@@ -1,3 +1,1 @@
-from flask_sqlalchemy import SQLAlchemy  # type: ignore[import]
-
-db = SQLAlchemy()
+from app.extensions import db

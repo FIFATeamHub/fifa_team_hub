@@ -13,6 +13,10 @@
 
 <script setup lang="ts">
 
+<<<<<<< HEAD
+=======
+import baseCard from './baseCard.vue';
+>>>>>>> main
 import { useRouter } from 'vue-router';
 
 const router = useRouter()

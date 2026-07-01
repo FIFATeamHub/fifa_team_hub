@@ -22,6 +22,7 @@
 
 </template>
 
+<<<<<<< HEAD
 <script lang="ts">
 /* eslint-disable vue/multi-word-component-names */
 
@@ -29,6 +30,10 @@ export default{
     name : "navbar"
 }
 
+=======
+<script setup lang="ts">
+defineOptions({ name: 'AppNavbar' })
+>>>>>>> main
 </script>
 
 <style scoped>

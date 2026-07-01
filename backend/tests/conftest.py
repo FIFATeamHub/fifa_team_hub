@@ -1,79 +1,198 @@
-# backend/tests/conftest.py
 import pytest
-from flask import g, jsonify
+
 from app import create_app
-from app.extensions import db  # O mesmo db que a aplicação usa
-from app.middlewares.auth_middleware import require_role, require_auth
-from app.services.auth_service import create_access_token
+from app.extensions import db
+
+from app.models.selection import Selection
+from app.models.user import User
+from app.models.document import Document
+
+from app.models.enums.user_role import (
+    UserRole,
+    TypeDocument,
+    DocStatus,
+)
+
+from app.services.auth import (
+    hash_password,
+    create_access_token,
+)
+
+
+# ----------------------------------------------------------------------
+# APP
+# ----------------------------------------------------------------------
 
 @pytest.fixture
 def app():
-    # Passamos as configurações de teste DIRETAMENTE na criação do app
+
     app = create_app({
         "TESTING": True,
         "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:"
     })
 
-    # Criamos a estrutura de tabelas no banco SQLite em memória
     with app.app_context():
         db.create_all()
 
-    # Rotas fictícias para os testes de middleware
-    @app.get("/test/protegida")
-    @require_auth
-    def rota_protegida():
-        return jsonify({
-            "user_id": g.current_user_id,
-            "role": getattr(g, "current_user_role", None),  # Evita quebra se não mapeado
-            "selection_id": getattr(g, "current_selection_id", None)
-        }), 200
-    
-    @app.get("/test/so-organizer")
-    @require_auth
-    @require_role("ORGANIZER")
-    def rota_organizer():
-        return jsonify({"ok": True}), 200
+        yield app
 
-    yield app
-
-    # Derruba o banco em memória após o fim dos testes deste ciclo
-    with app.app_context():
+        db.session.remove()
         db.drop_all()
+
+
+# ----------------------------------------------------------------------
+# CLIENT
+# ----------------------------------------------------------------------
 
 @pytest.fixture
 def client(app):
     return app.test_client()
 
-@pytest.fixture
-def token_bra_staff():
-    return create_access_token({
-        "user_id": 10,
-        "role": "staff",
-        "selection_id": "BRA" 
-    })
+
+# ----------------------------------------------------------------------
+# SELECTIONS
+# ----------------------------------------------------------------------
 
 @pytest.fixture
-def token_organizer():
-    return create_access_token({
-        "user_id": 20,
-        "role": "ORGANIZER",
-        "selection_id": None
-    })
+def selection_bra(app):
 
-@pytest.fixture
-def arg_document_id(app):
     with app.app_context():
-        try:
-            from app.models import Document 
-            
-            doc = Document(
-                original_name="tactical_plan_arg.pdf",
-                doc_type="pdf",
-                status="PENDENTE",
-                selection_id="ARG" 
-            )
-            db.session.add(doc)
-            db.session.commit()
-            return doc.id
-        except Exception:
-            return "id-documento-argentina-ficticio"
+
+        selection = Selection(
+            name="Brazil",
+            code="BRA"
+        )
+
+        db.session.add(selection)
+        db.session.commit()
+
+        return selection
+
+
+@pytest.fixture
+def selection_arg(app):
+
+    with app.app_context():
+
+        selection = Selection(
+            name="Argentina",
+            code="ARG"
+        )
+
+        db.session.add(selection)
+        db.session.commit()
+
+        return selection
+
+
+# ----------------------------------------------------------------------
+# USERS
+# ----------------------------------------------------------------------
+
+@pytest.fixture
+def bra_staff(app, selection_bra):
+
+    with app.app_context():
+
+        user = User(
+            full_name="Brazil Technical Staff",
+            email="bra.staff@test.com",
+            password_hash=hash_password("123456"),
+            role=UserRole.TECHNICAL_STAFF,
+            selection_id=selection_bra.id
+        )
+
+        db.session.add(user)
+        db.session.commit()
+
+        return user
+
+
+@pytest.fixture
+def organizer(app):
+
+    with app.app_context():
+
+        user = User(
+            full_name="Organizer",
+            email="organizer@test.com",
+            password_hash=hash_password("123456"),
+            role=UserRole.ORGANIZER,
+            selection_id=None
+        )
+
+        db.session.add(user)
+        db.session.commit()
+
+        return user
+
+
+@pytest.fixture
+def arg_staff(app, selection_arg):
+
+    with app.app_context():
+
+        user = User(
+            full_name="Argentina Technical Staff",
+            email="arg.staff@test.com",
+            password_hash=hash_password("123456"),
+            role=UserRole.TECHNICAL_STAFF,
+            selection_id=selection_arg.id
+        )
+
+        db.session.add(user)
+        db.session.commit()
+
+        return user
+
+
+# ----------------------------------------------------------------------
+# TOKENS
+# ----------------------------------------------------------------------
+
+@pytest.fixture
+def token_bra_staff(bra_staff):
+
+    return create_access_token(bra_staff)
+
+
+@pytest.fixture
+def token_arg_staff(arg_staff):
+
+    return create_access_token(arg_staff)
+
+
+@pytest.fixture
+def token_organizer(organizer):
+
+    return create_access_token(organizer)
+
+
+# ----------------------------------------------------------------------
+# DOCUMENTOS
+# ----------------------------------------------------------------------
+
+@pytest.fixture
+def arg_document(app, arg_staff, selection_arg):
+
+    with app.app_context():
+
+        document = Document(
+            selection_id=selection_arg.id,
+            uploaded_by=arg_staff.id,
+            type=TypeDocument.RELATORIO_TATICO,
+            original_name="relatorio.pdf",
+            storage_url="/tmp/relatorio.pdf",
+            status=DocStatus.APPROVED.value
+        )
+
+        db.session.add(document)
+        db.session.commit()
+
+        return document
+
+
+@pytest.fixture
+def arg_document_id(arg_document):
+
+    return str(arg_document.id)

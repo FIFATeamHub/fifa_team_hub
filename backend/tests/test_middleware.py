@@ -18,14 +18,14 @@ def test_header_malformado_retorna_401(client):
     assert response.status_code == 401
 
 def test_token_expirado_retorna_401(client):
-    with patch("app.middlewares.auth_middleware.decodificar_token") as mock:
+    with patch("app.middlewares.auth.decodificar_token") as mock:
         mock.side_effect = ExpiredSignatureError()
         response = client.get("/test/protegida", headers={"Authorization": "Bearer qualquer"})
     assert response.status_code == 401
     assert "expirado" in response.get_json()["error"]
 
 def test_token_invalido_retorna_401(client):
-    with patch("app.middlewares.auth_middleware.decodificar_token") as mock:
+    with patch("app.middlewares.auth.decodificar_token") as mock:
         mock.side_effect = JWTError()
         response = client.get("/test/protegida", headers={"Authorization": "Bearer invalido"})
     assert response.status_code == 401
@@ -36,7 +36,7 @@ def test_token_valido_retorna_200(client):
     Valida se o token é aceito e se g.current_user_role 
     e g.current_selection_id estão disponíveis na rota
     """
-    with patch("app.middlewares.auth_middleware.decodificar_token") as mock:
+    with patch("app.middlewares.auth.decodificar_token") as mock:
         mock.return_value = PAYLOAD_VALIDO
         response = client.get("/test/protegida", headers={"Authorization": "Bearer valido"})
     
@@ -55,7 +55,7 @@ def test_role_errada_retorna_403(client):
     # Usuário com role diferente (ATHLETE) tentando acessar rota de ORGANIZER
     payload_atleta = {**PAYLOAD_VALIDO, "role": "ATHLETE"} 
     
-    with patch("app.middlewares.auth_middleware.decodificar_token") as mock:
+    with patch("app.middlewares.auth.decodificar_token") as mock:
         mock.return_value = payload_atleta
         response = client.get("/test/so-organizer", headers={"Authorization": "Bearer valido"})
         

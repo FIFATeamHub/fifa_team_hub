@@ -8,17 +8,17 @@ JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", 60))
 
 
-def hash_senha(senha: str) -> str:
+def hash_password(senha: str) -> str:
     # werkzeug para gerar o hash da senha
     return generate_password_hash(senha)
 
 
-def verificar_senha(senha: str, hash: str) -> bool:
+def verify_password(senha: str, hash: str) -> bool:
     # werkzeug para verificar a senha contra o hash
     return check_password_hash(hash, senha)
 
 
-def gerar_token(user) -> str:
+def create_access_token(user) -> str:
     # Monta o payload com dados essenciais do usuário
     payload = {
         "sub": str(user.id), #id do user
@@ -29,7 +29,7 @@ def gerar_token(user) -> str:
     return jwt.encode(payload, JWT_SECRET_KEY, algorithm="HS256")
 
 
-def decodificar_token(token: str) -> dict:
+def decode_token(token: str) -> dict:
     # Lança exceção — deixa o middleware decidir a resposta HTTP
     try:
         return jwt.decode(token, JWT_SECRET_KEY, algorithms=["HS256"])
