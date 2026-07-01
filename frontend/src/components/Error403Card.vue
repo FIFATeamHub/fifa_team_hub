@@ -5,7 +5,7 @@
         <h1>ERRO</h1>
         <h1>403</h1>
         <p>Você não tem permissão para acessar essa área.</p>
-        <button @click="goHome">Voltar para Home</button>
+        <button @click="goHome()">Voltar para Home</button>
     
     </baseCard>
 

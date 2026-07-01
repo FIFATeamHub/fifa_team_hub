@@ -4,8 +4,7 @@ from werkzeug.security import generate_password_hash #Gera a senha em hash para 
 
 from sqlalchemy import Enum # type: ignore[import]
 from sqlalchemy.orm import Mapped,registry
-
-from app.config.database import db # type: ignore[import]
+from app.extensions import db
 from app.models.enums.user_role import UserRole
 from app.models.enums.user_role import TypeDocument
 from app.models.enums.user_role import LogAction
