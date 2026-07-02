@@ -19,5 +19,4 @@ def route_login():
 @auth_bp.get("/me")
 @token_required
 def route_me(current_user):
-    # current_user injetado pelo decorator token_required
     return me(current_user)

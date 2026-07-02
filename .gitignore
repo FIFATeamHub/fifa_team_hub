@@ -30,3 +30,4 @@ Thumbs.db
 # 
 backend/storage/uploads/**
 !backend/storage/uploads/.gitkeep
+config/fifa-team-hub-key.json
