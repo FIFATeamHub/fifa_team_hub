@@ -40,7 +40,7 @@ class Document(db.Model):
         nullable=True
     )
 
-    storage_url = db.Column(
+    storage_path = db.Column(
         db.String(255),
         nullable=False
     )

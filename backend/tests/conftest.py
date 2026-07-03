@@ -13,10 +13,7 @@ from app.models.enums.user_role import (
     DocStatus,
 )
 
-from app.services.auth import (
-    hash_password,
-    create_access_token,
-)
+from app.services.auth import hash_password, create_access_token
 
 
 # ----------------------------------------------------------------------

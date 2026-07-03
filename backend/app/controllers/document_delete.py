@@ -18,6 +18,8 @@ blueprint_name = Blueprint("Delete", __name__)
 
 def delete(document_id):
     document = Document.query.get(document_id)
+    if not document:
+        return {"error": "Documento não encontrado"}, 404
 
     if document.uploaded_by != g.current_user_id:
         return {"error": "Permissão negada"}, 403
