@@ -1,6 +1,5 @@
 from uuid import uuid4
-
-from app.config.database import db
+from app.extensions import db
 from app.models.enums.user_role import LogAction
 from sqlalchemy import Enum # type: ignore[import]
 
@@ -37,6 +36,11 @@ class AuditLog(db.Model):
     status = db.Column(
         db.String(255),
         nullable=False
+    )
+
+    details = db.Column(
+        db.Text,
+        nullable=True
     )
 
     created_at = db.Column(
