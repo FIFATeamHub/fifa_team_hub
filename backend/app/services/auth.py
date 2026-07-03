@@ -9,7 +9,7 @@ load_dotenv()
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", 60))
 
-def hash_senha(senha: str) -> str:
+def hash_password(senha: str) -> str:
     return generate_password_hash(senha)
 
 def verificar_senha(senha: str, hash: str) -> bool:

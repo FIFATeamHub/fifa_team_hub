@@ -5,7 +5,7 @@ from app.routes.schema import RegisterSchema, LoginSchema
 from app.extensions import db
 from app.models.user import User
 from app.models.enums.user_role import UserRole
-from app.services.auth import hash_senha, verify_password, create_access_token
+from app.services.auth import hash_password, verify_password, create_access_token
 
 
 def register():
