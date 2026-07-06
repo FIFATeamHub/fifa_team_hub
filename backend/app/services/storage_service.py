@@ -36,6 +36,10 @@ class StorageService(ABC):
     
     
 class LocalStorageService(StorageService):
+    def __init__(self, local_path: str = "./storage/uploads"):
+        self.local_path = local_path
+        # Garante que a pasta raiz do storage exista localmente
+        os.makedirs(self.local_path, exist_ok=True)
 
     def save_file(
         self,
