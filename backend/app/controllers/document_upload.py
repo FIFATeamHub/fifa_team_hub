@@ -4,6 +4,8 @@ from app.models.document import Document
 from app.models.audit_log import AuditLog
 from app.models.enums.user_role import TypeDocument, LogAction
 from app.services.document import validate_file, validate_upload_permission
+from app.services.storage_service import LocalStorageService
+from app.services.storage_factory import get_storage_service
 from werkzeug.utils import secure_filename
 import uuid
 from uuid import UUID
@@ -107,7 +109,14 @@ def upload_document(current_user):
         # 2. Monte o nome único usando o UUID gerado
         extensao = nome_original.rsplit('.', 1)[1].lower() if '.' in nome_original else 'pdf'
         nome_unico_arquivo = f"{id_exclusivo_doc}.{extensao}"
-        caminho_armazenamento = f"backend/storage/uploads/{current_user.id}/{nome_unico_arquivo}"
+
+
+        storage = get_storage_service()
+        caminho_armazenamento = storage.save_file(
+            file_stream=arquivo_fisico,
+            stored_name=nome_unico_arquivo,
+            selection_id=str(current_user.selection_id)
+        )
 
         novo_documento = Document(
             selection_id=current_user.selection_id,

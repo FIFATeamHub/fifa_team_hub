@@ -1,11 +1,14 @@
-from flask import request, jsonify
+from flask import request, jsonify, Blueprint
 
 import re
 from app.routes.schema import RegisterSchema, LoginSchema
 from app.extensions import db
 from app.models.user import User
 from app.models.enums.user_role import UserRole
+
 from app.services.auth import hash_password, verify_password, create_access_token
+
+auth_bp = Blueprint("auth", __name__)
 
 
 def register():
@@ -16,7 +19,7 @@ def register():
 
     # Valida campos obrigatórios
     campos = ["email", "password", "full_name", "role"]
-    for campo in campos:
+    for campo in campos:   
         if not dados.get(campo):
             return jsonify({"error": f"Campo '{campo}' é obrigatório"}), 400
         
