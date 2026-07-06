@@ -1,13 +1,11 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
+from app.config import Config
 from datetime import timedelta
 import shutil
 import os
 
 from google.cloud import storage as gcs_storage
-
-from app.config import Config
-
 
 class StorageService(ABC):
 
