@@ -11,6 +11,7 @@ import uuid
 from uuid import UUID
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
+import traceback
 
 
 UUID_ZERADO = UUID("00000000-0000-0000-0000-000000000000") # UTILIZADO QUANDO OCORRER ERRO, PARA REGISTRAR O LOG DE FALHA
@@ -35,10 +36,10 @@ def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event,
         # Commita a transação global para garantir a persistência imediata
         db.session.commit()
 
-    except Exception as log_err:
-        
+
+    except Exception as e:
         db.session.rollback()
-        print(f"Erro crítico ao tentar salvar Log de Auditoria: {log_err}")
+        traceback.print_exc()
 
 
 
@@ -162,10 +163,10 @@ def upload_document(current_user):
 
     except Exception as e:
         db.session.rollback()
+        traceback.print_exc()
         print(f"Erro no banco de dados durante upload: {e}")
         
         # Loga a quebra crítica de banco de dados com o datetime original
         register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, f"Erro interno de banco de dados ao salvar documento: {str(e)}")
 
-        return jsonify({"error": "Erro interno ao salvar arquivo", "details": str(e)}), 500
 

@@ -1,83 +1,88 @@
-import os
 from abc import ABC, abstractmethod
-from google.cloud import storage as gcs_storage
+from pathlib import Path
 from datetime import timedelta
+import shutil
+import os
+
+from google.cloud import storage as gcs_storage
 
 class StorageService(ABC):
 
-    #Interface abstrata (Contrato) que define o comportamento esperado 
-
     @abstractmethod
-    def save_file(self, file_stream, stored_name: str, selection_id: str) -> str:
+    def save_file(
+        self,
+        file_stream,
+        stored_name: str,
+        selection_id: str
+    ) -> str:
         pass
-       
+        
     @abstractmethod
-    def delete_file(self, storage_path: str) -> None:
+    def delete_file(
+        self,
+        storage_path: str
+    ) -> None:
         pass
-       
+        
     @abstractmethod
-    def get_signed_url(self, storage_path: str, expiration_minutes: int = 15) -> str:
-        #Gera URL temporária assinada (apenas GCS)
+    def get_signed_url(
+        self,
+        storage_path: str,
+        expiration_minutes: int = 15
+    ) -> str:
         pass
-
-
-
-
+    
+    
+    
 class LocalStorageService(StorageService):
-
-    #Implementação para armazenamento em disco local (Desenvolvimento/Testes).
-
     def __init__(self, local_path: str = "./storage/uploads"):
         self.local_path = local_path
         # Garante que a pasta raiz do storage exista localmente
         os.makedirs(self.local_path, exist_ok=True)
 
+    def save_file(
+        self,
+        file_stream,
+        stored_name: str,
+        selection_id: str
+    ) -> str:
 
+        target_dir = Path(self.local_path) / selection_id
 
+        target_dir.mkdir(
+            parents=True,
+            exist_ok=True
+        )
 
-    def save_file(self, file_stream, stored_name: str, selection_id: str) -> str:
-        """
-        Salva o arquivo no disco local dentro da pasta da seleção:
-        Ex: ./storage/uploads/selection_id/nome_unico.pdf
-        """
-        # Cria a subpasta com o ID da seleção, se não existir
-
-        pasta_selecao = os.path.join(self.local_path, selection_id)
-        os.makedirs(pasta_selecao, exist_ok=True)
+        file_path = target_dir / stored_name
         
-        caminho_final = os.path.join(pasta_selecao, stored_name)
-        
-        # Reseta o ponteiro do arquivo recebido e grava o binário no disco
         file_stream.seek(0)
-        with open(caminho_final, "wb") as f:
-            f.write(file_stream.read())
+
+        with open(file_path, "wb") as destination:
+            shutil.copyfileobj(
+                file_stream,
+                destination
+            )
+
+        return str(file_path)
+
+    def delete_file(
+        self,
+        storage_path: str
+    ) -> None:
+
+        path = Path(storage_path)
+
+        if path.exists():
+            path.unlink()
             
-        return caminho_final
-
-
-
-
-    def delete_file(self, storage_path: str) -> None:                       # IMPLEMENTAR NO ENDPOINT DELETE
-  
-        if os.path.exists(storage_path):
-            os.remove(storage_path)
-
-
-
-
     def get_signed_url(self, storage_path: str, expiration_minutes: int = 15) -> str:
-        """
-        Para o ambiente local, não há URL assinada criptograficamente.
-        Retornamos o caminho relativo simulado para o Frontend acessar via rota estática.
-        """
-        
-        partes = storage_path.replace("\\", "/").split("/")
-        if len(partes) >= 2:
-            selection_id = partes[-2]
-            filename = partes[-1]
-            return f"/static/uploads/{selection_id}/{filename}"
-        
-        return f"/static/uploads/{os.path.basename(storage_path)}"
+        path = Path(storage_path)
+
+        if len(path.parts) >= 2:
+            return f"/static/uploads/{path.parts[-2]}/{path.parts[-1]}"
+
+        return f"/static/uploads/{path.name}"
     
 
 
@@ -93,10 +98,6 @@ class GCSStorageService(StorageService):
         self.bucket = self.client.bucket(bucket_name)
 
     def save_file(self, file_stream, stored_name: str, selection_id: str) -> str:
-        """
-        Envia o arquivo para o bucket organizando pelo ID da seleção como pasta virtual.
-        Retorna o caminho universal do objeto: gs://nome-do-bucket/selection_id/nome_unico.pdf
-        """
 
         blob_path = f"{selection_id}/{stored_name}"
         blob = self.bucket.blob(blob_path)
