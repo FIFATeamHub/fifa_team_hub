@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 <template>
     <div class = "body">
 
@@ -21,12 +22,8 @@
 
 </template>
 
-<script>
-
-export default{
-    name : "navbar"
-}
-
+<script setup lang="ts">
+defineOptions({ name: 'AppNavbar' })
 </script>
 
 <style scoped>
