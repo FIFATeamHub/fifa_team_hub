@@ -13,20 +13,15 @@ export function useDocuments() {
   const documents = ref<Documento[]>([])
   const loading = ref(false)
 
-  // Busca a URL assinada do GCS para um documento específico.
-  // O backend é quem gera a URL — o frontend só a recebe e usa.
   async function getDownloadUrl(documentId: string): Promise<string> {
     const response = await api.get(`/documents/${documentId}/download`)
     return response.data.url
   }
 
-  // Faz o download do arquivo criando um <a> invisível e simulando o clique.
-  // Isso evita abrir uma nova aba e força o navegador a baixar o arquivo.
   async function downloadDocument(documentId: string, filename: string) {
     try {
       const url = await getDownloadUrl(documentId)
 
-      // Testa se a URL ainda é válida antes de baixar
       const headResponse = await api.head(url, { timeout: 5000 })
       if (headResponse.status !== 200) {
         throw new Error('URL expirada ou inválida')
@@ -40,11 +35,8 @@ export function useDocuments() {
       document.body.removeChild(link)
 
     } catch (error) {
-      // 1. Removemos o ": any". O TS agora trata o erro como 'unknown'.
-      // 2. Mapeamos a estrutura que esperamos do Axios sem usar a palavra 'any':
       const apiError = error as { response?: { status: number } }
 
-      // 410 = documento foi deletado do GCS
       if (apiError.response?.status === 410) {
         console.error('Documento deletado (410 Gone)')
         throw new Error('Este documento foi removido permanentemente.')
@@ -53,8 +45,6 @@ export function useDocuments() {
       throw error
     }
   }
-
-  // Abre o documento em uma nova aba para preview (PDF e imagens)
   async function previewDocument(documentId: string) {
     const url = await getDownloadUrl(documentId)
     window.open(url, '_blank')
