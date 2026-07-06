@@ -24,8 +24,8 @@ def token_required(f):
         token = partes[1]
 
         try:
-
             payload = decode_token(token)
+            
         except ExpiredSignatureError:
             return jsonify({"error": "Token expirado"}), 401
         except JWTError:

@@ -13,7 +13,7 @@ from app.models.enums.user_role import (
     DocStatus,
 )
 
-from app.services.auth import hash_password, create_access_token
+from app.services.auth import hash_password, create_access_token, user_to_token_payload
 
 
 # ----------------------------------------------------------------------
@@ -161,19 +161,19 @@ def arg_staff(app, selection_arg):
 @pytest.fixture
 def token_bra_staff(bra_staff):
 
-    return create_access_token(bra_staff)
+    return create_access_token(user_to_token_payload(bra_staff))
 
 
 @pytest.fixture
 def token_arg_staff(arg_staff):
 
-    return create_access_token(arg_staff)
+    return create_access_token(user_to_token_payload(arg_staff))
 
 
 @pytest.fixture
 def token_organizer(organizer):
 
-    return create_access_token(organizer)
+    return create_access_token(user_to_token_payload(organizer))
 
 
 # ----------------------------------------------------------------------
