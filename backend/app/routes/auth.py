@@ -5,7 +5,6 @@ from app.middlewares.auth import token_required
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
-
 @auth_bp.post("/register")
 def route_register():
     return register()
@@ -14,7 +13,6 @@ def route_register():
 @auth_bp.post("/login")
 def route_login():
     return login()
-
 
 @auth_bp.get("/me")
 @token_required

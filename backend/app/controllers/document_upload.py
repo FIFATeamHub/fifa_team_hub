@@ -125,7 +125,7 @@ def upload_document(current_user):
             type=tipo_documento_enum,
             # filename=nome_unico_arquivo, 
             original_name= nome_original_limpo,
-            storage_url=caminho_armazenamento,
+            storage_path=caminho_armazenamento,
             status=status_documento,
             created_at=momento_requisicao
         )
@@ -169,4 +169,7 @@ def upload_document(current_user):
         # Loga a quebra crítica de banco de dados com o datetime original
         register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, f"Erro interno de banco de dados ao salvar documento: {str(e)}")
 
-
+        return jsonify({
+            "error": "Erro interno ao salvar documento",
+            "details": str(e)
+        }), 500

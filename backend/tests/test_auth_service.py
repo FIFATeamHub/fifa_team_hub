@@ -3,13 +3,7 @@ from uuid import uuid4
 from app.models.user import User
 from app.models.enums.user_role import UserRole
 from werkzeug.security import generate_password_hash
-
-from app.services.auth import (
-    verify_password,
-    create_access_token,
-    decode_token
-)
-
+from app.services.auth import verify_password, create_access_token, decode_token
 
 class MockUser:
     def __init__(self, password):

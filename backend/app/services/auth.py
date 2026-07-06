@@ -1,40 +1,59 @@
 import os
 from datetime import datetime, timedelta, timezone
-from jose import jwt, JWTError, ExpiredSignatureError
+
+from dotenv import load_dotenv
+from jose import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 
-# Lê do .env — nunca hardcoded
+load_dotenv()
+
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", 60))
 
 
-def hash_password(senha: str) -> str:
-    # werkzeug para gerar o hash da senha
-    return generate_password_hash(senha)
+def hash_password(password: str) -> str:
+    return generate_password_hash(password)
 
 
-def verify_password(senha: str, hash: str) -> bool:
-    # werkzeug para verificar a senha contra o hash
-    return check_password_hash(hash, senha)
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return check_password_hash(hashed_password, plain_password)
 
 
-def create_access_token(user) -> str:
-    # Monta o payload com dados essenciais do usuário
-    payload = {
-        "sub": str(user.id), #id do user
-        "role": user.role.value, #auditor, admin ...
-        "selection_id": str(user.selection_id) if user.selection_id else None, #seleção que está vinculada
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=JWT_EXPIRE_MINUTES) #tempo de inspiração do token
+def user_to_token_payload(user) -> dict:
+    return {
+        "sub": str(user.id),
+        "role": user.role.value,
+        "selection_id": (
+            str(user.selection_id)
+            if user.selection_id is not None
+            else None
+        ),
     }
-    return jwt.encode(payload, JWT_SECRET_KEY, algorithm="HS256")
+
+
+def create_access_token(data) -> str:
+
+    if isinstance(data, dict):
+        payload = data.copy()
+    else:
+        payload = user_to_token_payload(data)
+
+    payload["exp"] = (
+        datetime.now(timezone.utc)
+        + timedelta(minutes=JWT_EXPIRE_MINUTES)
+    )
+
+    return jwt.encode(
+        payload,
+        JWT_SECRET_KEY,
+        algorithm="HS256"
+    )
 
 
 def decode_token(token: str) -> dict:
-    # Lança exceção — deixa o middleware decidir a resposta HTTP
-    try:
-        return jwt.decode(token, JWT_SECRET_KEY, algorithms=["HS256"])
-    except ExpiredSignatureError:
-        raise #token expirado
+    return jwt.decode(
+        token,
+        JWT_SECRET_KEY,
+        algorithms=["HS256"],
+    )
 
-    except JWTError:
-        raise #token invalido
