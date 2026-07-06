@@ -25,7 +25,9 @@ def app():
 
     app = create_app({
         "TESTING": True,
-        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:"
+        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+        "STORAGE_BACKEND": "local",
+        "LOCAL_STORAGE_PATH": "/tmp/test_uploads",
     })
 
     with app.app_context():

@@ -4,11 +4,14 @@ from app.models.document import Document
 from app.models.audit_log import AuditLog
 from app.models.enums.user_role import TypeDocument, LogAction
 from app.services.document import validate_file, validate_upload_permission
+from app.services.storage_service import LocalStorageService
+from app.services.storage_factory import get_storage_service
 from werkzeug.utils import secure_filename
 import uuid
 from uuid import UUID
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
+import traceback
 
 
 UUID_ZERADO = UUID("00000000-0000-0000-0000-000000000000") # UTILIZADO QUANDO OCORRER ERRO, PARA REGISTRAR O LOG DE FALHA
@@ -33,10 +36,10 @@ def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event,
         # Commita a transação global para garantir a persistência imediata
         db.session.commit()
 
-    except Exception as log_err:
-        
+
+    except Exception as e:
         db.session.rollback()
-        print(f"Erro crítico ao tentar salvar Log de Auditoria: {log_err}")
+        traceback.print_exc()
 
 
 
@@ -107,7 +110,14 @@ def upload_document(current_user):
         # 2. Monte o nome único usando o UUID gerado
         extensao = nome_original.rsplit('.', 1)[1].lower() if '.' in nome_original else 'pdf'
         nome_unico_arquivo = f"{id_exclusivo_doc}.{extensao}"
-        caminho_armazenamento = f"backend/storage/uploads/{current_user.id}/{nome_unico_arquivo}"
+
+
+        storage = get_storage_service()
+        caminho_armazenamento = storage.save_file(
+            file_stream=arquivo_fisico,
+            stored_name=nome_unico_arquivo,
+            selection_id=str(current_user.selection_id)
+        )
 
         novo_documento = Document(
             selection_id=current_user.selection_id,
@@ -153,10 +163,10 @@ def upload_document(current_user):
 
     except Exception as e:
         db.session.rollback()
+        traceback.print_exc()
         print(f"Erro no banco de dados durante upload: {e}")
         
         # Loga a quebra crítica de banco de dados com o datetime original
         register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, f"Erro interno de banco de dados ao salvar documento: {str(e)}")
 
-        return jsonify({"error": "Erro interno ao salvar arquivo", "details": str(e)}), 500
 

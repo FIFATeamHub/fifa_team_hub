@@ -18,6 +18,7 @@ import LoginForm from '@/components/loginForm.vue';
         
     }
 
+    
     .page{
         background-color: #061c42
     }

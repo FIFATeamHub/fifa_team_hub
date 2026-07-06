@@ -5,6 +5,8 @@ from pathlib import Path
 from flask import Flask  # type: ignore[import]
 from flask_migrate import Migrate  # type: ignore[import]
 
+
+from app.config.database import db  # type: ignore[import]
 from app.routes.auth import auth_bp
 from app.extensions import cors, db, migrate
 
@@ -19,7 +21,13 @@ def create_app(test_config=None):
 
     app = Flask(__name__)
 
-
+    app.config["STORAGE_BACKEND"] = os.getenv("STORAGE_BACKEND", "local")
+    app.config["LOCAL_STORAGE_PATH"] = os.getenv(
+        "LOCAL_STORAGE_PATH",
+        "./storage/uploads"
+    )
+    app.config["GCS_BUCKET_NAME"] = os.getenv("GCS_BUCKET_NAME")
+    app.config["GCP_PROJECT_ID"] = os.getenv("GCP_PROJECT_ID")
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SQLALCHEMY_EXPIRE_ON_COMMIT"] = False
