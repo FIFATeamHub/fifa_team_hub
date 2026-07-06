@@ -1,5 +1,5 @@
-import io
 import pytest
+import io
 
 def test_upload_assigns_correct_selection_id(client, token_bra_staff):
 

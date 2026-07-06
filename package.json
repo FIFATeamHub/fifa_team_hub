@@ -1,7 +1,11 @@
 {
   "dependencies": {
+<<<<<<< HEAD
+    "requirements": "^4.0.2",
+=======
     "lint": "^1.2.2",
     "type-check": "^0.4.0",
+>>>>>>> main
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
