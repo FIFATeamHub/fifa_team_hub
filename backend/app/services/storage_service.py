@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from app.config import Config
 from datetime import timedelta
 import shutil
 import os
@@ -48,7 +47,7 @@ class LocalStorageService(StorageService):
         selection_id: str
     ) -> str:
 
-        target_dir = Path(Config.LOCAL_STORAGE_PATH) / selection_id
+        target_dir = Path(self.local_path) / selection_id
 
         target_dir.mkdir(
             parents=True,
@@ -78,13 +77,12 @@ class LocalStorageService(StorageService):
             path.unlink()
             
     def get_signed_url(self, storage_path: str, expiration_minutes: int = 15) -> str:
-        partes = storage_path.replace("\\", "/").split("/")
-        if len(partes) >= 2:
-            selection_id = partes[-2]
-            filename = partes[-1]
-            return f"/static/uploads/{selection_id}/{filename}"
-        
-        return f"/static/uploads/{os.path.basename(storage_path)}"
+        path = Path(storage_path)
+
+        if len(path.parts) >= 2:
+            return f"/static/uploads/{path.parts[-2]}/{path.parts[-1]}"
+
+        return f"/static/uploads/{path.name}"
     
 
 
