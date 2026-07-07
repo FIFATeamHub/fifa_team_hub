@@ -25,11 +25,8 @@ class StorageService(ABC):
         pass
         
     @abstractmethod
-    def get_signed_url(
-        self,
-        storage_path: str,
-        expiration_minutes: int = 15
-    ) -> str:
+    def get_signed_url(self, storage_path: str, document_id: str = None,expiration_minutes: int = 15) -> str:
+        #Gera URL temporária assinada (apenas GCS)
         pass
     
     
@@ -124,7 +121,7 @@ class GCSStorageService(StorageService):
 
 
 
-    def get_signed_url(self, storage_path: str, expiration_minutes: int = 15) -> str:
+    def get_signed_url(self, storage_path: str, document_id: str = None,expiration_minutes: int = 15) -> str:
         
         prefixo = f"gs://{self.bucket_name}/"
         if storage_path.startswith(prefixo):
