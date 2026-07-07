@@ -1,0 +1,136 @@
+---
+title: "API — Autenticação"
+description: Endpoints de autenticação JWT do FIFA Team Hub
+---
+
+import { Card } from '@astrojs/starlight/components';
+
+# 🔐 API — Autenticação
+
+Todos os endpoints da aplicação requerem autenticação via **Bearer Token JWT**, exceto `POST /auth/login` e `POST /auth/register`.
+
+<Card title="🌐 Configuração de Ambiente" icon="globe">
+- **Base URL (dev):** `http://localhost:5000`
+- **Esquema de Autenticação:** `Bearer <token>`
+</Card>
+
+---
+
+## 👥 POST /auth/register
+
+Cria um novo utilizador. Apenas AUDITOR pode registrar outros utilizadores.
+
+- **Autenticação Requerida:** ✅ `Bearer <token>` (role: `AUDITOR`)
+
+### 📦 Ver Body do Request (JSON)
+
+
+```json
+{
+  "name": "Josef Woljtyla",
+  "email": "josef@fifateamhub.com",
+  "password": "senhaProvisoria123",
+  "role": "TECHNICAL_STAFF",
+  "selection_id": "uuid-da-selecao"
+}
+```
+
+
+### 📊 Respostas e Códigos de Status
+
+| Status | Descrição |
+| :--- | :--- |
+| `201` | Utilizador criado com sucesso |
+| `400` | Body inválido ou senha < 8 caracteres |
+| `401` | Token ausente ou inválido |
+| `403` | Perfil sem permissão de registro |
+| `409` | E-mail já cadastrado |
+
+---
+
+## 🔑 POST /auth/login
+
+Autentica utilizador e retorna o token JWT.
+
+- **Autenticação Requerida:** ❌ Nenhuma
+
+### 📦 Ver Body e Payload do JWT
+
+
+```json
+**Body (JSON):**
+{
+  "email": "josef@fifateamhub.com",
+  "password": "minhasenha"
+}
+
+**Response 200 (Sucesso):**
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "Bearer",
+  "expires_in": 3600
+}
+
+**Payload Decodificado do JWT:**
+{
+  "user_id": "uuid-do-usuario",
+  "role": "TECHNICAL_STAFF",
+  "selection_id": "uuid-da-selecao",
+  "exp": 1749322800
+}
+```
+
+
+### 📊 Respostas e Códigos de Status
+
+| Status | Descrição |
+| :--- | :--- |
+| `200` | Login bem-sucedido, retorna JWT |
+| `401` | Credenciais inválidas (sem indicar qual campo) |
+
+---
+
+## 👤 GET /auth/me
+
+Retorna os dados do utilizador autenticado baseado no token enviado.
+
+- **Autenticação Requerida:** ✅ `Bearer <token>`
+
+### 📦 Ver Resposta de Sucesso
+
+
+```json
+**Response 200:**
+{
+  "id": "uuid-do-usuario",
+  "name": "Josef Woljtyla",
+  "email": "josef@fifateamhub.com",
+  "role": "TECHNICAL_STAFF",
+  "selection_id": "uuid-da-selecao",
+  "created_at": "2026-05-28T21:30:00Z"
+}
+```
+
+
+### 📊 Respostas e Códigos de Status
+
+| Status | Descrição |
+| :--- | :--- |
+| `200` | Dados do utilizador autenticado |
+| `401` | Token ausente, inválido ou expirado |
+
+---
+
+## 🛡️ Regras de Segurança
+
+- [ ] **Expiração do Token:** JWT expira em 60 minutos — sem extensão automática
+- [ ] **Criptografia:** bcrypt com custo ≥ 10 — hash nunca é exposto em responses
+- [ ] **Privacidade de Erro:** Credenciais inválidas retornam `401` sem revelar qual campo errou
+- [ ] **Ciclo de Vida da Senha:** Senha provisória obriga a troca no primeiro acesso
+- [ ] **Sessão Expirada:** Token expirado retorna `401` com redirecionamento para `/login`
+
+---
+
+<Card title="🚀 Postman Collection" icon="download">
+Importe o arquivo `docs/postman/s9_auth.json` para testar todos os endpoints com os cenários de sucesso e erro mapeados.
+</Card>

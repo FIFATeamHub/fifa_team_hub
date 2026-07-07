@@ -1,0 +1,290 @@
+---
+title: Backlog do Produto
+description: Backlog, histórias de usuário, priorização MoSCoW e MVP do FIFA Team Hub
+---
+
+import { Card, CardGrid, Aside } from '@astrojs/starlight/components'
+
+## Backlog Geral
+
+<Aside type="note" title="Processo">
+No contexto do **FIFA Team Hub**, o Product Backlog é uma lista dinâmica e priorizada de funcionalidades que guia a equipa para entregar valor incremental a comissões técnicas, organizadores e auditores de seleções nacionais. O backlog evolui com feedback de uso real, testes de segurança e mudanças regulatórias.
+</Aside>
+
+## Características da Solução
+
+[🔗 Ver na Solução Proposta](/fifa_team_hub/visao/solucao#características-da-solução)
+
+| **ID** | **Característica** | **Descrição** | **Objetivos Específicos** | **User Stories** |
+|--------|--------------------|---------------|---------------------------|------------------|
+| **[C01](/fifa_team_hub/visao/solucao#c01)** | Upload e gestão de documentos | Upload de convocações, passaportes, laudos médicos, relatórios táticos e esquemas de jogadas com versionamento automático. | [OE1](/fifa_team_hub/visao/solucao#oe1-centralizar), [OE3](/fifa_team_hub/visao/solucao#oe3-auditoria) | [US-006](#us-006), [US-007](#us-007), [US-008](#us-008), [US-009](#us-009), [US-013](#us-013), [US-017](#us-017), [US-018](#us-018) |
+| **[C02](/fifa_team_hub/visao/solucao#c02)** | Isolamento multi-tenant | Row-level filtering obrigatório, controle RBAC por perfil, testes de isolamento bloqueadores. | [OE2](/fifa_team_hub/visao/solucao#oe2-isolamento) | [US-005](#us-005), [US-012](#us-012) |
+| **[C03](/fifa_team_hub/visao/solucao#c03)** | AuditLog imutável | Registo de LOGIN, UPLOAD, DOWNLOAD, DELETE, APPROVE, REJECT, ACCESS_DENIED com timestamp, IP e responsável. | [OE3](/fifa_team_hub/visao/solucao#oe3-auditoria) | [US-015](#us-015), [US-016](#us-016) |
+| **[C04](/fifa_team_hub/visao/solucao#c04)** | Status e conformidade documentar | Ciclo de vida PENDENTE → APROVADO/REJEITADO, aprovação de laudos com comentário obrigatório. | [OE4](/fifa_team_hub/visao/solucao#oe4-compliance) | [US-010](#us-010), [US-014](#us-014) |
+| **[C05](/fifa_team_hub/visao/solucao#c05)** | Autenticação e gestão de seleções | JWT stateless, bcrypt, troca de senha obrigatória, cadastro de seleções, redirecionamento por perfil. | [OE5](/fifa_team_hub/visao/solucao#oe5-autonomia) | [US-001](#us-001), [US-002](#us-002), [US-003](#us-003), [US-004](#us-004), [US-011](#us-011) |
+
+---
+
+## Histórias de Usuário
+
+### Tabela de User Stories
+
+| **US** | **C** | **RF** | **Declaração** | **Critérios** | **Benefício/Valor** |
+|--------|--------|--------|----------------|---------------|---------------------|
+| **US-001** | [C05](#c05) | [RF-01](/fifa_team_hub/visao/levantamento-parcial#rf-01--cadastrar-usuários) | Como **Auditor**, quero cadastrar novos usuários com e-mail, senha provisória e perfil. | [Ver](#us-001--cadastrar-novos-usuários) | Garantir que apenas utilizadores autorizados acessem o sistema. |
+| **US-002** | [C05](#c05) | [RF-02](/fifa_team_hub/visao/levantamento-parcial#rf-02--troca-senha) | Como **novo utilizador**, quero ser obrigado a trocar a senha provisória no primeiro acesso. | [Ver](#us-002--troca-de-senha-obrigatória) | Evitar uso indevido de senhas provisórias e reforçar segurança. |
+| **US-003** | [C05](#c05) | [RF-03](/fifa_team_hub/visao/levantamento-parcial#rf-03--autenticacao) | Como **utilizador**, quero me autenticar com e-mail e senha recebendo um token JWT. | [Ver](#us-003--autenticação-com-jwt) | Garantir acesso seguro e stateless à plataforma. |
+| **US-004** | [C05](#c05) | [RF-04](/fifa_team_hub/visao/levantamento-parcial#rf-04--redirecionamento) | Como **utilizador autenticado**, quero ser redirecionado ao dashboard correto conforme meu perfil. | [Ver](#us-004--redirecionamento-por-perfil) | Garantir que cada perfil acesse diretamente suas funcionalidades. |
+| **US-005** | [C02](#c02) | [RF-05](/fifa_team_hub/visao/levantamento-parcial#rf-05--rbac) | Como **sistema**, quero restringir ações e dados com base no perfil RBAC. | [Ver](#us-005--controle-rbac) | Impedir que utilizadores realizem ações além de seu escopo. |
+| **US-006** | [C01](#c01) | [RF-06](/fifa_team_hub/visao/levantamento-parcial#rf-06--upload) | Como **Technical Staff**, quero fazer upload de documentos associados à minha seleção. | [Ver](#us-006--upload-de-documentos) | Centralizar submissão oficial de documentos de forma rastreável. |
+| **US-007** | [C01](#c01) | [RF-07](/fifa_team_hub/visao/levantamento-parcial#rf-07--reupload) | Como **Technical Staff**, quero substituir um documento por nova versão preservando histórico. | [Ver](#us-007--reenvio-de-versões) | Permitir correção de documentos sem perda de rastreabilidade. |
+| **US-008** | [C01](#c01) | [RF-08](/fifa_team_hub/visao/levantamento-parcial#rf-08--listagem) | Como **utilizador autenticado**, quero visualizar apenas documentos da minha seleção. | [Ver](#us-008--listagem-de-documentos) | Facilitar acesso rápido sem exposição de dados de outras seleções. |
+| **US-009** | [C01](#c01) | [RF-09](/fifa_team_hub/visao/levantamento-parcial#rf-09--download) | Como **utilizador da seleção**, quero baixar um documento por link temporário seguro. | [Ver](#us-009--download-com-link-temporário) | Garantir que ficheiros sensíveis não fiquem expostos permanentemente. |
+| **US-010** | [C04](#c04) | [RF-10](/fifa_team_hub/visao/levantamento-parcial#rf-10--status) | Como **atleta**, quero visualizar o status de cada documento (PENDENTE, APROVADO, REJEITADO). | [Ver](#us-010--visualização-de-status) | Dar visibilidade sobre a situação documentar da seleção. |
+| **US-011** | [C05](#c05) | [RF-11](/fifa_team_hub/visao/levantamento-parcial#rf-11--selecao) | Como **Organizer**, quero cadastrar uma seleção com nome, código FIFA e bandeira. | [Ver](#us-011--cadastro-de-seleção) | Preparar o ambiente isolado de cada seleção antes das operações. |
+| **US-012** | [C02](#c02) | [RF-12](/fifa_team_hub/visao/levantamento-parcial#rf-12--isolamento) | Como **sistema**, quero garantir isolamento absoluto entre seleções. | [Ver](#us-012--isolamento-inviolável) | Assegurar confidencialidade total entre seleções participantes. |
+| **US-013** | [C01](#c01) | [RF-13](/fifa_team_hub/visao/levantamento-parcial#rf-13--laudo-upload) | Como **Medical Staff**, quero fazer upload de laudos médicos vinculados a um atleta. | [Ver](#us-013--upload-de-laudos-médicos) | Digitalizar avaliação médica dos atletas de forma rastreável. |
+| **US-014** | [C04](#c04) | [RF-14](/fifa_team_hub/visao/levantamento-parcial#rf-14--laudo-aprovacao) | Como **Organizer**, quero aprovar ou rejeitar laudos médicos com comentário. | [Ver](#us-014--aprovação-de-laudos) | Garantir que apenas atletas com laudos validados participem. |
+| **US-015** | [C03](#c03) | [RF-15](/fifa_team_hub/visao/levantamento-parcial#rf-15--auditlog) | Como **sistema**, quero registrar automaticamente todo evento auditável. | [Ver](#us-015--registo-de-eventos) | Manter rastreabilidade completa de todas as operações. |
+| **US-016** | [C03](#c03) | [RF-16](/fifa_team_hub/visao/levantamento-parcial#rf-16--logs-painel) | Como **Auditor**, quero visualizar e filtrar o histórico completo de eventos. | [Ver](#us-016--painel-de-logs) | Permitir investigação de incidentes e verificação de conformidade. |
+| **US-017** | [C01](#c01) | [RF-17](/fifa_team_hub/visao/levantamento-parcial#rf-17--tatico) | Como **Technical Staff**, quero fazer upload de documentos táticos visíveis só à minha seleção. | [Ver](#us-017--documentos-táticos) | Proteger informações táticas confidenciais de acesso externo. |
+| **US-018** | [C01](#c01) | [RF-18](/fifa_team_hub/visao/levantamento-parcial#rf-18--gcs) | Como **sistema**, quero armazenar todos os ficheiros no Google Cloud Storage. | [Ver](#us-018--armazenamento-gcs) | Garantir escalabilidade e segurança de documentos sensíveis. |
+
+---
+
+---
+
+## Critérios de Aceitação de User Stories
+
+<Aside type="note" title="Critérios">
+Os critérios de aceitação definem quando uma história de usuário está completa e atende aos requisitos esperados.
+</Aside>
+
+### US-001 — Cadastrar novos usuários
+**[↑ Voltar para US-001](#us-001)** | **Característica:** [C05 — Autenticação e gestão](#c05) | **Requisito:** [RF-01](/fifa_team_hub/visao/levantamento-parcial#rf-01--cadastrar-usuários)
+
+* Auditor cadastra usuário com nome, e-mail, senha provisória e perfil
+* E-mail duplicado é rejeitado com HTTP 409
+* Senha é armazenada como hash bcrypt — nunca em texto plano
+
+### US-002 — Troca de senha obrigatória
+**[↑ Voltar para US-002](#us-002)** | **Característica:** [C05 — Autenticação e gestão](#c05) | **Requisito:** [RF-02](/fifa_team_hub/visao/levantamento-parcial#rf-02--troca-senha)
+
+* Sistema bloqueia dashboard até a troca de senha
+* Nova senha deve ter no mínimo 8 caracteres
+* Senha provisória é invalidada imediatamente após a troca
+
+### US-003 — Autenticação com JWT
+**[↑ Voltar para US-003](#us-003)** | **Característica:** [C05 — Autenticação e gestão](#c05) | **Requisito:** [RF-03](/fifa_team_hub/visao/levantamento-parcial#rf-03--autenticacao)
+
+* Credenciais inválidas retornam HTTP 401 sem indicar qual campo errou
+* JWT contém: user_id, role, selection_id, exp (60 min)
+* Token expirado retorna HTTP 401 e redireciona para /login
+
+### US-004 — Redirecionamento por perfil
+**[↑ Voltar para US-004](#us-004)** | **Característica:** [C05 — Autenticação e gestão](#c05) | **Requisito:** [RF-04](/fifa_team_hub/visao/levantamento-parcial#rf-04--redirecionamento)
+
+* TECHNICAL_STAFF → dashboard de documentos da própria seleção
+* ORGANIZER → visão burocrática geral
+* AUDITOR → painel de logs
+
+### US-005 — Controle RBAC
+**[↑ Voltar para US-005](#us-005)** | **Característica:** [C02 — Isolamento multi-tenant](#c02) | **Requisito:** [RF-05](/fifa_team_hub/visao/levantamento-parcial#rf-05--rbac)
+
+* Acesso fora do escopo retorna HTTP 403
+* Toda violação gera AuditLog com action=ACCESS_DENIED
+* Permissões aplicadas sem exceção em todas as rotas
+
+### US-006 — Upload de documentos
+**[↑ Voltar para US-006](#us-006)** | **Característica:** [C01 — Upload e gestão de documentos](#c01) | **Requisito:** [RF-06](/fifa_team_hub/visao/levantamento-parcial#rf-06--upload)
+
+* Apenas TECHNICAL_STAFF pode fazer upload
+* Tipos: CONVOCACAO, PASSAPORTE, LAUDO_MEDICO, RELATORIO_TATICO, ESQUEMA_JOGADAS
+* Formatos: PDF, JPG, JPEG, PNG, DOCX — máximo 10 MB
+* selection_id é preenchido automaticamente pelo sistema a partir do JWT
+* Upload gera AuditLog com action=UPLOAD
+
+### US-007 — Reenvio de versões
+**[↑ Voltar para US-007](#us-007)** | **Característica:** [C01 — Upload e gestão de documentos](#c01) | **Requisito:** [RF-07](/fifa_team_hub/visao/levantamento-parcial#rf-07--reupload)
+
+* Versão anterior marcada como histórica (não excluída)
+* Apenas o autor original pode reenviar
+* Reenvio gera AuditLog com action=REUPLOAD
+
+### US-008 — Listagem de documentos
+**[↑ Voltar para US-008](#us-008)** | **Característica:** [C01 — Upload e gestão de documentos](#c01) | **Requisito:** [RF-08](/fifa_team_hub/visao/levantamento-parcial#rf-08--listagem)
+
+* TECHNICAL_STAFF vê apenas documentos da própria seleção (todos os tipos)
+* ORGANIZER vê apenas CONVOCACAO e PASSAPORTE de todas as seleções
+* AUDITOR recebe HTTP 403
+* Listagem ordenada por created_at DESC; suporta filtro por doc_type e paginação
+
+### US-009 — Download com link temporário
+**[↑ Voltar para US-009](#us-009)** | **Característica:** [C01 — Upload e gestão de documentos](#c01) | **Requisito:** [RF-09](/fifa_team_hub/visao/levantamento-parcial#rf-09--download)
+
+* Link temporário válido por 15 minutos ou até o primeiro acesso
+* Download gera AuditLog com action=DOWNLOAD
+* Link expirado retorna HTTP 410 Gone
+
+### US-010 — Visualização de status
+**[↑ Voltar para US-010](#us-010)** | **Característica:** [C04 — Status e conformidade documentar](#c04) | **Requisito:** [RF-10](/fifa_team_hub/visao/levantamento-parcial#rf-10--status)
+
+* Status inicial de todo documento é PENDING
+* Estados exibidos com badge visual: PENDING (amarelo), APPROVED (verde), REJECTED (vermelho)
+* Documentos REJECTED exibem o comentário do Organizer
+
+### US-011 — Cadastro de seleção
+**[↑ Voltar para US-011](#us-011)** | **Característica:** [C05 — Autenticação e gestão](#c05) | **Requisito:** [RF-11](/fifa_team_hub/visao/levantamento-parcial#rf-11--selecao)
+
+* Organizer cadastra seleção com nome, código FIFA (3 letras maiúsculas) e bandeira opcional
+* Código FIFA único — duplicata retorna HTTP 409
+* Bandeira armazenada no GCS
+
+### US-012 — Isolamento inviolável
+**[↑ Voltar para US-012](#us-012)** | **Característica:** [C02 — Isolamento multi-tenant](#c02) | **Requisito:** [RF-12](/fifa_team_hub/visao/levantamento-parcial#rf-12--isolamento)
+
+* Toda query inclui filtro obrigatório por selection_id
+* Acesso cross-selection retorna HTTP 403 e gera AuditLog ACCESS_DENIED
+* Testes de isolamento executados e aprovados antes de cada release
+
+### US-013 — Upload de laudos médicos
+**[↑ Voltar para US-013](#us-013)** | **Característica:** [C01 — Upload e gestão de documentos](#c01) | **Requisito:** [RF-13](/fifa_team_hub/visao/levantamento-parcial#rf-13--laudo-upload)
+
+* Tipo LAUDO_MEDICO segue as mesmas regras de upload do RF-06
+* Registro contém: user_id, selection_id, nome do jogador (opcional), timestamp
+* Status inicial é PENDING
+
+### US-014 — Aprovação de laudos
+**[↑ Voltar para US-014](#us-014)** | **Característica:** [C04 — Status e conformidade documentar](#c04) | **Requisito:** [RF-14](/fifa_team_hub/visao/levantamento-parcial#rf-14--laudo-aprovacao)
+
+* Organizer aprova ou rejeita laudos PENDING
+* Rejeição sem comentário retorna HTTP 400
+* Mudança gera AuditLog com action=APPROVE ou REJECT
+
+### US-015 — Registo de eventos
+**[↑ Voltar para US-015](#us-015)** | **Característica:** [C03 — AuditLog imutável](#c03) | **Requisito:** [RF-15](/fifa_team_hub/visao/levantamento-parcial#rf-15--auditlog)
+
+* 100% dos eventos auditáveis registrados, incluindo falhas
+* Cada registro: user_id, action, resource_id, status, ip_address, timestamp
+* AuditLog é imutável — nenhum perfil pode editar ou excluir
+
+### US-016 — Painel de logs
+**[↑ Voltar para US-016](#us-016)** | **Característica:** [C03 — AuditLog imutável](#c03) | **Requisito:** [RF-16](/fifa_team_hub/visao/levantamento-parcial#rf-16--logs-painel)
+
+* Auditor filtra logs por ação, usuário, seleção e período
+* Conteúdo dos documentos nunca exposto nos logs
+
+### US-017 — Documentos táticos
+**[↑ Voltar para US-017](#us-017)** | **Característica:** [C01 — Upload e gestão de documentos](#c01) | **Requisito:** [RF-17](/fifa_team_hub/visao/levantamento-parcial#rf-17--tatico)
+
+* RELATORIO_TATICO e ESQUEMA_JOGADAS não aparecem na listagem do Organizer
+* Acesso externo retorna HTTP 403
+
+### US-018 — Armazenamento GCS
+**[↑ Voltar para US-018](#us-018)** | **Característica:** [C01 — Upload e gestão de documentos](#c01) | **Requisito:** [RF-18](/fifa_team_hub/visao/levantamento-parcial#rf-18--gcs)
+
+* Nenhum arquivo armazenado no servidor da aplicação
+* URL do GCS nunca exposta — apenas links assinados temporários
+* Falha no GCS retorna HTTP 503 sem persistir metadados incompletos
+
+---
+
+## Priorização Backlog (MoSCoW)
+
+<Aside type="note" title="Método MoSCoW">
+O **método MoSCoW** classifica funcionalidades em quatro categorias para ajudar a equipa a focar no essencial para o sucesso do projeto.
+</Aside>
+
+### Critérios de Classificação
+
+* **Must Have (Deve ter):** Se ausente, falha o objetivo principal do projeto. A solução não entrega seu valor essencial sem estas funcionalidades.
+* **Should Have (Deveria ter):** Alto valor agregado e melhoria significativa da experiência do utilizador. Implementado após Must Have.
+* **Could Have (Poderia ter):** Melhorias boas de ter, mas não críticas. Implementadas se tempo e recursos permitirem.
+* **Won't Have (Não terá agora):** Fora do escopo deste MVP. Reavaliadas em versões futures com feedback de uso real.
+
+### Pontuação de Esforço (Story Points)
+
+<Aside type="note" title="Pontuação">
+A pontuação vai de **0 a 20**, sendo:
+</Aside>
+
+* **0–5**: Simples → Implementação em 2 dias
+* **8–13**: Médio → Implementação em 5 dias
+* **15–20**: Complexo → Implementação em 10 dias
+
+### Must Have
+
+| **Funcionalidade** | **User Story** | **RF** | **Justificativa** | **Story Points** |
+|---|---|---|---|---|
+| Autenticação JWT com bcrypt | US-003 | RF-03 | Base de toda a segurança — sem autenticação, isolamento não funciona. | 8 |
+| Controle RBAC | US-005 | RF-05 | Segurança crítica — restrição de acesso é obrigatória em todas as rotas. | 8 |
+| Upload de documentos | US-006 | RF-06 | Core do produto — sem upload, não há funcionalidade. | 13 |
+| Listagem filtrada por seleção | US-008 | RF-08 | Core do produto — sem visualização, upload é inútil. | 8 |
+| Isolamento inviolável entre seleções | US-012 | RF-12 | Segurança crítica — RF determinante, testes em cada release. | 13 |
+| Registro imutável de eventos | US-015 | RF-15 | Auditoria obrigatória — conformidade LGPD depende disso. | 8 |
+| Armazenamento em GCS | US-018 | RF-18 | Arquitetura obrigatória — preparação para produção. | 8 |
+| Cadastro de usuários | US-001 | RF-01 | Core — sem cadastro, não há acesso. | 5 |
+| Troca de senha obrigatória | US-002 | RF-02 | Segurança crítica — força utilizadores a definir senha própria. | 3 |
+| Redirecionamento por perfil | US-004 | RF-04 | UX essencial — cada perfil precisa ver seu contexto correto. | 3 |
+
+### Should Have
+
+| **Funcionalidade** | **User Story** | **RF** | **Justificativa** | **Story Points** |
+|---|---|---|---|---|
+| Reenvio de versões | US-007 | RF-07 | Correção sem perda de rastreabilidade. | 5 |
+| Download com link temporário | US-009 | RF-09 | Segurança aprimorada — ficheiros não ficam expostos. | 5 |
+| Visualização de status | US-010 | RF-10 | Transparência para o utilizador. | 3 |
+| Cadastro de seleção | US-011 | RF-11 | Necessário para inicializar ambiente isolado. | 5 |
+| Upload de laudos médicos | US-013 | RF-13 | Cobertura de caso de uso específico. | 5 |
+| Aprovação de laudos | US-014 | RF-14 | Conformidade — aprovação estruturada e auditável. | 5 |
+| Painel de logs | US-016 | RF-16 | Auditor precisa investigar incidentes. | 5 |
+| Documentos táticos restritos | US-017 | RF-17 | Proteção de informações confidenciais. | 3 |
+
+### Won't Have
+
+| **Funcionalidade** | **Justificativa** |
+|---|---|
+| Notificações automáticas (e-mail/Slack) | Melhora comunicação mas não é crítica ao funcionamento. Implementada em v2. |
+| Relatórios analíticos avançados de ocupação | Análise profunda aguarda fase 2 com dados reais. |
+| Mobile app nativa | Responsividade web atende MVP. App reavaliada após feedback. |
+| Integração SSO (Google Workspace) | Autenticação manual funciona para MVP. SSO em v2. |
+
+---
+
+## MVP — Produto Mínimo Viável
+
+<Aside type="note" title="MVP">
+O **MVP** do FIFA Team Hub foi definido com base nas funcionalidades **Must Have** e **Should Have**, garantindo que comissões técnicas possam fazer upload, que o isolamento seja inviolável e que auditores rastreiem tudo.
+</Aside>
+
+### Escopo do MVP
+
+<CardGrid>
+  <Card title="✅ No MVP" icon="success">
+    **18 User Stories incluídas:**
+
+    - **Must Have (10):** US-001, US-002, US-003, US-004, US-005, US-006, US-008, US-012, US-015, US-018
+    - **Should Have (8):** US-007, US-009, US-010, US-011, US-013, US-014, US-016, US-017
+  </Card>
+
+  <Card title="⏸️ Pós-MVP" icon="warning">
+    **Não incluídas nesta versão:**
+
+    - Notificações automáticas
+    - Relatórios analíticos avançados
+    - Mobile app nativa
+    - Integração SSO
+  </Card>
+</CardGrid>
+
+**Total MVP: 18 User Stories | 117 Story Points**
+
+---
+
+## Histórico de Versão
+
+| Data | Versão | Descrição | Autor(es) | Revisor(es) |
+|------|--------|-----------|-----------|-------------|
+| 09/06/2026 | 1.0 | Criação do backlog com 18 User Stories, características C01–C05 e priorização MoSCoW. | Júlia Campos | Todos |
+| 09/06/2026 | 1.1 | Adição de critérios de aceitação detalhados e links bidirecionais com requisitos e solução. | Júlia Campos | Todos |
+| 18/06/2026 | 1.2 | Atualização do MVP com 18 US e 117 story points conforme sprints S9–S13. | Júlia Campos | Todos |

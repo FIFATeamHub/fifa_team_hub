@@ -1,0 +1,237 @@
+---
+title: Contexto e Necessidades
+description: Cenário atual e oportunidade de solução do FIFA Team Hub
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components'
+
+## Introdução ao Negócio e Contexto
+
+O **FIFA Team Hub** é um sistema desenvolvido no contexto do programa **AILAB Makers Fase 2**, com foco na gestão segura de documentos críticos de seleções nacionais de futebol. Comissões técnicas, equipes médicas e organizadores lidam diariamente com documentação sensível — convocações, passaportes, laudos médicos e relatórios táticos — sem um ambiente centralizado, auditável e seguro.
+
+### Perfis de Atuação
+
+<CardGrid>
+  <Card title="Comissão Técnica" icon="users">
+    **Technical Staff**
+
+    - Envio de convocações e documentos oficiais
+    - Upload de relatórios táticos e esquemas de jogadas
+    - Acesso restrito à própria seleção
+  </Card>
+
+  <Card title="Equipe Médica" icon="heart">
+    **Medical Staff**
+
+    - Upload de laudos médicos dos atletas
+    - Acompanhamento do status de aprovação
+    - Conformidade com regulações sanitárias
+  </Card>
+
+  <Card title="Organizador" icon="setting">
+    **Organizer**
+
+    - Visão burocrática de todas as seleções
+    - Aprovação e rejeição de laudos
+    - Cadastro de seleções no sistema
+  </Card>
+
+  <Card title="Auditor" icon="magnifier">
+    **Auditor**
+
+    - Acesso completo aos logs de eventos
+    - Cadastro de usuários no sistema
+    - Investigação de incidentes e conformidade
+  </Card>
+</CardGrid>
+
+### Contexto Operacional
+
+As seleções nacionais operam em ambiente de **alta sensibilidade informacional**, o que exige:
+
+- **Isolamento absoluto** entre dados de seleções distintas
+- **Rastreabilidade completa** de quem acessou o quê e quando
+- **Controle de acesso granular** por perfil e função
+- **Conformidade** com LGPD e regulações internacionais de proteção de dados
+- **Armazenamento seguro** em nuvem com links temporários
+
+---
+
+## Identificação da Oportunidade
+
+### Problema Atual
+
+<CardGrid>
+  <Card title="Gestão por E-mail" icon="document">
+    **Processo Fragmentado**
+
+    - Documentos trafegam por e-mail sem controle
+    - Versões desatualizadas em múltiplos destinatários
+    - Sem rastreabilidade de quem recebeu o quê
+  </Card>
+
+  <Card title="Drives Compartilhadas" icon="warning">
+    **Falta de Isolamento**
+
+    - Risco de exposição de dados entre seleções
+    - Sem controle de versão de documentos
+    - Acesso irrestrito a arquivos táticos sensíveis
+  </Card>
+
+  <Card title="Ausência de Auditoria" icon="close">
+    **Sem Rastreabilidade**
+
+    - Impossível saber quem baixou um laudo médico
+    - Nenhuma evidência de acesso para conformidade
+    - Violações de privacidade sem detecção
+  </Card>
+</CardGrid>
+
+### Análise de Causas e Efeitos
+
+Os principais vetores do problema identificados:
+
+- **Ausência de sistema centralizado**: cada seleção usa métodos próprios e incompatíveis
+- **Falta de controle de acesso**: drives compartilhadas sem restrição por seleção
+- **Ausência de auditoria**: nenhum log de acesso ou evento registrado
+- **Processo manual**: aprovações de laudos por e-mail, sem fluxo estruturado
+- **Risco de vazamento**: documentos táticos sem proteção adequada
+
+### Oportunidade de Solução
+
+<CardGrid>
+  <Card title="Portal Centralizado" icon="rocket">
+    **Ambiente Único**
+
+    - Upload estruturado por tipo de documento
+    - Histórico versionado de cada arquivo
+    - Interface self-service para comissões técnicas
+  </Card>
+
+  <Card title="Isolamento Multi-Tenant" icon="shield">
+    **Segurança por Design**
+
+    - Row-level filtering em todas as queries
+    - Impossibilidade técnica de cross-selection access
+    - Testes de isolamento bloqueadores em CI/CD
+  </Card>
+
+  <Card title="Auditoria Imutável" icon="approve-check">
+    **Conformidade Garantida**
+
+    - Logs de LOGIN, UPLOAD, DOWNLOAD, DELETE, ACCESS_DENIED
+    - Registros imutáveis com timestamp e IP
+    - Painel de investigação para auditores
+  </Card>
+
+  <Card title="Cloud Storage" icon="cloud">
+    **Infraestrutura Segura**
+
+    - Armazenamento no Google Cloud Storage
+    - Links temporários assinados (15 min)
+    - Criptografia em trânsito e em repouso
+  </Card>
+</CardGrid>
+
+---
+
+## Desafios do Projeto
+
+### Desafios Técnicos
+
+<CardGrid>
+  <Card title="Isolamento" icon="shield">
+    **Multi-Tenant Seguro**
+
+    - Row-level filtering obrigatório em toda query
+    - Testes de segurança em cada PR
+    - CI/CD bloqueia violações de isolamento
+  </Card>
+
+  <Card title="Storage em Nuvem" icon="cloud">
+    **Migração Local → GCS**
+
+    - Interface StorageService abstraída desde S10
+    - Migração transparente sem quebrar contratos
+    - Links assinados com expiração configurável
+  </Card>
+
+  <Card title="Auditoria" icon="magnifier">
+    **Logs Imutáveis**
+
+    - AuditLog não pode ser editado nem deletado
+    - Cobertura de 100% dos eventos auditáveis
+    - Falhas também são registradas
+  </Card>
+</CardGrid>
+
+### Desafios de Equipa
+
+<CardGrid>
+  <Card title="Rotação de Papéis" icon="refresh">
+    **Aprendizado Distribuído**
+
+    - Cada sprint tem novos membros em cada frente
+    - Pair programming para transferência de conhecimento
+    - Semanas 9 e 10 com primeiros contatos em BE real
+  </Card>
+
+  <Card title="Prazo Acadêmico" icon="clock">
+    **8 Sprints Semanais**
+
+    - MVP completo em S13
+    - Reunião semanal às quintas-feiras
+    - Issues entregues até sábado às 12h
+  </Card>
+</CardGrid>
+
+---
+
+## Segmentação de Usuários
+
+### Público-Alvo do Sistema
+
+<CardGrid>
+  <Card title="Technical Staff" icon="document">
+    **Comissão Técnica**
+
+    - Upload de convocações e documentos táticos
+    - Listagem da documentação da própria seleção
+    - Download via links temporários seguros
+  </Card>
+
+  <Card title="Organizer" icon="users">
+    **Organizador do Campeonato**
+
+    - Visão de convocações e passaportes de todas as seleções
+    - Aprovação e rejeição de laudos médicos
+    - Cadastro de novas seleções
+  </Card>
+
+  <Card title="Auditor" icon="magnifier">
+    **Auditor de Conformidade**
+
+    - Painel de logs filtráveis
+    - Investigação de tentativas de acesso indevido
+    - Cadastro e gestão de usuários
+  </Card>
+</CardGrid>
+
+---
+
+## Benefícios Esperados
+
+- **Isolamento inviolável** entre seleções — nenhuma seleção acessa dados de outra
+- **Rastreabilidade completa** de 100% dos eventos no sistema
+- **Conformidade LGPD** garantida por design, não por configuração
+- **Processo self-service** eliminando intermediários para upload de documentos
+- **Armazenamento seguro** sem exposição de URLs diretas
+- **Aprovação estruturada** de laudos médicos com comentários obrigatórios na rejeição
+- **Deploy em nuvem** com escalabilidade automática (Google Cloud Run)
+
+## Histórico de Versão
+
+| Data | Versão | Descrição | Autor(es) | Revisor(es) |
+|------|--------|-----------|-----------|-------------|
+| 28/05/2026 | 1.0 | Definição inicial do contexto e necessidades do projeto. | Júlia Campos | Todos |
+| 09/06/2026 | 1.1 | Atualização com desafios técnicos identificados nas sprints S9 e S10. | Júlia Campos | Todos |

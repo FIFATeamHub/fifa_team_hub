@@ -1,0 +1,78 @@
+---
+title: Processo de Engenharia de Software - FIFA Team Hub
+description: Processo de Engenharia de Software e suas fases aplicadas ao projeto FIFA Team Hub
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components'
+
+## Processo de Engenharia de Software
+
+### Atividades de Engenharia de Software
+
+<div class="softex-process">
+> Processo de Engenharia de Software adotado no **FIFA Team Hub**, dividido em fases iterativas (planejamento, análise, documentação, design, implementação, testes e deploy), adaptado ao modelo ágil e à rotação de papéis da equipe (Semanas 7 a 14).
+</div>
+
+<div class="fases-container">
+  <div class="fase-item">
+    <h3>1. Planejamento / Iniciação <span class="badge badge--purple">Início</span></h3>
+    <h4>Elicitação de Requisitos e Setup</h4>
+    <p><strong>O que faz:</strong> Levantamento inicial das necessidades de isolamento de dados (Multitenancy), permissões de usuários (RBAC) e definição da stack.</p>
+    <p><strong>Como faz:</strong> Reuniões de alinhamento pelo Discord, definição do escopo da arquitetura, papéis da equipe e setup inicial do repositório (Semana 7).</p>
+    <p><strong>Entrega:</strong> Documento de Visão, stack definida (Python, PostgreSQL, Docker) e mapeamento inicial.</p>
+  </div>
+
+  <div class="fase-item">
+    <h3>2. Análise e Especificação <span class="badge badge--info">Análise</span></h3>
+    <h4>Análise e Refinamento de Requisitos</h4>
+    <p><strong>O que faz:</strong> Refinamento, classificação e priorização das funcionalidades mapeadas, com foco nas restrições de negócio e segurança.</p>
+    <p><strong>Como faz:</strong> Priorização técnica (MoSCoW), workshops de refinamento no Discord para definir o fluxo do campeonato.</p>
+    <p><strong>Entrega:</strong> Backlog do Produto priorizado no GitHub Projects, definindo a criticidade de módulos como Autenticação JWT e Auditoria.</p>
+  </div>
+
+  <div class="fase-item">
+    <h3>3. Documentação <span class="badge badge--success">Documentação</span></h3>
+    <h4>Documentação de Histórias de Usuário</h4>
+    <p><strong>O que faz:</strong> Documentação clara e estruturada das funcionalidades a serem desenvolvidas nas próximas Sprints de rotação.</p>
+    <p><strong>Como faz:</strong> Escrita de Histórias de Usuário com critérios de aceite focados nos atores (Organizador, Comissão Técnica, Auditor, etc).</p>
+    <p><strong>Entrega:</strong> Cards e Issues detalhadas prontas para puxar para o desenvolvimento no GitHub Projects.</p>
+  </div>
+
+  <div class="fase-item">
+    <h3>4. Projeto (Design) <span class="badge badge--pink">Design</span></h3>
+    <h4>Modelagem e Arquitetura</h4>
+    <p><strong>O que faz:</strong> Validação da proposta de solução técnica e de interface antes do início massivo da codificação.</p>
+    <p><strong>Como faz:</strong> Modelagem de banco de dados (dbdiagram.io), prototipação de interfaces do frontend e definição de contratos de API via Postman.</p>
+    <p><strong>Entrega:</strong> Diagrama ER validado, contratos do backend fechados e UI alinhada com as necessidades da auditoria e gestão de times.</p>
+  </div>
+
+  <div class="fase-item">
+    <h3>5. Implementação <span class="badge badge--indigo">Desenvolvimento</span></h3>
+    <h4>Desenvolvimento e Rastreabilidade</h4>
+    <p><strong>O que faz:</strong> Codificação e integração contínua das funcionalidades seguindo a rotação de papéis estipulada (Semanas 8 a 12).</p>
+    <p><strong>Como faz:</strong> Rastreabilidade via Issues e Commits no GitHub, branches por feature, utilização de Docker Compose para conteinerização do ambiente local.</p>
+    <p><strong>Entrega:</strong> Código-fonte (Frontend e Backend) rastreável a uma História de Usuário, com rotas protegidas, uploads integrados e logs ativos.</p>
+  </div>
+
+  <div class="fase-item">
+    <h3>6. Teste e Validação <span class="badge badge--teal">Teste</span></h3>
+    <h4>Garantia de Qualidade e Isolamento</h4>
+    <p><strong>O que faz:</strong> Garantir que as lógicas implementadas (especialmente de isolamento de tenants) funcionam corretamente e não vazam informações entre as seleções.</p>
+    <p><strong>Como faz:</strong> Testes unitários no backend via <code>pytest</code>, avaliação por Code Review nos Pull Requests, pipelines de CI no GitHub Actions.</p>
+    <p><strong>Entrega:</strong> Pull requests com cobertura de testes satisfatória, funcionalidades blindadas contra falhas de injeção ou violação de acesso.</p>
+  </div>
+
+  <div class="fase-item">
+    <h3>7. Implantação e Entrega <span class="badge badge--danger">Entrega</span></h3>
+    <h4>Deploy e Monitoramento em Nuvem</h4>
+    <p><strong>O que faz:</strong> Disponibilizar a aplicação para os stakeholders, integrando serviços definitivos de storage e banco (Semanas 13 e 14).</p>
+    <p><strong>Como faz:</strong> Configuração final no Google Cloud Storage, persistência de metadados, checklist final para o release e apresentação de arquitetura.</p>
+    <p><strong>Entrega:</strong> MVP funcional em ambiente de produção contendo todas as funcionalidades validadas, pronto para a Demonstração Final.</p>
+  </div>
+</div>
+
+## Histórico de Versão
+
+| Data | Versão | Descrição | Autor(es) | Revisor(es) |
+|------|--------|-----------|-----------|-------------|
+| 07/07/2026 | 1.0 | Adaptação do documento de Engenharia de Software ao processo e arquitetura do projeto FIFA Team Hub. | Júlia Campos | Equipe FIFA Team Hub |

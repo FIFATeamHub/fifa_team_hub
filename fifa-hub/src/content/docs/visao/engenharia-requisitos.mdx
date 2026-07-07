@@ -1,0 +1,90 @@
+---
+title: Engenharia de Requisitos - FIFA Team Hub
+description: Processo de Engenharia de Requisitos vinculado ao processo de Engenharia de Software no projeto FIFA Team Hub
+---
+import { Card, CardGrid } from '@astrojs/starlight/components'
+
+<div class="softex-process">
+> O **Processo de Engenharia de Requisitos** do **FIFA Team Hub** abrange desde o levantamento das restrições arquiteturais e fluxos de usuário, até a modelagem, validação e gestão das regras de negócio (como o rígido isolamento de Multitenancy) aplicadas no ciclo de vida do desenvolvimento.
+</div>
+
+## Atividades de Engenharia de Requisitos
+
+### 1. Elicitação e Descoberta
+#### Reuniões de Alinhamento e Mapeamento de Papéis
+<ul class="softex-list">
+  <li>Conduzir sessões colaborativas através do **Discord** para capturar requisitos e definir as arquiteturas de nuvem.</li>
+  <li>Levantar as restrições e escopos de acesso de cada ator: **Atleta, Comissão Técnica (TECHNICAL_STAFF), Organizador (ORGANIZER) e Auditor (AUDITOR)**.</li>
+  <li>Definir a infraestrutura base: integração com **Google Cloud Storage** para upload e banco de dados **PostgreSQL**.</li>
+</ul>
+
+### 2. Análise e Consenso
+#### Priorização de Requisitos (Técnica MoSCoW)
+<div class="softex-process">
+> Classificar os requisitos Funcionais e Não Funcionais levantados para focar nos componentes de maior criticidade
+</div>
+<ul class="softex-flow">
+  <li>**Must-have** (essencial) — Isolamento total de dados entre as seleções (RF-12), logs e auditoria rigorosa de ações (RF-15), e autenticação segura com JWT (RE-02).</li>
+  <li>**Should-have** (importante) — Reenvio de documentos pelo TECHNICAL_STAFF mantendo o histórico de upload (RF-07), e fluxo de aprovação ou rejeição de laudos com comentário do Organizador (RF-14).</li>
+  <li>**Could-have** (desejável) — Filtros avançados e combinados para a visualização de logs pelo Auditor.</li>
+  <li>**Won't-have** (não terá nesta versão) — Modificações do sistema para que um usuário seja vinculado a mais de uma seleção simultaneamente.</li>
+</ul>
+
+### 3. Declaração de Requisitos
+#### Escrita de Histórias de Usuário e Diretrizes (RBAC)
+<div class="softex-process">
+> Descrever as permissões baseadas em controle de acesso:
+</div>
+<ul class="softex-list">
+  <li><strong>Como um Auditor</strong>, eu quero <em>cadastrar novos usuários e seleções com o código FIFA</em> para que <em>a base do campeonato esteja inicializada e configurada com segurança</em>.</li>
+  <li><strong>Como membro da Comissão Técnica</strong>, eu quero <em>realizar uploads de documentos (Convocações, Passaportes e Laudos) vinculados à minha seleção</em> para que <em>os critérios de aprovação do time sejam atendidos</em>.</li>
+  <li><strong>Como um Organizador</strong>, eu quero <em>visualizar e analisar a documentação (e aprovar laudos) de todas as seleções</em> para que <em>a validação burocrática das equipes aconteça de forma centralizada</em>.</li>
+</ul>
+
+### 4. Representação de Requisitos
+#### Modelagem Arquitetural e Prototipação
+<ul class="softex-list">
+  <li>Criar o **Diagrama de Entidade-Relacionamento (DER)** utilizando <em>dbdiagram.io</em> para planejar a estrutura do banco e mapear chaves relacionais essenciais.</li>
+  <li>Documentar a estrutura da API, payloads e validação de tokens JWT através do **Postman**, servindo como contrato de comunicação entre o Frontend (Vue 3) e o Backend (Flask).</li>
+</ul>
+
+### 5. Verificação e Validação de Requisitos
+#### Revisões Contínuas e Testes Unitários
+<ul class="softex-list">
+  <li>Estabelecer meta de **cobertura mínima de 60%** nos testes unitários do backend (RNF-10) verificados pelo pipeline de CI do GitHub Actions em cada Pull Request.</li>
+  <li>Promover avaliações e code reviews da arquitetura implementada (Semana 14) para garantir que endpoints não expõem falhas do particionamento de inquilino (Multitenancy).</li>
+</ul>
+
+### 6. Organização e Atualização de Requisitos
+#### Controle de Versão e CI/CD
+<ul class="softex-list">
+  <li>Manter versionamento estrito usando **Git e GitHub**, separando features em branches e atrelando todo código a um fluxo com Pull Requests.</li>
+  <li>Automatizar a gestão de qualidade da entrega com **GitHub Actions** bloqueando merges que falhem nas validações de cobertura.</li>
+</ul>
+
+## Ferramentas Utilizadas
+<div class="fases-container">
+  <div class="fase-item">
+    <h4>Comunicação</h4>
+    <p><strong>Discord</strong> — Reuniões, pareamento de código e alinhamentos semanais da equipe</p>
+    <p><strong>WhatsApp</strong> — Avisos rápidos e resoluções urgentes</p>
+  </div>
+  
+  <div class="fase-item">
+    <h4>Gestão e Documentação</h4>
+    <p><strong>GitHub (PRs/Actions)</strong> — Rastreamento de código, revisão por pares e esteira de CI/CD contínua</p>
+    <p><strong>Astro Starlight</strong> — Documentação consolidada da arquitetura (Docs)</p>
+  </div>
+  
+  <div class="fase-item">
+    <h4>Modelagem e Testes</h4>
+    <p><strong>dbdiagram.io</strong> — Esboços rápidos para a estrutura do banco (PostgreSQL)</p>
+    <p><strong>Postman</strong> — Testes da API, contratos e requisições backend</p>
+  </div>
+</div>
+
+## Histórico de Versão
+| Data | Versão | Descrição | Autor(es) | Revisor(es) |
+|------|--------|-----------|-----------|-------------|
+| 28/05/2026 | 1.0 | Adaptação e criação do documento de Engenharia de Requisitos focado na arquitetura do FIFA Team Hub. | Júlia Campos & João Sauma | Equipe FIFA Team Hub |
+

@@ -1,0 +1,197 @@
+---
+title: "API — Documentos"
+description: Endpoints de upload, listagem, download e exclusão de documentos
+---
+
+import { Card } from '@astrojs/starlight/components';
+
+# 📂 API — Documentos
+
+Todos os endpoints desta seção requerem obrigatoriamente autenticação via Bearer Token JWT.
+
+---
+
+## 📋 Modelo de Dados (Document Entity)
+
+### 📋 Modelo de Dados (Document Entity)
+
+
+| Campo | Tipo | Descrição |
+| :--- | :--- | :--- |
+| `id` | UUID | Identificador único |
+| `selection_id` | UUID | Seleção do documento (extraído do token, nunca do body) |
+| `uploaded_by` | UUID | ID do utilizador que fez upload |
+| `doc_type` | Enum | Tipo do documento (ver abaixo) |
+| `original_name` | String | Nome original do arquivo |
+| `stored_name` | String | UUID gerado + extensão do arquivo |
+| `storage_path` | String | `gs://bucket/...` (GCS) ou path local |
+| `file_size_kb` | Integer | Tamanho em KB |
+| `mime_type` | String | MIME type validado via python-magic |
+| `status` | Enum | PENDING, APPROVED, REJECTED |
+| `created_at` | DateTime | Data/hora do upload |
+| `deleted_at` | DateTime | Soft delete (null se ativo) |
+
+---
+
+**🏷️ Enums Disponíveis:**
+- **DocType:** `CONVOCACAO` \| `PASSAPORTE` \| `LAUDO_MEDICO` \| `RELATORIO_TATICO` \| `ESQUEMA_JOGADAS`
+- **DocStatus:** `PENDING` \| `APPROVED` \| `REJECTED`
+
+
+---
+
+## 📤 POST /documents/upload
+
+Faz upload de documento para a seleção do utilizador autenticado.
+
+- **Autenticação Requerida:** ✅ `Bearer <token>` (role: `TECHNICAL_STAFF`)
+- **Content-Type:** `multipart/form-data`
+
+### 📥 Parâmetros do Formulário
+
+| Campo | Tipo | Obrigatório |
+| :--- | :--- | :--- |
+| `file` | Arquivo binário | ✅ |
+| `doc_type` | String (Enum DocType) | ✅ |
+
+### 📦 Ver Resposta de Sucesso (201)
+
+
+```json
+{
+  "id": "uuid",
+  "original_name": "convocacao_brasil.pdf",
+  "doc_type": "CONVOCACAO",
+  "file_size_kb": 245,
+  "status": "PENDING",
+  "uploaded_by": "uuid-do-user",
+  "created_at": "2026-06-09T10:00:00Z"
+}
+```
+
+
+### 📊 Respostas de Erro
+
+| Status | Motivo |
+| :--- | :--- |
+| `400` | Ficheiro ausente no request |
+| `401` | Token ausente ou inválido |
+| `403` | Perfil sem permissão de upload |
+| `413` | Ficheiro excede 10 MB |
+| `415` | Formato de ficheiro não suportado |
+| `422` | doc_type inválido |
+| `503` | Falha ao armazenar (GCS indisponível) |
+
+---
+
+## 🔍 GET /documents
+
+Lista documentos filtrados pelo perfil do utilizador autenticado.
+
+- **Autenticação Requerida:** ✅ `Bearer <token>`
+
+### 🎛️ Parâmetros de Query (Opcionais)
+
+| Parâmetro | Tipo | Padrão | Descrição |
+| :--- | :--- | :--- | :--- |
+| `doc_type` | String | — | Filtrar por tipo de documento |
+| `page` | Integer | 1 | Número da página |
+| `per_page` | Integer | 20 | Itens por página |
+
+
+> 
+- **`TECHNICAL_STAFF`:** Retorna documentos da própria seleção (todos os tipos)
+- **`ORGANIZER`:** Retorna `CONVOCACAO` e `PASSAPORTE` de todas as seleções
+- **`AUDITOR`:** HTTP `403` (Acesso negado)
+
+
+### 📦 Ver Resposta de Sucesso (200)
+
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "original_name": "convocacao.pdf",
+      "doc_type": "CONVOCACAO",
+      "file_size_kb": 245,
+      "status": "PENDING",
+      "uploaded_by_name": "Josef Woljtyla",
+      "selection_code": "BRA",
+      "created_at": "2026-06-09T10:00:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "per_page": 20,
+    "total": 45,
+    "pages": 3
+  }
+}
+```
+
+
+---
+
+## 📥 GET /documents/:id/download
+
+Gera um link temporário e assinado para a realização do download seguro do arquivo.
+
+- **Autenticação Requerida:** ✅ `Bearer <token>`
+
+### 📦 Ver Resposta de Sucesso (200)
+
+
+```json
+{
+  "url": "https://storage.googleapis.com/bucket/...?X-Goog-Signature=...",
+  "expires_in_minutes": 15,
+  "filename": "convocacao_brasil.pdf"
+}
+```
+
+
+### 📊 Respostas e Códigos de Status
+
+| Status | Descrição |
+| :--- | :--- |
+| `200` | URL assinada gerada (válida por 15 min) |
+| `403` | Documento pertencente a outra seleção |
+| `404` | Documento não encontrado |
+| `410` | Documento excluído (o arquivo físico/blob não existe mais) |
+
+---
+
+## 🗑️ DELETE /documents/:id
+
+Realiza a exclusão lógica do documento (*soft delete*).
+
+- **Autenticação Requerida:** ✅ `Bearer <token>` (role: `TECHNICAL_STAFF` — apenas o próprio autor do upload)
+
+### 📊 Respostas e Códigos de Status
+
+| Status | Descrição |
+| :--- | :--- |
+| `204` | Documento excluído com sucesso |
+| `403` | Sem permissão (documento de outra seleção ou o usuário não é o autor) |
+| `404` | Documento não encontrado |
+
+---
+
+## 🛠️ Regras de Validação Geral
+
+
+> 
+- **Tamanho Máximo:** 10 MB por arquivo
+- **Formatos Aceitos:** PDF, JPG, JPEG, PNG, DOCX
+- **Validação de Integridade:** O tipo real do arquivo é validado via MIME type através da biblioteca `python-magic` (rejeitando alterações apenas na extensão)
+- **Segurança de Infraestrutura:** O `storage_path` real nunca é exposto nas respostas da API; apenas URLs assinadas e temporárias são distribuídas
+- **Segurança de Multitenancy:** O parâmetro `selection_id` é obrigatoriamente injetado a partir do token JWT e nunca aceito via payload do body
+
+
+---
+
+<Card title="🚀 Postman Collection" icon="download">
+Importe o arquivo `docs/postman/s10_documents.json` para testar localmente todos os fluxos e validações (Upload válido, erro 413, erro 415, bloqueio 403, listagem condicional, download e remoção).
+</Card>

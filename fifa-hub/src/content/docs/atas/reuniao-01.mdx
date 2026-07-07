@@ -1,0 +1,112 @@
+---
+title: "Reunião 01 — 28/05/2026"
+description: Definição do escopo inicial, stack tecnológica e requisitos de negócio do FIFA Team Hub
+---
+
+import { Card } from '@astrojs/starlight/components';
+
+# 📝 Ata de Reunião — 01
+
+<Card title="📌 Metadados da Reunião" icon="calendar">
+- **Data:** 28/05/2026
+- **Horário:** 21h30 às 23h00
+- **Canal:** Discord — Servidor Oficial do Grupo 4
+</Card>
+
+---
+
+## 👥 Participantes
+
+| Papel | Nome |
+|-------|------|
+| **Facilitadora** | Júlia Campos |
+| **Redator** | João Sauma |
+| **Presentes** | Arthur Miguel, Caio Felipe, João Sauma, Josef Woljtyla, Júlia Campos |
+| **Ausentes** | Nenhum |
+
+---
+
+## 🎯 Objetivo da Reunião
+
+Definição do escopo inicial do projeto **FIFA Team Hub**, alinhamento da stack tecnológica (Frontend, Backend, Banco de Dados, Storage e Autenticação), levantamento de requisitos de negócio primários e padronização do ambiente de desenvolvimento local.
+
+---
+
+## ⚙️ Decisões Técnicas e Arquitetura
+
+### 💻 Frontend
+- **Vue 3:** Escolhido pela menor curva de aprendizado para aplicação em projeto de prazo curto.
+- **CSS Puro:** Adotado para simplificar o desenvolvimento e otimizar o tempo, evitando frameworks de estilização complexos neste momento.
+
+### ⚙️ Backend
+- **Flask (Python):** Escolhido pela simplicidade de configuração e abordagem amigável para início dos estudos no ecossistema Python.
+
+### 🗄️ Banco de Dados & ORM
+- **PostgreSQL:** Banco relacional robusto, aproveitando familiaridade prévia do time com MySQL e SQLite.
+- **SQLAlchemy + Alembic:** ORM e ferramenta de migração oficial para integração nativa com Python/Flask.
+
+### 🔐 Segurança & Autenticação
+- **python-jose + jsonwebtoken:** Implementação de autenticação segura baseada em tokens JWT.
+
+### ☁️ Infraestrutura & Storage
+- **Google Cloud Storage:** Definido como obrigatório pelos pré-requisitos do projeto para armazenamento seguro de arquivos.
+
+---
+
+## 💡 Requisitos e Regras de Negócio
+
+### 👥 Atores e Perfis de Usuário
+O sistema contará com 4 perfis definidos:
+- 🏃 **Atleta:** responsável pelo upload dos próprios documentos
+- 📋 **Comissão Técnica:** acesso restrito à própria seleção
+- 🩺 **Comissão Médica:** gestão de laudos médicos
+- 👑 **Organizador:** visão global e irrestrita
+
+### 🔒 Isolamento e Regras de Acesso
+- Um usuário comum não pode pertencer a mais de uma seleção
+- A Comissão Técnica possui acesso exclusivo aos documentos da sua seleção (*multitenancy*)
+- O Organizador possui visão global sobre todas as seleções
+
+### 📂 Gestão de Documentos
+- O Atleta é responsável pelo upload inicial dos arquivos (Passaporte, Laudos, etc.)
+- Formatos aceitos: `.pdf` e `.jpg`
+- Exclusão permitida apenas pelo Organizador ou pelo próprio Atleta que fez upload
+
+
+> 
+- Pendente ➡️ Aprovado
+- Pendente ➡️ Rejeitado
+
+
+
+> 
+Uma seleção só é considerada **"Confirmada"** quando **todos** os documentos obrigatórios de todos os membros forem submetidos.
+
+
+---
+
+## 🛠️ Ferramental da Equipe
+
+| Ferramenta | Finalidade |
+|------------|------------|
+| **WhatsApp** | Avisos rápidos e urgentes |
+| **Discord** | Reuniões, alinhamentos e pareamento |
+| **Docker** | Containerização e padronização de ambiente |
+| **DBeaver** | Cliente oficial para PostgreSQL |
+| **Postman** | Testes e consumo das rotas da API |
+| **dbdiagram.io** | Design do modelo de dados |
+
+---
+
+## 🚀 Plano de Ação
+
+- [x] **T01:** Instalar e configurar ambiente local (Docker, DBeaver, Postman) — *Responsável: Todos* (Prazo: 30/05)
+- [x] **T02:** Esboçar primeira versão do DER no dbdiagram.io — *Responsável: Todos* (Prazo: Próxima reunião)
+
+---
+
+## ⚠️ Próxima Pauta
+
+- Validação em grupo do diagrama de entidades (DER)
+- Criação do repositório base na organização GitHub
+- Divisão oficial das primeiras tarefas de código (Setup do Flask e do Vue 3)

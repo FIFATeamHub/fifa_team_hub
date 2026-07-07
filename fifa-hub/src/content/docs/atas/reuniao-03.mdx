@@ -1,0 +1,97 @@
+---
+title: "Reunião 03 — 18/06/2026"
+description: Retrospectiva da Semana 10 e planejamento da Semana 11 — Google Cloud Storage
+---
+
+import { Card } from '@astrojs/starlight/components';
+
+# 📝 Ata de Reunião — 03
+
+<Card title="📌 Metadados da Reunião" icon="calendar">
+- **Data:** 18/06/2026
+- **Canal:** Discord — Servidor Oficial do Grupo 4
+</Card>
+
+---
+
+## 👥 Participantes
+
+| Papel | Nome |
+| :--- | :--- |
+| **Facilitadora** | Júlia Campos |
+| **Presentes** | Arthur Miguel, Caio Felipe, João Sauma, Júlia Campos |
+| **Ausentes** | Josef Woljtyla |
+
+---
+
+## 🎯 Objetivo da Reunião
+
+- Retrospectiva da Semana 10 (Upload e Listagem)
+- Definição e planejamento da Semana 11 (Cloud Storage — GCS)
+
+---
+
+## 🗣️ Entregas Reportadas — Semana 10
+
+### 👤 Arthur Miguel
+
+
+Realizou a implementação do método DELETE de documentos.
+
+
+### 👤 João Sauma
+
+
+Implementou a listagem de documentos com filtro, no frontend.
+
+
+### 👤 Caio Felipe
+
+
+Implementou o upload de documentos, GET /documents, GET /documents por id e o AuditLog.
+
+
+---
+
+## ✅ Decisões e Padronizações
+
+Duas decisões importantes foram tomadas para padronizar o desenvolvimento:
+
+
+> 
+**PRs com conflito serão negados diretamente.** Todo PR deve ser aberto com a branch devidamente atualizada em relação à `develop`. Conflitos devem ser resolvidos pelo autor antes de submeter o code review.
+
+
+
+> 
+**Variáveis devem seguir o padrão em inglês e minúsculo.** Todas as variáveis de ambiente, nomes de campos e configurações seguem estritamente esse padrão. Exemplo: `gcs_bucket_name`, evitando variações como `BUCKET` ou `nomeBucket`.
+
+
+---
+
+## 🚀 Planejamento — Semana 11
+
+### **Tema:** Storage e Persistência — Google Cloud Storage + Metadados
+
+| Frente | Responsáveis | Foco |
+| :--- | :--- | :--- |
+| **Backend** | Caio (Âncora) + Júlia (1ª vez BE real) | Integração GCS, GCSStorageService, links assinados |
+| **Frontend** | Josef (Âncora) + Arthur (2ª vez FE) | Exibir arquivos via URL GCS, preview na listagem |
+| **DevOps** | Arthur (Protagonista) + João (Âncora) | Bucket GCS, service account, credenciais, deploy Cloud Run |
+| **Docs** | João (Responsável) | Como criar bucket, variáveis de ambiente, diagrama de fluxo |
+
+### 📋 Issues S11 a serem abertas:
+- [ ] `S11-BE-01` GCSStorageService
+- [ ] `S11-BE-02` Links temporários assinados no download
+- [ ] `S11-DO-01` Bucket + service account + permissões
+- [ ] `S11-DO-02` Docker Compose + Cloud Run preparation
+- [ ] `S11-FE-01` Frontend adaptado para URLs GCS
+- [ ] `S11-QA-01` Testes de isolamento com GCS
+
+---
+
+## ⚠️ Próxima Pauta
+
+- Retrospectiva da Semana 11
+- Planejamento da Semana 12 (Logs e Auditoria)
+- Status do deploy em Cloud Run

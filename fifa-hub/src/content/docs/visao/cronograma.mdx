@@ -1,0 +1,270 @@
+---
+title: Cronograma e Entregas
+description: Cronograma detalhado do projeto FIFA Team Hub com marcos e entregas planejadas por sprint.
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components'
+
+Metodologia ágil com sprints semanais — 8 sprints de desenvolvimento (S7–S14) com rotação de papéis entre frentes técnicas.
+
+## Timeline do Projeto
+
+### Fases do Projeto
+
+<div class="fases-container">
+  <div class="fase-item">
+    <h4>📋 Preparação</h4>
+    <p><strong>Período:</strong> Semanas 7 e 8</p>
+    <p><strong>Sprints:</strong> S7, S8</p>
+    <p><strong>Foco:</strong> Planejamento, stack, repositório e estrutura inicial</p>
+  </div>
+
+  <div class="fase-item">
+    <h4>🔐 Segurança Core</h4>
+    <p><strong>Período:</strong> Semana 9</p>
+    <p><strong>Sprint:</strong> S9</p>
+    <p><strong>Foco:</strong> Autenticação JWT, RBAC, isolamento e CI/CD</p>
+  </div>
+
+  <div class="fase-item">
+    <h4>📁 Funcionalidade Core</h4>
+    <p><strong>Período:</strong> Semanas 10 e 11</p>
+    <p><strong>Sprints:</strong> S10, S11</p>
+    <p><strong>Foco:</strong> Upload, listagem, GCS e links assinados</p>
+  </div>
+
+  <div class="fase-item">
+    <h4>📊 Auditoria e Laudos</h4>
+    <p><strong>Período:</strong> Semana 12</p>
+    <p><strong>Sprint:</strong> S12</p>
+    <p><strong>Foco:</strong> AuditLog completo, aprovação de laudos, painel auditor</p>
+  </div>
+
+  <div class="fase-item">
+    <h4>🚀 Deploy e Entrega</h4>
+    <p><strong>Período:</strong> Semanas 13 e 14</p>
+    <p><strong>Sprints:</strong> S13, S14</p>
+    <p><strong>Foco:</strong> Deploy em GCP, hardening e demonstração final</p>
+  </div>
+</div>
+
+### Marcos Importantes
+
+<div class="marcos-container">
+  <div class="marco-item">
+    <div class="marco-bola">●</div>
+    <div class="marco-content">
+      <strong>S8 (28/05 – 04/06)</strong>: Repositório configurado, Docker Compose funcional, estruturas BE e FE prontas
+    </div>
+  </div>
+
+  <div class="marco-item">
+    <div class="marco-bola">●</div>
+    <div class="marco-content">
+      <strong>S9 (05/06 – 12/06)</strong>: Autenticação completa, CI/CD ativo, 34 requisitos documentados, GitHub Pages no ar
+    </div>
+  </div>
+
+  <div class="marco-item">
+    <div class="marco-bola">●</div>
+    <div class="marco-content">
+      <strong>S10 (13/06 – 19/06)</strong>: Upload e listagem funcionais, isolamento testado e aprovado, AuditLog ativo
+    </div>
+  </div>
+
+  <div class="marco-item">
+    <div class="marco-bola">●</div>
+    <div class="marco-content">
+      <strong>S11 (20/06 – 26/06)</strong>: Migração para GCS completa, links temporários assinados funcionais
+    </div>
+  </div>
+
+  <div class="marco-item">
+    <div class="marco-bola">●</div>
+    <div class="marco-content">
+      <strong>S12 (27/06 – 03/07)</strong>: Painel de auditoria, aprovação de laudos, MVP funcional fechado
+    </div>
+  </div>
+
+  <div class="marco-item">
+    <div class="marco-bola">●</div>
+    <div class="marco-content">
+      <strong>S13 (04/07 – 10/07)</strong>: MVP em produção no Google Cloud Run com URL pública
+    </div>
+  </div>
+
+  <div class="marco-item">
+    <div class="marco-bola">●</div>
+    <div class="marco-content">
+      <strong>S14 (11/07 – 17/07)</strong>: Demonstração final, ajustes e encerramento do projeto
+    </div>
+  </div>
+</div>
+
+---
+
+## Sprints Detalhadas
+
+### Fase: Preparação
+
+<CardGrid>
+  <Card title="Sprint S7 — Planejamento">
+    **28/05 – 04/06/2026**
+
+    **Atividades:**
+    - Definição do escopo e proposta de valor
+    - Escolha da stack tecnológica
+    - Organização da equipa e rotação de papéis
+    - Levantamento inicial de requisitos
+
+    **Entregas:** Documento de visão, stack definida, cronograma de sprints
+    **Validação:** Interna (reunião 28/05)
+  </Card>
+
+  <Card title="Sprint S8 — Estrutura Inicial">
+    **04/06 – 09/06/2026**
+
+    **Atividades:**
+    - Setup Flask + PostgreSQL + Docker Compose
+    - Setup Vue 3 + TypeScript + Pinia
+    - Configuração de branches e políticas de PR
+    - Estrutura de pastas e padrões de commit
+
+    **Entregas:** Repositório funcional, `GET /health → 200`, ambiente local rodando
+    **Validação:** Todos conseguem `docker compose up` sem erros
+  </Card>
+</CardGrid>
+
+---
+
+### Fase: Segurança Core — Must Have
+
+<CardGrid>
+  <Card title="Sprint S9 — Autenticação e RBAC">
+    **09/06 – 16/06/2026**
+
+    **Atividades (ligadas ao MoSCoW):**
+    - Modelo User + migration Alembic (US-001)
+    - AuthService bcrypt + JWT (US-002, US-003)
+    - Endpoints /auth/register, /login, /me
+    - Decorator @require_auth + @require_role (US-005)
+    - Telas Login e Cadastro Vue 3 (US-004)
+    - CI/CD GitHub Actions (RNF-10)
+    - 34 Requisitos documentados (RF, RNF, RE)
+
+    **Entregas:** Autenticação completa, CI/CD ativo, GitHub Pages no ar
+    **Validação:** Técnica + documentação IEEE 830
+  </Card>
+</CardGrid>
+
+---
+
+### Fase: Funcionalidade Core — Must Have
+
+<CardGrid>
+  <Card title="Sprint S10 — Upload e Listagem">
+    **13/06 – 19/06/2026**
+
+    **Atividades (ligadas ao MoSCoW):**
+    - Endpoint POST /documents/upload (US-006)
+    - Validação MIME type via python-magic (RF-06)
+    - Listagem filtrada por selection_id (US-008)
+    - Soft delete de documentos (RF-06)
+    - Componente UploadDocumentModal.vue
+    - Componente DocumentList.vue com badges
+    - Testes de isolamento bloqueadores (US-012)
+
+    **Entregas:** Upload e listagem funcionais, isolamento testado
+    **Validação:** Técnica + testes cross-selection
+  </Card>
+
+  <Card title="Sprint S11 — Cloud Storage">
+    **20/06 – 26/06/2026**
+
+    **Atividades (ligadas ao MoSCoW):**
+    - Criar bucket GCS + service account (US-018)
+    - Implementar GCSStorageService (US-018)
+    - Links temporários assinados 15 min (US-009)
+    - Atualizar frontend para URLs GCS
+    - Docker Compose com fake-gcs para dev
+    - Preparar Cloud Run deployment (RNF-09)
+
+    **Entregas:** GCS integrado, links assinados funcionais
+    **Validação:** Técnica + testes de isolamento com GCS
+  </Card>
+</CardGrid>
+
+---
+
+### Fase: Auditoria e Laudos — Should Have
+
+<CardGrid>
+  <Card title="Sprint S12 — Logs e Auditoria">
+    **27/06 – 03/07/2026**
+
+    **Atividades (ligadas ao MoSCoW):**
+    - AuditLog completo imutável (US-015)
+    - Painel de logs para Auditor (US-016)
+    - Aprovação e rejeição de laudos médicos (US-014)
+    - Status visual de documentos (US-010)
+    - Restrição de documentos táticos (US-017)
+    - MVP funcional fechado
+
+    **Entregas:** Auditoria completa, aprovação de laudos, MVP fechado
+    **Validação:** Interna + checklist MVP
+  </Card>
+</CardGrid>
+
+---
+
+### Fase: Deploy e Entrega
+
+<CardGrid>
+  <Card title="Sprint S13 — Deploy GCP">
+    **04/07 – 10/07/2026**
+
+    **Atividades:**
+    - Deploy em Google Cloud Run (RNF-09)
+    - Cloud SQL configurado em produção
+    - GCS em produção com credenciais reais
+    - Testes de carga e performance (RNF-03)
+    - URL pública funcional
+    - Hardening de segurança
+
+    **Entregas:** MVP em produção, URL pública
+    **Validação:** Técnica + smoke tests em produção
+  </Card>
+
+  <Card title="Sprint S14 — Demonstração Final">
+    **11/07 – 17/07/2026**
+
+    **Atividades:**
+    - Demonstração completa do sistema
+    - Ajustes finais baseados em feedback
+    - Documentação técnica finalizada
+    - GitHub Pages completo e atualizado
+    - Encerramento e retrospectiva geral
+
+    **Entregas:** Projeto encerrado, documentação completa
+    **Validação:** Apresentação final ao avaliador
+  </Card>
+</CardGrid>
+
+---
+
+## Rituais da Equipa
+
+| Ritual | Frequência | Canal | Objetivo |
+|--------|-----------|-------|----------|
+| Reunião de Sprint | Toda quinta-feira | Discord | Retrospectiva + planejamento da próxima sprint |
+| Prazo de issues | Sábado 12h | GitHub Issues | Entrega das tarefas da sprint |
+| Code Review | A cada PR | GitHub | Qualidade, segurança, isolamento |
+| CI/CD | A cada PR | GitHub Actions | Testes + lint bloqueadores |
+
+## Histórico de Versão
+
+| Data | Versão | Descrição | Autor(es) | Revisor(es) |
+|------|--------|-----------|-----------|-------------|
+| 28/05/2026 | 1.0 | Criação do cronograma inicial com sprints S7–S14. | Júlia Campos | Todos |
+| 09/06/2026 | 1.1 | Detalhamento de S9 e atualização de marcos. | Júlia Campos | Todos |
+| 18/06/2026 | 1.2 | Atualização de S10 e S11 com entregas confirmadas. | Júlia Campos | Todos |

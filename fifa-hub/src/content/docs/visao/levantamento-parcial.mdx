@@ -1,0 +1,287 @@
+---
+title: Requisitos do Sistema
+description: Requisitos funcionais, não funcionais e externos do FIFA Team Hub
+---
+
+## Requisitos Funcionais
+
+<div class="softex-process">
+> Os requisitos funcionais definem **o que o sistema deve fazer** para atender às necessidades das comissões técnicas, organizadores e auditores das seleções nacionais.
+</div>
+
+### Objetivo — Autenticação e Gestão de Acesso
+
+#### <span id="rf-01--cadastrar-usuários">RF-01 — Cadastrar usuários</span> <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>O sistema DEVERÁ permitir que o Auditor cadastre novos usuários informando nome, e-mail, senha provisória e perfil (TECHNICAL_STAFF, ORGANIZER, AUDITOR)</li>
+  <li>E-mail duplicado DEVERÁ ser rejeitado com HTTP 409</li>
+  <li>Senha DEVERÁ ser armazenada exclusivamente como hash bcrypt — nunca em texto plano</li>
+</ul>
+
+#### <span id="rf-02--troca-senha">RF-02 — Troca de senha obrigatória no primeiro acesso</span> <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>O sistema DEVERÁ bloquear o acesso ao dashboard enquanto a senha provisória não for trocada</li>
+  <li>A nova senha DEVERÁ ter no mínimo 8 caracteres</li>
+  <li>A senha provisória DEVERÁ ser invalidada imediatamente após a troca</li>
+</ul>
+
+#### <span id="rf-03--autenticacao">RF-03 — Autenticação com JWT</span> <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>O sistema DEVERÁ autenticar usuários via e-mail e senha e emitir token JWT com validade máxima de 60 minutos</li>
+  <li>Credenciais inválidas DEVERÃO retornar HTTP 401 sem revelar qual campo está errado</li>
+  <li>O payload do JWT DEVERÁ conter: user_id, role, selection_id, exp</li>
+</ul>
+
+#### <span id="rf-04--redirecionamento">RF-04 — Redirecionamento por perfil após login</span> <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>TECHNICAL_STAFF DEVERÁ ser redirecionado ao dashboard de documentos da própria seleção</li>
+  <li>ORGANIZER DEVERÁ ser redirecionado à visão burocrática geral</li>
+  <li>AUDITOR DEVERÁ ser redirecionado ao painel de logs</li>
+</ul>
+
+#### <span id="rf-05--rbac">RF-05 — Controle de acesso por perfil (RBAC)</span> <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>O sistema DEVERÁ restringir ações e dados com base no perfil do usuário autenticado</li>
+  <li>Acesso fora do escopo do perfil DEVERÁ retornar HTTP 403</li>
+  <li>Toda violação de acesso DEVERÁ gerar entrada no AuditLog com action=ACCESS_DENIED</li>
+</ul>
+
+---
+
+### Objetivo — Upload e Gestão de Documentos
+
+#### <span id="rf-06--upload">RF-06 — Upload de documentos</span> <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>O sistema DEVERÁ permitir que TECHNICAL_STAFF faça upload de documentos associados à sua seleção</li>
+  <li>Tipos aceitos: CONVOCACAO, PASSAPORTE, LAUDO_MEDICO, RELATORIO_TATICO, ESQUEMA_JOGADAS</li>
+  <li>Formatos aceitos: PDF, JPG, JPEG, PNG, DOCX com tamanho máximo de 10 MB</li>
+  <li>O MIME type DEVERÁ ser validado no servidor via python-magic — nunca pela extensão do arquivo</li>
+  <li>O selection_id DEVERÁ ser preenchido automaticamente pelo sistema a partir do JWT</li>
+</ul>
+
+<div class="softex-process">
+> **Tratamento de erros obrigatório:**
+</div>
+
+<ul class="softex-flow">
+  <li>Arquivo ausente → HTTP 400</li>
+  <li>Tamanho excedido → HTTP 413</li>
+  <li>MIME type não permitido → HTTP 415</li>
+  <li>doc_type inválido → HTTP 422</li>
+  <li>Falha no GCS → HTTP 503 sem persistir metadados incompletos</li>
+</ul>
+
+#### <span id="rf-07--reupload">RF-07 — Reenvio de documento (versionamento)</span> <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>O sistema DEVERÁ permitir que o autor original substitua um documento por nova versão</li>
+  <li>A versão anterior DEVERÁ ser marcada como histórica, nunca excluída</li>
+  <li>O reenvio DEVERÁ gerar registro no AuditLog com action=REUPLOAD</li>
+</ul>
+
+#### <span id="rf-08--listagem">RF-08 — Listagem de documentos filtrada por seleção</span> <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>O filtro por selection_id DEVERÁ ser aplicado no backend — nunca confiando no frontend</li>
+  <li>TECHNICAL_STAFF DEVERÁ visualizar apenas documentos da própria seleção (todos os tipos)</li>
+  <li>ORGANIZER DEVERÁ visualizar apenas CONVOCACAO e PASSAPORTE de todas as seleções</li>
+  <li>AUDITOR DEVERÁ receber HTTP 403 ao tentar listar documentos</li>
+  <li>A listagem DEVERÁ suportar paginação e filtro por doc_type</li>
+</ul>
+
+#### <span id="rf-09--download">RF-09 — Download com link temporário assinado</span> <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>O sistema DEVERÁ gerar links temporários assinados com validade de 15 minutos</li>
+  <li>O link DEVERÁ expirar após o primeiro acesso ou após o prazo, o que ocorrer primeiro</li>
+  <li>Download DEVERÁ gerar registro no AuditLog com action=DOWNLOAD</li>
+  <li>Link expirado DEVERÁ retornar HTTP 410 Gone</li>
+</ul>
+
+#### <span id="rf-10--status">RF-10 — Visualização de status do documento</span> <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>O sistema DEVERÁ exibir o status de cada documento: PENDING, APPROVED ou REJECTED</li>
+  <li>Documentos REJECTED DEVERÃO exibir o comentário do Organizer</li>
+  <li>Mudança de status DEVERÁ ser refletida no próximo carregamento da interface</li>
+</ul>
+
+---
+
+### Objetivo — Gestão de Seleções
+
+#### <span id="rf-11--selecao">RF-11 — Cadastro de seleção</span> <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>O sistema DEVERÁ permitir que o Organizer cadastre seleções com nome completo, código FIFA (3 letras maiúsculas) e bandeira opcional</li>
+  <li>O código FIFA DEVERÁ ser único — duplicata retorna HTTP 409</li>
+  <li>A bandeira DEVERÁ ser armazenada no Google Cloud Storage</li>
+</ul>
+
+#### <span id="rf-12--isolamento">RF-12 — Isolamento inviolável entre seleções</span> <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>O sistema DEVERÁ garantir que nenhum usuário acesse documentos ou metadados de uma seleção diferente da sua</li>
+  <li>Toda query ao banco DEVERÁ incluir filtro obrigatório por selection_id</li>
+  <li>Tentativa de acesso cross-selection DEVERÁ retornar HTTP 403 e gerar AuditLog ACCESS_DENIED</li>
+  <li>Testes de isolamento DEVERÃO ser executados e aprovados antes de cada release</li>
+</ul>
+
+---
+
+### Objetivo — Laudos Médicos
+
+#### <span id="rf-13--laudo-upload">RF-13 — Upload de laudo médico</span> <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>O sistema DEVERÁ permitir upload de laudos vinculados a um atleta específico com status inicial PENDING</li>
+  <li>O tipo LAUDO_MEDICO DEVERÁ seguir as mesmas regras de validação do RF-06</li>
+  <li>O registro DEVERÁ conter: user_id, selection_id, nome do jogador (opcional) e timestamp</li>
+</ul>
+
+#### <span id="rf-14--laudo-aprovacao">RF-14 — Aprovação e rejeição de laudos</span> <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>O sistema DEVERÁ permitir que o Organizer aprove ou rejeite laudos com status PENDING</li>
+  <li>A rejeição sem comentário DEVERÁ retornar HTTP 400</li>
+  <li>Mudança de status DEVERÁ gerar registro no AuditLog com action=APPROVE ou REJECT</li>
+</ul>
+
+---
+
+### Objetivo — Logs e Auditoria
+
+#### <span id="rf-15--auditlog">RF-15 — Registro imutável de eventos</span> <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>O sistema DEVERÁ registrar automaticamente 100% dos eventos auditáveis, incluindo falhas</li>
+  <li>Cada registro DEVERÁ conter: user_id, action, resource_id, status (SUCCESS/FAILURE), ip_address, timestamp</li>
+  <li>Registros do AuditLog DEVERÃO ser imutáveis — nenhum perfil pode editar ou excluir</li>
+</ul>
+
+#### <span id="rf-16--logs-painel">RF-16 — Painel de logs para Auditor</span> <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>O Auditor DEVERÁ visualizar o histórico completo de eventos com filtros por ação, usuário, seleção e período</li>
+  <li>O conteúdo dos documentos NUNCA DEVERÁ ser exposto nos logs</li>
+</ul>
+
+---
+
+### Objetivo — Segurança de Documentos Táticos
+
+#### <span id="rf-17--tatico">RF-17 — Restrição de documentos táticos</span> <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>Os tipos RELATORIO_TATICO e ESQUEMA_JOGADAS NUNCA DEVERÃO aparecer na listagem do Organizer</li>
+  <li>Tentativa de acesso externo a documentos táticos DEVERÁ retornar HTTP 403</li>
+</ul>
+
+---
+
+### Objetivo — Infraestrutura e Storage
+
+#### <span id="rf-18--gcs">RF-18 — Armazenamento em Google Cloud Storage</span> <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>O sistema DEVERÁ armazenar todos os arquivos no GCS — nenhum arquivo no servidor da aplicação</li>
+  <li>A URL do GCS NUNCA DEVERÁ ser exposta diretamente ao cliente — apenas links assinados temporários</li>
+  <li>Falha no GCS durante upload DEVERÁ retornar HTTP 503 sem persistir metadados incompletos</li>
+</ul>
+
+---
+
+## Requisitos Não Funcionais
+
+<div class="softex-process">
+> Os requisitos não funcionais definem **como o sistema deve funcionar** em termos de qualidade, performance, segurança e restrições técnicas.
+</div>
+
+### Requisitos de Segurança
+
+#### RNF-01 — Hash de senha <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>O sistema DEVERÁ usar bcrypt com fator de custo ≥ 10 para hash de senhas</li>
+  <li>O hash NUNCA DEVERÁ aparecer em responses da API</li>
+</ul>
+
+#### RNF-02 — Row-level filtering <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>Toda query ao banco que acesse documentos ou metadados DEVERÁ incluir filtro obrigatório por selection_id</li>
+  <li>A omissão deste filtro DEVERÁ ser detectada por testes automatizados bloqueadores</li>
+</ul>
+
+### Requisitos de Performance
+
+#### RNF-03 — Tempo de resposta <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>Listagem e autenticação DEVERÃO responder em menos de 500ms no p95 com 10 usuários simultâneos</li>
+</ul>
+
+#### RNF-04 — Disponibilidade <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>O sistema DEVERÁ garantir uptime mínimo de 99% durante os sprints S13 e S14</li>
+</ul>
+
+### Requisitos de Processo
+
+#### RNF-05 — Cobertura de testes <span class="badge badge--alta">Alta</span>
+
+<ul class="softex-list">
+  <li>O backend DEVERÁ manter cobertura mínima de 60% verificada via `pytest --cov-fail-under=60` no CI</li>
+</ul>
+
+#### RNF-06 — Ambiente reproduzível <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>O comando `docker compose up` DEVERÁ subir o ambiente completo a partir de clone limpo sem erros</li>
+  <li>O endpoint `/health` DEVERÁ retornar HTTP 200 em menos de 30 segundos após o start</li>
+</ul>
+
+### Requisitos Externos
+
+#### RNF-07 — Compatibilidade de navegadores <span class="badge badge--media">Média</span>
+
+<ul class="softex-list">
+  <li>O sistema DEVERÁ funcionar sem erros no Chrome, Firefox e Edge (versões atuais)</li>
+</ul>
+
+#### RNF-08 — Conformidade LGPD <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>O sistema DEVERÁ implementar HTTPS em produção, menor privilégio e ausência de compartilhamento não documentado de dados pessoais</li>
+</ul>
+
+#### RNF-09 — Deploy em GCP <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>O sistema DEVERÁ ser implantado em Google Cloud Run + Cloud SQL + Cloud Storage com URL pública funcional na S13</li>
+</ul>
+
+#### RNF-10 — CI/CD obrigatório <span class="badge badge--critica">Crítica</span>
+
+<ul class="softex-list">
+  <li>O GitHub Actions DEVERÁ executar testes e lint em todo PR para develop e main</li>
+  <li>Badge de status DEVERÁ estar visível no README</li>
+  <li>PR com CI falhando DEVERÁ ser bloqueado de merge automaticamente</li>
+</ul>
+
+---
+
+## Histórico de Versão
+
+| Data | Versão | Descrição | Autor(es) | Revisor(es) |
+|------|--------|-----------|-----------|-------------|
+| 28/05/2026 | 1.0 | Levantamento inicial de requisitos na reunião de kick-off. | Júlia Campos, Josef Woljtyla | Todos |
+| 09/06/2026 | 2.0 | Documentação formal com 18 RFs, 10 RNFs no padrão IEEE 830 com MoSCoW. | Júlia Campos | Todos |
+| 18/06/2026 | 2.1 | Ajuste de RNF-02 (row-level filtering) e inclusão de RNF-10 (CI/CD bloqueador). | Júlia Campos | Todos |

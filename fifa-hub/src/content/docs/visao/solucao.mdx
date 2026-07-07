@@ -1,0 +1,262 @@
+---
+title: Solução Proposta
+description: Características da solução e objetivos específicos do FIFA Team Hub
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components'
+
+## Objetivo do Produto
+
+O objetivo do produto é **centralizar e securizar o gerenciamento de documentos críticos de seleções nacionais de futebol** num portal único, auditável e com isolamento absoluto entre seleções. Atualmente, esses processos ocorrem por e-mail, drives compartilhadas e planilhas, gerando riscos de segurança, perda de rastreabilidade e acesso não autorizado.
+
+#### Objetivos Específicos
+
+- <span id="oe1-centralizar">**OE1 — Centralizar a gestão de documentos**</span>: substituir e-mails e drives manuais por um portal único com rastreamento completo por tipo de documento.
+
+- <span id="oe2-isolamento">**OE2 — Garantir isolamento absoluto entre seleções**</span>: implementar isolamento multi-tenant que torna tecnicamente impossível uma seleção acessar dados de outra.
+
+- <span id="oe3-auditoria">**OE3 — Criar trilha de auditoria completa**</span>: registrar cada ação (LOGIN, UPLOAD, DOWNLOAD, DELETE, APPROVE, REJECT, ACCESS_DENIED) com timestamp, IP e responsável, para conformidade regulatória.
+
+- <span id="oe4-compliance">**OE4 — Acelerar decisões de compliance**</span>: disponibilizar status estruturado de documentação (PENDENTE, APROVADO, REJEITADO) com fluxo de aprovação de laudos médicos rastreável.
+
+- <span id="oe5-autonomia">**OE5 — Apoiar autonomia das comissões técnicas**</span>: criar ferramenta self-service que reduz dependência de intermediários para gestão de documentação oficial.
+
+---
+
+## Características da Solução
+
+As características foram organizadas **por objetivo específico**.
+
+---
+
+## 🎯 OE1 — Centralizar a gestão de documentos
+
+- <span id="c01">**[C01](#c01) — Upload e gestão de documentos**</span>: upload de convocações, passaportes, laudos médicos, relatórios táticos e esquemas de jogadas com versionamento automático e metadados persistidos no banco.
+
+- **C01.1 — Tipos de documento aceitos**: CONVOCACAO, PASSAPORTE, LAUDO_MEDICO, RELATORIO_TATICO, ESQUEMA_JOGADAS.
+
+- **C01.2 — Formatos e restrições**: PDF, JPG, JPEG, PNG, DOCX com tamanho máximo de 10 MB. Validação de MIME type no servidor via `python-magic`.
+
+- **C01.3 — Download seguro**: links temporários assinados via Google Cloud Storage com validade de 15 minutos.
+
+---
+
+## 🎯 OE2 — Garantir isolamento absoluto entre seleções
+
+- <span id="c02">**[C02](#c02) — Isolamento multi-tenant**</span>: row-level filtering obrigatório em todas as queries ao banco. O `selection_id` é sempre extraído do JWT — nunca do body da requisição.
+
+- **C02.1 — Controle de acesso por perfil (RBAC)**: TECHNICAL_STAFF acessa apenas sua seleção; ORGANIZER visualiza CONVOCACAO e PASSAPORTE de todas; AUDITOR acessa somente logs.
+
+- **C02.2 — Testes de isolamento bloqueadores**: testes de cross-selection access executados em cada PR. Falha bloqueia o merge no CI/CD.
+
+---
+
+## 🎯 OE3 — Criar trilha de auditoria completa
+
+- <span id="c03">**[C03](#c03) — AuditLog imutável**</span>: cada evento registra user_id, action, resource_id, status (SUCCESS/FAILURE), ip_address e timestamp. Registros não podem ser editados nem deletados.
+
+- **C03.1 — Eventos rastreados**: LOGIN, LOGOUT, UPLOAD, DOWNLOAD, DELETE, APPROVE, REJECT, ACCESS_DENIED, REUPLOAD.
+
+- **C03.2 — Painel do auditor**: listagem filtrável por tipo de ação, usuário, seleção e período, sem expor conteúdo dos documentos.
+
+---
+
+## 🎯 OE4 — Acelerar decisões de compliance
+
+- <span id="c04">**[C04](#c04) — Status e conformidade documentar**</span>: cada documento tem ciclo de vida com estados PENDENTE → APROVADO ou PENDENTE → REJEITADO, com comentário obrigatório na rejeição.
+
+- **C04.1 — Aprovação de laudos médicos**: ORGANIZER aprova ou rejeita laudos com comentário. Mudança gera AuditLog com APPROVE ou REJECT.
+
+- **C04.2 — Conformidade LGPD**: criptografia em trânsito, acesso por menor privilégio, logs estruturados, soft-delete para direito ao esquecimento.
+
+---
+
+## 🎯 OE5 — Apoiar autonomia das comissões técnicas
+
+- <span id="c05">**[C05](#c05) — Autenticação e gestão de seleções**</span>: autenticação JWT stateless com expiração de 60 minutos, hash bcrypt com custo ≥ 10, troca obrigatória de senha provisória no primeiro acesso.
+
+- **C05.1 — Redirecionamento por perfil**: após login, cada perfil é direcionado ao seu dashboard específico.
+
+- **C05.2 — Cadastro de seleções**: ORGANIZER cadastra seleção com código FIFA único (3 letras maiúsculas), nome e bandeira opcional.
+
+---
+
+## Métodos e Tecnologias
+
+O desenvolvimento segue metodologia ágil com 8 sprints semanais (S7–S14), entregando funcionalidade incrementalmente com rotação de papéis entre Backend, Frontend, DevOps e Documentação.
+
+#### Stack Tecnológico
+
+<CardGrid>
+  <Card title="Vue 3 + TypeScript" icon="document">
+    **Interface Moderna e Type-Safe**
+
+    - Reatividade nativa com Composition API
+    - State management via Pinia
+    - Componentes reutilizáveis e testáveis
+    - Type-safety com TypeScript strict mode
+  </Card>
+
+  <Card title="Flask + Python 3.11" icon="setting">
+    **API Leve e Segura**
+
+    - Autenticação stateless com JWT (python-jose)
+    - Validação rigorosa no servidor (python-magic)
+    - ORM com SQLAlchemy para queries tipadas
+    - Migrations com Alembic
+  </Card>
+
+  <Card title="PostgreSQL 15" icon="setting">
+    **Banco de Dados Confiável**
+
+    - UUID nativo para identificadores
+    - Enums para tipos de documentos e status
+    - Foreign keys para integridade referencial
+    - Row-level filtering para isolamento
+  </Card>
+
+  <Card title="Google Cloud Storage" icon="cloud">
+    **Persistência de Ficheiros**
+
+    - Armazenamento redundante e durável
+    - Criptografia automática em repouso
+    - Links temporários assinados (15 min)
+    - Escalabilidade automática
+  </Card>
+
+  <Card title="Docker + GitHub Actions" icon="github">
+    **CI/CD e Containers**
+
+    - Ambientes reproduzíveis (dev, produção)
+    - Testes automatizados em cada PR
+    - Deploy contínuo em Google Cloud Run
+    - Bloqueio de merge em falhas
+  </Card>
+
+  <Card title="Google Cloud Run" icon="rocket">
+    **Deploy Serverless**
+
+    - Escalabilidade automática sob carga
+    - Pay-per-use
+    - Suporte nativo a containerização
+    - Uptime garantido 99%
+  </Card>
+</CardGrid>
+
+---
+
+## Metodologia de Desenvolvimento
+
+<CardGrid>
+  <Card title="Sprints Semanais" icon="clock">
+    **Ciclos Curtos e Incrementais**
+
+    - 8 semanas, 1 sprint por semana
+    - Entrega de funcionalidade real a cada sprint
+    - Reunião semanal às quintas-feiras
+    - Prazo de issues: sábado às 12h
+  </Card>
+
+  <Card title="Pair Programming" icon="users">
+    **Rotação de Papéis**
+
+    - Cada sprint tem par âncora + aprendiz
+    - Conhecimento distribuído entre todos
+    - Mentor-aprendiz em Backend, Frontend, DevOps e Docs
+    - Experiência em múltiplas frentes garantida
+  </Card>
+
+  <Card title="Code Review Rigoroso" icon="approve-check">
+    **Qualidade Garantida**
+
+    - Todo código passa por PR com 1 aprovação
+    - PRs com conflito negados diretamente
+    - Testes de isolamento obrigatórios
+    - Linting e type-check automatizados
+  </Card>
+
+  <Card title="CI/CD Bloqueador" icon="shield">
+    **Deploy Confiável**
+
+    - Testes rodam em todo PR
+    - Build falho bloqueia merge
+    - Coverage mínimo de 60% no backend
+    - Rollback rápido se necessário
+  </Card>
+</CardGrid>
+
+---
+
+## Viabilidade da Solução
+
+#### Viabilidade Técnica
+Stack escolhida (Vue 3, Flask, PostgreSQL, GCS, Google Cloud Run) é madura e bem documentada. Isolamento por row-level filtering é pattern consolidado em sistemas multi-tenant. JWT stateless escalável sem estado de servidor.
+
+**Riscos**: implementação correta de isolamento (mitigado por testes bloqueadores), integração GCS (SDK robusto com mock para dev).
+
+**Conclusão**: altamente viável com equipa full-stack e foco rigoroso em testes de segurança.
+
+#### Viabilidade de Prazo
+MVP entregável em S13 com escopo claro e sprints semanais.
+
+**Conclusão**: viável se a disciplina de testes e rotação for mantida.
+
+#### Viabilidade Financeira
+Deploy no Google Cloud Run + Cloud SQL com custo estimado ~R$ 100–200/mês em operação. Desenvolvimento acadêmico reduz custo de mão de obra. Alternativas comerciais (Box, SharePoint) custariam R$ 5–10 mil/mês.
+
+**Conclusão**: ROI positivo dentro de 2–3 meses.
+
+#### Conformidade Regulatória
+Auditoria imutável e logs completos permitem demonstrar conformidade com LGPD e regulações desportivas. Isolamento garante privacidade de dados sensíveis (laudos médicos, passaportes).
+
+**Conclusão**: desenhado para conformidade desde o início.
+
+---
+
+## Impacto da Solução
+
+<CardGrid>
+  <Card title="Segurança" icon="shield">
+    **Isolamento Inviolável**
+
+    - Nenhuma seleção acessa dados de outra
+    - Auditoria completa de qualquer acesso
+    - Criptografia em trânsito e em repouso
+    - URLs temporárias (nunca permanentes)
+  </Card>
+
+  <Card title="Autonomia" icon="document">
+    **Comissões Self-Service**
+
+    - Upload sem intermediários
+    - Visibilidade em tempo real
+    - Aprovações estruturadas
+    - Download sob demanda
+  </Card>
+
+  <Card title="Conformidade" icon="approve-check">
+    **LGPD e Regulatório**
+
+    - Logs para auditoria externa
+    - Prova de custódia de documentos
+    - Soft-delete para direito ao esquecimento
+    - Menor privilégio por design
+  </Card>
+
+  <Card title="Escalabilidade" icon="rocket">
+    **Crescimento Sustentável**
+
+    - Suporta múltiplas seleções simultaneamente
+    - Cloud Run escala automaticamente
+    - GCS sem limites de armazenamento
+    - Custos proporcionais ao uso
+  </Card>
+</CardGrid>
+
+## Histórico de Versão
+
+| Data | Versão | Descrição | Autor(es) | Revisor(es) |
+|------|--------|-----------|-----------|-------------|
+| 28/05/2026 | 1.0 | Criação do documento de solução proposta com objetivos e características. | Júlia Campos | Todos |
+| 09/06/2026 | 1.1 | Atualização com características C01–C05 alinhadas às User Stories e Requisitos. | Júlia Campos | Todos |
+| 18/06/2026 | 1.2 | Adição de seção de viabilidade e conformidade regulatória. | Júlia Campos | Todos |
