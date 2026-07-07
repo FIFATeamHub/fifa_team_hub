@@ -11,7 +11,6 @@ export default new Map([
 ["src/content/docs/visao/cronograma.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fvisao%2Fcronograma.mdx&astroContentModuleFlag=true")],
 ["src/content/docs/visao/engenharia-requisitos.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fvisao%2Fengenharia-requisitos.mdx&astroContentModuleFlag=true")],
 ["src/content/docs/visao/levantamento-parcial.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fvisao%2Flevantamento-parcial.mdx&astroContentModuleFlag=true")],
-["src/content/docs/visao/metodologia.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fvisao%2Fmetodologia.mdx&astroContentModuleFlag=true")],
 ["src/content/docs/visao/processo-sw.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fvisao%2Fprocesso-sw.mdx&astroContentModuleFlag=true")],
 ["src/content/docs/visao/solucao.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fvisao%2Fsolucao.mdx&astroContentModuleFlag=true")]]);
 		

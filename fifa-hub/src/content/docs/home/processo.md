@@ -11,7 +11,7 @@ O FIFA Team Hub segue uma metodologia ágil adaptada ao contexto acadêmico, com
 
 ---
 
-## Rituais da Equipa
+## Rituais da Equipe
 
 <CardGrid>
   <Card title="📅 Reunião Semanal" icon="pencil">

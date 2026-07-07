@@ -5,7 +5,7 @@ import { defineConfig } from "astro/config";
 import starlightThemeRapidePlugin from "starlight-theme-rapide";
 
 export default defineConfig({
-	site: "https://fifa_team_hub.github.io",
+	site: "https://fifateamhub.github.io",
 	base: "/fifa_team_hub/",
 	markdown:{
 		gfm:true,
@@ -111,12 +111,12 @@ export default defineConfig({
 					label: "API",
 					items: [
 						{
-							label: "Autenticação",
-							slug: "atas/reuniao-01",
+						label: "Autenticação",
+						slug: "api/auth",
 						},
 						{
-							label: "Reunião 02 — 09/06/2026",
-							slug: "atas/reuniao-02",
+						label: "Documentos",
+						slug: "api/documents",
 						},
 					],
 				},
