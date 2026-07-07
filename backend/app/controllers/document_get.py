@@ -4,7 +4,7 @@ import os
 from app.services.document_get import DocumentService
 from app.models.enums.user_role import  LogAction
 from app.controllers.document_upload import register_audit_log
-from app.services.storage_service import LocalStorageService
+from app.services.storage_service import LocalStorageService, GCSStorageService
 from app.services.storage_factory import get_storage_service
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
@@ -67,10 +67,6 @@ def list_documents(current_user):  # Injetado pelo seu token_required
     }), 200
 
 
-
-
-
-
 def get_document_by_id(current_user, document_id):
 
     fuso_sp = ZoneInfo("America/Sao_Paulo") 
@@ -97,7 +93,10 @@ def get_document_by_id(current_user, document_id):
     
 
     storage = get_storage_service()
-    url_visualizacao = storage.get_signed_url(document.storage_url, expiration_minutes=15)
+    
+    # Determina qual caminho/URL usar dependendo do backend
+    storage_reference = document.storage_url if isinstance(storage, GCSStorageService) else document.storage_path
+    url_visualizacao = storage.get_signed_url(storage_reference, expiration_minutes=15)
 
 
     return jsonify({
@@ -173,12 +172,12 @@ def stream_local_file(current_user, document_id):
         return jsonify({"error": "Acesso negado."}), 403
 
     # 2. Critério de aceitação: verificar se o arquivo físico existe no disco rígido
-    if not os.path.exists(document.storage_url):
+    if not os.path.exists(document.storage_path):
         return jsonify({"error": "O arquivo físico não foi encontrado no servidor."}), 410
 
     # 3. Retorna o streaming de pedaços (chunks) nativo do Flask via send_file
     return send_file(
-        document.storage_url,
+        document.storage_path,
         as_attachment=True,
         download_name=document.original_name
         )

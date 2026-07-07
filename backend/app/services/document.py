@@ -1,6 +1,7 @@
 import magic
 from flask import jsonify
 from app.models.enums.user_role import TypeDocument, DocStatus
+from app.models.enums.user_role import UserRole
 
 
 ALLOWED_MIME_TYPES = {
@@ -54,12 +55,12 @@ def validate_upload_permission(user_role, doc_type_enum):
     Retorna uma tupla: (bool: permitido, string: status_inicial_do_documento)
     """
 
-    if user_role == "AUDITOR":
+    if user_role == UserRole.AUDITOR:
         if doc_type_enum == TypeDocument.PASSPORT:
             return True, DocStatus.APPROVED.value
 
 
-    elif user_role == "TECHNICAL_STAFF":
+    elif user_role == UserRole.TECHNICAL_STAFF:
         if doc_type_enum.name in ["CONVOCADO", "RELATORIO_TATICO"]:
             return True, DocStatus.APPROVED.value
         
@@ -68,7 +69,7 @@ def validate_upload_permission(user_role, doc_type_enum):
             return True, DocStatus.PENDING.value
 
 
-    elif user_role == "MEDICAL_STAFF":
+    elif user_role == UserRole.MEDICAL_STAFF:
         if doc_type_enum.name in ["LAUDO_MEDICO"]:
             return True, DocStatus.APPROVED.value
         
@@ -76,7 +77,7 @@ def validate_upload_permission(user_role, doc_type_enum):
         if doc_type_enum == TypeDocument.PASSPORT:
             return True, DocStatus.PENDING.value
 
-    elif user_role == "ATHELETE":
+    elif user_role == UserRole.ATHELETE:
         if doc_type_enum.name in ["PASSPORT", "LAUDO_MEDICO"]:
             return True, DocStatus.PENDING.value
 

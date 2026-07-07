@@ -13,3 +13,26 @@ class Config():
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
+    STORAGE_BACKEND = os.getenv(
+        "STORAGE_BACKEND",
+        "local"
+    )
+
+    LOCAL_STORAGE_PATH = os.getenv(
+        "LOCAL_STORAGE_PATH",
+        "./storage/uploads"
+    )
+
+    MAX_FILE_SIZE_BYTES = (
+        int(os.getenv("MAX_FILE_SIZE_MB", 10))
+        * 1024
+        * 1024
+    )
+
+    ALLOWED_EXTENSIONS = set(
+        os.getenv(
+            "ALLOWED_EXTENSIONS",
+            "pdf,jpg,jpeg,png,docx"
+        ).split(",")
+    )
+    

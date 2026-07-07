@@ -1,6 +1,5 @@
 from uuid import uuid4
-
-from app.config.database import db
+from app.extensions import db
 
 from app.models.enums.user_role import TypeDocument
 from sqlalchemy import Enum # type: ignore[import]
@@ -17,7 +16,7 @@ class Document(db.Model):
     selection_id = db.Column(
         db.UUID(as_uuid=True),
         db.ForeignKey("selection.id"),
-        nullable=True                       # COLOQUEI TRUE PARA TESTE / ALTERAR DEPOIS
+        nullable=True
     )
 
     uploaded_by = db.Column(
@@ -36,17 +35,17 @@ class Document(db.Model):
     #     nullable=False
     # )
 
-    original_name = db.Column(    # NOME NORMAL -> ENVIADO PELO USUÁRIO
+    original_name = db.Column(
         db.String(255), 
         nullable=True
     )
 
-    storage_url = db.Column(
+    storage_path = db.Column(
         db.String(255),
-        nullable=False
+        nullable=True
     )
 
-    status = db.Column(  # ADICIONEI O CAMPO DE STATUS DO DOCUMENTO
+    status = db.Column(
         db.String(50),
         nullable=False,
         default="PENDING"
@@ -55,4 +54,13 @@ class Document(db.Model):
     created_at = db.Column(
         db.DateTime,
         server_default=db.func.now()
+    )
+    deleted_at = db.Column(
+        db.DateTime,
+        nullable = True
+    )
+
+    storage_url = db.Column(
+        db.String(500),
+        nullable=True
     )

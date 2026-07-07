@@ -1,5 +1,5 @@
 from flask import request, jsonify
-from app.config.database import db
+from app.extensions import db
 from app.models.document import Document
 from app.models.audit_log import AuditLog
 from app.models.enums.user_role import TypeDocument, LogAction
@@ -11,6 +11,7 @@ import uuid
 from uuid import UUID
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
+import traceback
 
 
 UUID_ZERADO = UUID("00000000-0000-0000-0000-000000000000") # UTILIZADO QUANDO OCORRER ERRO, PARA REGISTRAR O LOG DE FALHA
@@ -35,10 +36,10 @@ def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event,
         # Commita a transação global para garantir a persistência imediata
         db.session.commit()
 
-    except Exception as log_err:
-        
+
+    except Exception as e:
         db.session.rollback()
-        print(f"Erro crítico ao tentar salvar Log de Auditoria: {log_err}")
+        traceback.print_exc()
 
 
 
@@ -73,12 +74,6 @@ def upload_document(current_user):
         return jsonify({"error": erro_msg, "details": erro_msg}), 422
     
 
-    ###################################
-    # LÓGICA DE ROLE INTEGRADA COM SUCESSO
-    ###################################
-    # Cruza a role do current_user com o enum obtido da requisição
-    # Agora importada e chamada diretamente como função, seguindo o padrão pythônico
-    
     permitido, status_documento = validate_upload_permission(current_user.role, tipo_documento_enum)
 
     if not permitido:
@@ -130,7 +125,7 @@ def upload_document(current_user):
             type=tipo_documento_enum,
             # filename=nome_unico_arquivo, 
             original_name= nome_original_limpo,
-            storage_url=caminho_armazenamento,
+            storage_path=caminho_armazenamento,
             status=status_documento,
             created_at=momento_requisicao
         )
@@ -168,10 +163,13 @@ def upload_document(current_user):
 
     except Exception as e:
         db.session.rollback()
+        traceback.print_exc()
         print(f"Erro no banco de dados durante upload: {e}")
         
         # Loga a quebra crítica de banco de dados com o datetime original
         register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, f"Erro interno de banco de dados ao salvar documento: {str(e)}")
 
-        return jsonify({"error": "Erro interno ao salvar arquivo", "details": str(e)}), 500
-
+        return jsonify({
+            "error": "Erro interno ao salvar documento",
+            "details": str(e)
+        }), 500

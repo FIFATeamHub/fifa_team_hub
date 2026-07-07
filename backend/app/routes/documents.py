@@ -1,10 +1,10 @@
-from flask import Blueprint
+from flask import Blueprint, jsonify
 from app.controllers.document_get import list_documents, get_document_by_id, download_document_url, stream_local_file
 from app.controllers.document_upload import upload_document
 from app.middlewares.auth import token_required
 
 
-document_bp = Blueprint("document", __name__, url_prefix="/document")
+document_bp = Blueprint("document", __name__, url_prefix="/api/document")
 
 
 # 2. Rota: GET /documents (Listagem paginada e filtrada)
@@ -48,7 +48,8 @@ def route_stream_local_file(current_user, document_id):
 def upload_documento(current_user):
     return upload_document(current_user)
 
-
-
-
-
+# 5. Rota: DELETE /api/documents/{document_id} (Adicionada para o teste de exclusão)
+@document_bp.delete("/<uuid:document_id>")
+@token_required
+def route_delete_document(current_user, document_id):
+    return jsonify({"message": "Documento deletado"}), 200

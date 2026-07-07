@@ -1,6 +1,5 @@
 from uuid import uuid4
-
-from app.config.database import db
+from app.extensions import db
 
 class Selection(db.Model):
     __tablename__ = "selection"
