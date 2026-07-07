@@ -52,10 +52,6 @@ export default defineConfig({
 							slug: "visao/processo-sw",
 						},
 						{
-							label: "Comunicação e Colaboração",
-							slug: "visao/interacao",
-						},
-						{
 							label: "Cronograma",
 							slug: "visao/cronograma",
 						},
