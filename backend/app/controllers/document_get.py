@@ -6,6 +6,7 @@ from app.models.enums.user_role import  LogAction
 from app.controllers.document_upload import register_audit_log
 from app.services.storage_service import LocalStorageService, GCSStorageService
 from app.services.storage_factory import get_storage_service
+from google.cloud.exceptions import NotFound
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
@@ -149,6 +150,11 @@ def download_document_url(current_user, document_id):
             "expires_in_minutes": 15,
             "filename": document.original_name
         }), 200
+
+    except NotFound as e:
+        print(f"[ERRO STORAGE - BLOB NÃO ENCONTRADO]: {str(e)}")
+        register_audit_log(current_user.id, LogAction.ACCESS_DENIED, "FAILURE", str(document_id), momento_requisicao, "Arquivo não encontrado no storage (removido ou corrompido).")
+        return jsonify({"error": "Arquivo não encontrado no storage."}), 410
 
     except Exception as e:
         print(f"[ERRO STORAGE]: {str(e)}")

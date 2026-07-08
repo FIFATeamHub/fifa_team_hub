@@ -47,6 +47,11 @@ def app():
 def client(app):
     return app.test_client()
 
+@pytest.fixture(name="db")
+def db_session(app):
+    with app.app_context():
+        yield db.session
+
 
 # ----------------------------------------------------------------------
 # SELECTIONS
@@ -159,8 +164,8 @@ def arg_staff(app, selection_arg):
 # ----------------------------------------------------------------------
 
 @pytest.fixture
-def token_bra_staff(bra_staff_token):
-    return bra_staff_token
+def token_bra_staff(bra_staff):
+    return create_access_token(user_to_token_payload(bra_staff))
 
 
 @pytest.fixture

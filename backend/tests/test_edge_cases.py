@@ -7,12 +7,15 @@ from google.api_core.exceptions import ResourceExhausted
 class TestGCSEdgeCases:
 
     @pytest.fixture
-    def token_bra_staff(bra_staff_token):
-        return bra_staff_token
+    def app(self, app):
+        app.config["STORAGE_BACKEND"] = "gcs"
+        app.config["GCS_BUCKET_NAME"] = "test-bucket"
+        app.config["GCP_PROJECT_ID"] = "test-project"
+        return app
 
     @pytest.fixture
     def mock_gcs_storage(self):
-        with patch('app.services.storage_service.GCSStorageService') as mock_cls:
+        with patch('app.services.storage_factory.GCSStorageService') as mock_cls:
             service = MagicMock()
             service.save_file.return_value = "gs://bucket/BRA/doc.pdf"
             service.get_signed_url.return_value = "https://signed-url"
@@ -21,17 +24,15 @@ class TestGCSEdgeCases:
 
     @staticmethod
     def create_test_document(db, **overrides):
+        import uuid as uuid_module
+        from app.models.enums.user_role import TypeDocument, DocStatus
         defaults = dict(
-            id="test-doc-id",
-            selection_id="BRA",
-            uploaded_by="user-bra",
-            doc_type="CONVOCACAO",
+            id=uuid_module.uuid4(),
+            type=TypeDocument.CONVOCADO,
             original_name="doc.pdf",
-            stored_name="doc.pdf",
             storage_path="gs://bucket/BRA/doc.pdf",
-            file_size_kb=100,
-            mime_type="application/pdf",
-            status="APPROVED"
+            storage_url="gs://bucket/BRA/doc.pdf",
+            status=DocStatus.APPROVED.value
         )
         defaults.update(overrides)
         doc = Document(**defaults)
@@ -40,16 +41,16 @@ class TestGCSEdgeCases:
         db.refresh(doc)
         return doc
 
-    def test_signed_url_expires_in_15_minutes(self, client, db, token_bra_staff, mock_gcs_storage):
-        doc = self.create_test_document(db, selection_id="BRA")
+    def test_signed_url_expires_in_15_minutes(self, client, db, token_bra_staff, mock_gcs_storage, selection_bra, bra_staff):
+        doc = self.create_test_document(db, selection_id=selection_bra, uploaded_by=bra_staff.id)
 
         response = client.get(
-            f"/documents/{doc.id}/download",
+            f"/api/document/{doc.id}/download",
             headers={"Authorization": f"Bearer {token_bra_staff}"}
         )
 
         assert response.status_code == 200
-        assert response.json()["expires_in_minutes"] == 15
+        assert response.json["expires_in_minutes"] == 15
 
     def test_gcs_quota_exceeded_returns_503(self, client, token_bra_staff, mock_gcs_storage):
         
@@ -59,7 +60,7 @@ class TestGCSEdgeCases:
             "/api/document/upload",
             headers={"Authorization": f"Bearer {token_bra_staff}"},
             data={
-                "doc_type": "CONVOCACAO",
+                "doc_type": "CONVOCADO",
                 "file": (io.BytesIO(b"test"), "test.pdf"),
             },
             content_type="multipart/form-data",
@@ -67,14 +68,17 @@ class TestGCSEdgeCases:
 
         assert response.status_code == 503
 
-    def test_gcs_blob_not_found_returns_410(self, client, db, token_bra_staff, mock_gcs_storage):
+    def test_gcs_blob_not_found_returns_410(self, client, db, token_bra_staff, mock_gcs_storage, selection_bra, bra_staff):
         from google.cloud.exceptions import NotFound
 
-        doc = self.create_test_document(db, storage_path="gs://bucket/BRA/deleted.pdf")
+        doc = self.create_test_document(
+            db, selection_id=selection_bra, uploaded_by=bra_staff.id,
+            storage_path="gs://bucket/BRA/deleted.pdf", storage_url="gs://bucket/BRA/deleted.pdf"
+        )
         mock_gcs_storage.get_signed_url.side_effect = NotFound("Blob not found")
 
         response = client.get(
-            f"/documents/{doc.id}/download",
+            f"/api/document/{doc.id}/download",
             headers={"Authorization": f"Bearer {token_bra_staff}"}
         )
 

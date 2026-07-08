@@ -7,6 +7,7 @@ from app.services.document import validate_file, validate_upload_permission
 from app.services.storage_service import LocalStorageService
 from app.services.storage_factory import get_storage_service
 from werkzeug.utils import secure_filename
+from google.api_core.exceptions import ResourceExhausted
 import uuid
 from uuid import UUID
 from datetime import datetime, timezone
@@ -160,6 +161,13 @@ def upload_document(current_user):
             "created_at": momento_requisicao.isoformat()
         }), 201
     
+    except ResourceExhausted as e:
+        db.session.rollback()
+        register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, f"Cota do storage excedida: {str(e)}")
+
+        return jsonify({
+            "error": "Serviço de armazenamento temporariamente indisponível (cota excedida).",
+        }), 503
 
     except Exception as e:
         db.session.rollback()
