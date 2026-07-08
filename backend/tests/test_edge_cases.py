@@ -1,9 +1,14 @@
 import pytest
+import io
 from unittest.mock import patch, MagicMock
 from app.models import Document
 
 
 class TestGCSEdgeCases:
+
+    @pytest.fixture
+    def token_bra_staff(bra_staff_token):
+        return bra_staff_token
 
     @pytest.fixture
     def mock_gcs_storage(self):
@@ -49,16 +54,19 @@ class TestGCSEdgeCases:
     def test_gcs_quota_exceeded_returns_503(self, client, token_bra_staff, mock_gcs_storage):
         from google.api_core.exceptions import ResourceExhausted
 
-        mock_gcs_storage.save_file.side_effect = ResourceExhausted("Quota exceeded")
+    mock_gcs_storage.save_file.side_effect = ResourceExhausted("Quota exceeded")
 
-        response = client.post(
-            "/documents/upload",
-            headers={"Authorization": f"Bearer {token_bra_staff}"},
-            data={"doc_type": "CONVOCACAO"},
-            files={"file": ("test.pdf", b"test")}
-        )
+    response = client.post(
+        "/documents/upload",
+        headers={"Authorization": f"Bearer {token_bra_staff}"},
+        data={
+            "doc_type": "CONVOCACAO",
+            "file": (io.BytesIO(b"test"), "test.pdf"),
+        },
+        content_type="multipart/form-data",
+    )
 
-        assert response.status_code == 503
+    assert response.status_code == 503
 
     def test_gcs_blob_not_found_returns_410(self, client, db, token_bra_staff, mock_gcs_storage):
         from google.cloud.exceptions import NotFound

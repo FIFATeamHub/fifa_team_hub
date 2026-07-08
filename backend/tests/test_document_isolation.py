@@ -1,6 +1,10 @@
 import pytest
 import io
 
+@pytest.fixture
+def token_bra_staff(bra_staff_token):
+    return bra_staff_token
+
 def test_upload_assigns_correct_selection_id(client, token_bra_staff):
 
     data = {
