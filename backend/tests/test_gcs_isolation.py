@@ -43,7 +43,7 @@ class TestGCSIsolation:
 
     def test_upload_to_gcs_isolates_by_selection(self, client, token_bra_staff, mock_gcs_storage):
         response = client.post(
-            "/documents/upload",
+            "/api/document/upload",
             headers={"Authorization": f"Bearer {token_bra_staff}"},
             data={
                 "doc_type": "CONVOCACAO",
@@ -55,8 +55,7 @@ class TestGCSIsolation:
         assert response.status_code == 201
 
         mock_gcs_storage.save_file.assert_called_once()
-        call_args = mock_gcs_storage.save_file.call_args
-        assert call_args[0][2] == "BRA"
+        assert mock_gcs_storage.save_file.call_args.kwargs["selection_id"] == "BRA"
 
     def test_cross_selection_document_access_denied_with_gcs(
         self, client, db, token_bra_staff, mock_gcs_storage
