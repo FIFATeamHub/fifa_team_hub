@@ -74,6 +74,8 @@ class TestGCSIsolation:
             f"/api/document/{arg_doc.id}/download",
             headers={"Authorization": f"Bearer {token_bra_staff}"}
         )
+        assert response.status_code == 403
+        mock_gcs_storage.get_signed_url.assert_not_called()    
 
     @pytest.mark.xfail(reason="DELETE ainda não implementado: route_delete_document é um stub que sempre retorna 200 e não chama storage.delete_file nem remove o registro do banco")
     def test_delete_from_gcs_when_document_deleted(self, client, db, token_bra_staff, mock_gcs_storage, selection_bra, bra_staff):

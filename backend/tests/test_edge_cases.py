@@ -61,7 +61,7 @@ class TestGCSEdgeCases:
             headers={"Authorization": f"Bearer {token_bra_staff}"},
             data={
                 "doc_type": "CONVOCADO",
-                "file": (io.BytesIO(b"test"), "test.pdf"),
+                "file": (io.BytesIO(b"%PDF-1.4 test"), "test.pdf"),
             },
             content_type="multipart/form-data",
         )
