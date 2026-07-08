@@ -56,7 +56,7 @@ class TestGCSEdgeCases:
         mock_gcs_storage.save_file.side_effect = ResourceExhausted("Quota exceeded")
 
         response = client.post(
-            "/documents/upload",
+            "/api/documents/upload",
             headers={"Authorization": f"Bearer {token_bra_staff}"},
             data={
                 "doc_type": "CONVOCACAO",
