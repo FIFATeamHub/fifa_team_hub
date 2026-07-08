@@ -159,9 +159,8 @@ def arg_staff(app, selection_arg):
 # ----------------------------------------------------------------------
 
 @pytest.fixture
-def token_bra_staff(bra_staff):
-
-    return create_access_token(user_to_token_payload(bra_staff))
+def token_bra_staff(bra_staff_token):
+    return bra_staff_token
 
 
 @pytest.fixture

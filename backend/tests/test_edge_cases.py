@@ -2,9 +2,7 @@ import pytest
 import io
 from unittest.mock import patch, MagicMock
 from app.models import Document
-
-
-
+from google.api_core.exceptions import ResourceExhausted
 
 class TestGCSEdgeCases:
 

@@ -43,14 +43,14 @@ class TestGCSIsolation:
 
     def test_upload_to_gcs_isolates_by_selection(self, client, token_bra_staff, mock_gcs_storage):
         response = client.post(
-        "/documents/upload",
-        headers={"Authorization": f"Bearer {token_bra_staff}"},
-        data={
-            "doc_type": "CONVOCACAO",
-            "file": (io.BytesIO(b"%PDF-1.4 test"), "test.pdf"),
-        },
-        content_type="multipart/form-data",
-    )
+            "/documents/upload",
+            headers={"Authorization": f"Bearer {token_bra_staff}"},
+            data={
+                "doc_type": "CONVOCACAO",
+                "file": (io.BytesIO(b"%PDF-1.4 test"), "test.pdf"),
+            },
+            content_type="multipart/form-data",
+        )
 
         assert response.status_code == 201
 
