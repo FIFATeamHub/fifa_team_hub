@@ -171,5 +171,4 @@ def upload_document(current_user):
 
         return jsonify({
             "error": "Erro interno ao salvar documento",
-            "details": str(e)
         }), 500
