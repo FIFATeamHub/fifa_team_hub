@@ -1,81 +1,60 @@
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
+import api from '@/services/api'
 
-//define como um documento deve ser
+// Tipo que representa um documento retornado pelo backend
 export interface Documento {
   id: string
   original_name: string
   doc_type: string
-  file_size_kb: number
   status: string
-  uploaded_by_name: string
-  selection_code: string
-  created_at: string
 }
 
 export function useDocuments() {
+  const documents = ref<Documento[]>([])
+  const loading = ref(false)
 
-    // Lista de documentos exibidos na tela
-    const documents = ref<Documento[]>([])
+  async function getDownloadUrl(documentId: string): Promise<string> {
+    const response = await api.get(`/documents/${documentId}/download`)
+    return response.data.url
+  }
 
-    // Indica quando uma operação está em andamento (Carregando...)
-    const loading = ref(false)
+  async function downloadDocument(documentId: string, filename: string) {
+    try {
+      const url = await getDownloadUrl(documentId)
 
-    // Armazena mensagens de erro para exibição na interface
-    const error = ref('')
+      const headResponse = await api.head(url, { timeout: 5000 })
+      if (headResponse.status !== 200) {
+        throw new Error('URL expirada ou inválida')
+      }
 
-    // adiciona documento ao topo da lista (chamada após upload bem-sucedido)
-    function addDocument(doc: Documento) {
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
 
-        // unshift é um append no inicio da lista
-        documents.value.unshift(doc)
+    } catch (error) {
+      const apiError = error as { response?: { status: number } }
 
+      if (apiError.response?.status === 410) {
+        console.error('Documento deletado (410 Gone)')
+        throw new Error('Este documento foi removido permanentemente.')
+      }
+      console.error('Erro no download:', error)
+      throw error
     }
+  }
+  async function previewDocument(documentId: string) {
+    const url = await getDownloadUrl(documentId)
+    window.open(url, '_blank')
+  }
 
-    async function fetchDocuments() {
-        
-        
-
-        loading.value = true
-        error.value = ''
-
-        // chamada da api
-        try {
-
-            //futuramente:
-            //const response = await api.get(...)
-
-            documents.value = []
-        } 
-        // se der errado
-        catch (err){
-
-            error.value = 'Erro ao carregar documentos.'
-
-        } 
-        // executa sempre após
-        finally {
-
-            loading.value = false
-
-        }
-    }
-        
-    
-    function deleteDocument(id: string) {
-
-        documents.value = documents.value.filter(
-            doc => doc.id !== id
-        )
-    }
-
-
-    return {
-        documents,
-        loading,
-        error,
-        addDocument,
-        deleteDocument,
-        fetchDocuments
-    }
-
+  return {
+    documents,
+    loading,
+    getDownloadUrl,
+    downloadDocument,
+    previewDocument,
+  }
 }

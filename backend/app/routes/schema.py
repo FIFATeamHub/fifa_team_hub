@@ -8,7 +8,7 @@ class RegisterSchema(Schema):
     full_name = fields.String(required=True)
     role = fields.String(required = True)
     selection_id = fields.String(allow_none = True) # allow_none pois pode ter o auditor sem nenhuma seleção especifíca
-
+    
 class LoginSchema(Schema):
     email = fields.Email(required = True)
     password = fields.String(required = True) 

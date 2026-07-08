@@ -29,9 +29,15 @@
             <div class="campo">
                 <label>Seleção :</label>
                 <select v-model="selection">
-                <option value="" disabled>Selecione sua seleção</option>
-                <option value="BRA">Brasil</option>
-                <option value="ARG">Argentina</option>
+                    <option value="">Selecione sua seleção</option>
+
+                    <option
+                        v-for="item in selections"
+                        :key="item.id"
+                        :value="item.id"
+                    >
+                        {{ item.name }}
+                    </option>
                 </select>
             </div>
 
@@ -66,9 +72,22 @@
 
 <script setup lang="ts">
 
-import {ref} from 'vue'
+import {ref, watch, onMounted} from 'vue'
 import {useAuthStore} from '@/stores/auth.js'
-import { useRouter , RouterLink } from 'vue-router';
+import { useRouter , RouterLink } from 'vue-router'
+import api from '@/services/api';
+
+const selections = ref([])
+
+onMounted(async () => {
+    try {
+        const response = await api.get('/api/selection/')
+        selections.value = response.data
+    } catch (err) {
+        console.error(err)
+    }
+})
+
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -80,6 +99,11 @@ const password = ref('')
 const passwordConfirm = ref('')
 const selection = ref(null)
 
+watch(cargo, (novoCargo) => {
+    if (novoCargo === "AUDITOR" || novoCargo === "ORGANIZER") {
+        selection.value = null
+    }
+})
 
 const errorMessage = ref('')
 const successMessage = ref('')
