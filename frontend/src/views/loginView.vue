@@ -1,47 +1,24 @@
-
-
 <template>
-    <div class = "page">
-
-        <LoginForm/>
-
-        <!-- <p>teste</p> -->
-
-    </div>
-
+  <div class="page">
+    <LoginForm />
+  </div>
 </template>
 
-<script setup>
-
-import LoginForm from '@/components/loginForm.vue';
-
+<script setup lang="ts">
+import LoginForm from '@/components/loginForm.vue'
 </script>
 
 <style scoped>
-
-    :global(html),
-    :global(body),
-    :global(#app) {
-        margin: 0;
-        padding: 0; 
-        box-sizing: border-box;
-        
-    }
-
-    } catch (error) {
-    if (error.status === 401) {
-      errorMessage.value = 'E-mail ou senha incorretos'
-    } else {
-      errorMessage.value = 'Ocorreu um erro no servidor. Verifique os dados e tente novamente.'
-    }
-    console.error(error) // Isso imprime o erro no F12 para você debugar!
-  }
-
+:global(html),
+:global(body),
+:global(#app) {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
-</script>
-    .page{
-        background-color: #061c42;
-    }
 
-
+.page {
+  background-color: #061c42;
+  min-height: 100vh;
+}
 </style>

@@ -1,22 +1,32 @@
 from flask import request, jsonify, Blueprint
 
+import re
 from app.routes.schema import RegisterSchema, LoginSchema
-from app.config.database import db
+from app.extensions import db
 from app.models.user import User
 from app.models.enums.user_role import UserRole
-from app.services.auth_service import hash_password, verify_password, create_access_token
+
+from app.services.auth import hash_password, verify_password, create_access_token
 
 auth_bp = Blueprint("auth", __name__)
 
-@auth_bp.route("/register", methods=["POST"])
+
 def register():
     dados = request.get_json()
     
     register_schema = RegisterSchema()
     erros = register_schema.validate(dados)
 
-    if erros:
-        return jsonify({"error": erros}), 400
+    # Valida campos obrigatórios
+    campos = ["email", "password", "full_name", "role"]
+    for campo in campos:   
+        if not dados.get(campo):
+            return jsonify({"error": f"Campo '{campo}' é obrigatório"}), 400
+        
+    # Cole isto no seu register() logo após validar os campos obrigatórios:
+    email = dados.get("email")
+    if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
+        return jsonify({"error": "Formato de e-mail inválido. Verifique se digitou o '.com'."}), 400
 
     # Valida se role é um valor válido do enum
     try:
@@ -32,7 +42,7 @@ def register():
     # Cria o usuário com senha hasheada
     novo_user = User(
         email=dados["email"],
-        password_hash=hash_senha(dados["password"]),
+        password_hash=hash_password(dados["password"]),
         full_name=dados["full_name"],
         role=role,
         selection_id=dados.get("selection_id")
@@ -49,9 +59,13 @@ def register():
         "selection_id": str(novo_user.selection_id) if novo_user.selection_id else None
     }), 201
 
-@auth_bp.route("/login", methods=["POST"])
 def login():
     dados = request.get_json()
+
+    schema = LoginSchema()
+    erros = schema.validate(dados)
+    if erros:
+        return jsonify({"error": erros}), 400
 
     email = dados.get("email")
     password = dados.get("password")
@@ -59,20 +73,13 @@ def login():
     if not email or not password:
         return jsonify({"error": "Email e password são obrigatórios"}), 400
 
-    login_schema = LoginSchema()
-    erros = login_schema.validate(dados) #Verificação automática de emails
-
-    if erros:
-        return jsonify({"error": "Formato de e-mail inválido. Verifique se digitou corretamente (ex: faltou o .com?)"}), 400
-
-
     try:
         # Busca user por email
         user = User.query.filter_by(email=email.lower()).first()
         # Credenciais inválidas
-        if not user or not verificar_senha(password, user.password_hash):
+        if not user or not verify_password(password, user.password_hash):
             return jsonify({"error": "Credenciais inválidas"}), 401
-        token = gerar_token(user)
+        token = create_access_token(user)
         return jsonify({
             "access_token": token,
             "token_type": "bearer"
@@ -83,14 +90,17 @@ def login():
         print(f"Erro no login: {e}") # Isso vai pro terminal
         return jsonify({"error": "Erro interno no servidor"}), 500
 
-@auth_bp.route("/me", methods=["GET"])
-def me(current_user):
-    # Retorna dados do usuário autenticado (injetado pelo middleware)
-    return jsonify({
-    "id": str(current_user.id),
-    "email": current_user.email,
-    "full_name": current_user.full_name,
-    "role": current_user.role.value,
-    "selection_id": str(current_user.selection_id) if current_user.selection_id else None
-}), 200
 
+def me(current_user):
+    if current_user is None:
+        return jsonify({"error": "Usuário não encontrado"}), 404
+    
+    return jsonify({
+        "id": str(current_user.id),
+        "email": current_user.email,
+        "full_name": current_user.full_name,
+        "role": current_user.role.value,
+        "selection_id": str(current_user.selection_id) if current_user.selection_id else None,
+        "is_active": current_user.is_active,
+        "created_at": current_user.created_at.isoformat() if current_user.created_at else None
+    }), 200

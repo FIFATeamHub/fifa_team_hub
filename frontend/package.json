@@ -12,6 +12,8 @@
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
