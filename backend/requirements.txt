@@ -24,3 +24,7 @@ SQLAlchemy==2.0.50
 typing_extensions==4.15.0
 Werkzeug==3.1.8
 marshmallow
+pytest>=8.0.0
+pytest-mock>=3.14.0
+google-cloud-storage>=2.18.0
+google-api-core>=2.19.0
