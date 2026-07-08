@@ -1,23 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useDocuments, type Documento } from '@/composables/useDocuments'
-declare module '@/composables/usePermissions'
 import { usePermissions } from '@/composables/usePermissions';
 import { useAuthStore } from '@/stores/auth.js'
 
 const selectedType = ref('')
-
-const currentPage = ref(1)
-
-const totalPages = computed(() => {
-
-    return Math.ceil(
-        filteredDocuments.value.length / itemsPerPage
-    )
-    
-})
-
-const itemsPerPage = 10
 
 const filteredDocuments = computed(() => {
 
@@ -45,22 +32,11 @@ const filteredDocuments = computed(() => {
 })
 
 
-const paginatedDocuments = computed(() => {
-
-    const start = (currentPage.value - 1) * itemsPerPage
-
-    const end = start + itemsPerPage
-
-    return filteredDocuments.value.slice(start, end)
-
-})
-
-
-
 const {
     documents,
     loading,
     error,
+    pagination,
     fetchDocuments,
     deleteDocument
 } = useDocuments()
@@ -70,38 +46,38 @@ const { can } = usePermissions()
 const authStore = useAuthStore()
 
 // Roda fetchDocuments assim que a página/componente é carregado.
-onMounted(() => {
-    fetchDocuments()
+onMounted(async () => {
+    await fetchDocuments()
 })
 
-function nextPage() {
-
-    if (currentPage.value < totalPages.value) {
-        currentPage.value++
+async function nextPage() {
+    if (pagination.value.page < pagination.value.pages) {
+        await fetchDocuments({
+            page: pagination.value.page + 1,
+            doc_type: selectedType.value || undefined
+        })
     }
-
 }
 
-function previousPage() {
-
-    if (currentPage.value > 1) {
-        currentPage.value--
+async function previousPage() {
+    if (pagination.value.page > 1) {
+        await fetchDocuments({
+            page: pagination.value.page - 1,
+            doc_type: selectedType.value || undefined
+        })
     }
-
 }
 
 // confirmação de delete
-function handleDelete(id: string) {
+async function handleDelete(id: string) {
 
     const confirmed = confirm(
         'Tem certeza que deseja excluir este documento? Essa ação é irreversível.'
     )
 
-    if (!confirmed) {
-        return
-    }
+    if (!confirmed) return
 
-    deleteDocument(id)
+    await deleteDocument(id)
 }
 
 function handleDownload(doc: Documento) {
@@ -185,13 +161,13 @@ function handleView(doc: Documento) {
 
 
                 <tr
-                    v-for="doc in paginatedDocuments"
+                    v-for="doc in filteredDocuments"
                     :key="doc.id"
                 >
             
                 <td>{{ doc.original_name }}</td>
                 <td>{{ doc.doc_type }}</td>
-                <td>{{ doc.uploaded_by_name }}</td>
+                <td>{{ doc.uploaded_by_id }}</td>
                 <td>{{ doc.created_at }}</td>
                 <!--status-->
                 <td>
@@ -260,18 +236,18 @@ function handleView(doc: Documento) {
 
         <button
         @click="previousPage"
-        :disabled="currentPage === 1"        
+        :disabled="pagination.page === 1"       
         >
         Anterior
         </button>
 
         <span>
-            Página {{ currentPage }} de {{ totalPages }}
+            Página {{ pagination.page }} de {{ pagination.pages }}
         </span>
 
         <button
         @click="nextPage"
-        :disabled="currentPage === totalPages"
+        :disabled="pagination.page >= pagination.pages || pagination.pages === 0"
         >
         Próxima
         </button>
