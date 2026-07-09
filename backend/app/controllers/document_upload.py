@@ -15,7 +15,7 @@ from zoneinfo import ZoneInfo
 import traceback
 
 
-UUID_ZERADO = UUID("00000000-0000-0000-0000-000000000001")  # Sentinel para logs de falha sem recurso associado
+UUID_ZERADO = uuid.uuid4()  # Sentinel para logs de falha sem recurso associado
 
 
 def _coerce_uuid(value):
@@ -29,6 +29,7 @@ def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event,
     try :
 
         with db.session.begin_nested():
+            
             log_falha = AuditLog(
                 user_id = user_id_e,
                 action = action_e,

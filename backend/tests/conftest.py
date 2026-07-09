@@ -9,6 +9,7 @@ from app.models.selection import Selection
 from app.models.user import User
 from app.models.document import Document
 from app.models.audit_log import AuditLog
+from sqlalchemy import text
 
 from app.models.enums.user_role import (
     UserRole,
@@ -266,4 +267,28 @@ def get_latest_audit_log(db, *, action=None, user_id=None, status=None):
         query = query.filter_by(user_id=user_id)
     if status is not None:
         query = query.filter_by(status=status)
+    return query.order_by(AuditLog.created_at.desc()).first()
+
+def get_latest_audit_log(db, *, action=None, user_id=None, status=None):
+    rows = db.execute(text("""
+        SELECT *
+        FROM audit_log
+    """)).fetchall()
+
+    print("AUDIT_LOG:", rows)
+    schema = db.execute(text("PRAGMA table_info(audit_log)")).fetchall()
+    print(schema)
+    print(
+    db.execute(text("PRAGMA table_info(audit_log)")).fetchall()
+    )
+
+    query = db.query(AuditLog)
+
+    if action is not None:
+        query = query.filter_by(action=action)
+    if user_id is not None:
+        query = query.filter_by(user_id=user_id)
+    if status is not None:
+        query = query.filter_by(status=status)
+
     return query.order_by(AuditLog.created_at.desc()).first()
