@@ -14,7 +14,7 @@ def test_delete_inexistent_document(client, token_bra_staff):
 
 def test_delete_document_success(client, token_bra_staff):
     # Setup: Criar um documento isolado para a execução do nosso teste
-    data = {"doc_type": "CONVOCADO", "file": (io.BytesIO(b"Pdf falso"), "teste_delete.pdf")}
+    data = {"doc_type": "CONVOCADO", "file": (io.BytesIO(b"%PDF-1.4\n%%EOF"), "teste_delete.pdf")}
     resp_upload = client.post(
         "/api/document/upload", 
         headers={"Authorization": f"Bearer {token_bra_staff}"}, 
