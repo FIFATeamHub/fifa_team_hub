@@ -15,7 +15,13 @@ from zoneinfo import ZoneInfo
 import traceback
 
 
-UUID_ZERADO = UUID("00000000-0000-0000-0000-000000000000") # UTILIZADO QUANDO OCORRER ERRO, PARA REGISTRAR O LOG DE FALHA
+UUID_ZERADO = UUID("00000000-0000-0000-0000-000000000001")  # Sentinel para logs de falha sem recurso associado
+
+
+def _coerce_uuid(value):
+    if isinstance(value, UUID):
+        return value
+    return UUID(str(value))
 
 
 def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event, details_e = None):
@@ -26,7 +32,7 @@ def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event,
             log_falha = AuditLog(
                 user_id = user_id_e,
                 action = action_e,
-                resource_id = resource_id_e,
+                resource_id = _coerce_uuid(resource_id_e),
                 ip_address = request.remote_addr or "0.0.0.0",
                 status = status_e,
                 details = details_e,

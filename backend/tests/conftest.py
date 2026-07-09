@@ -1,4 +1,6 @@
+import uuid
 import pytest
+from unittest.mock import patch, MagicMock
 
 from app import create_app
 from app.extensions import db
@@ -6,11 +8,13 @@ from app.extensions import db
 from app.models.selection import Selection
 from app.models.user import User
 from app.models.document import Document
+from app.models.audit_log import AuditLog
 
 from app.models.enums.user_role import (
     UserRole,
     TypeDocument,
     DocStatus,
+    LogAction,
 )
 
 from app.services.auth import hash_password, create_access_token, user_to_token_payload
@@ -211,3 +215,55 @@ def arg_document(app, arg_staff, selection_arg):
 def arg_document_id(arg_document):
 
     return str(arg_document.id)
+
+@pytest.fixture
+def gcs_app(app):
+    app.config.update({
+        "STORAGE_BACKEND": "gcs",
+        "GCS_BUCKET_NAME": "test-bucket",
+        "GCP_PROJECT_ID": "test-project",
+    })
+    return app
+
+
+@pytest.fixture
+def gcs_client(gcs_app):
+    return gcs_app.test_client()
+
+
+@pytest.fixture
+def mock_gcs_storage():
+    with patch("app.services.storage_factory.GCSStorageService") as mock_cls:
+        service = MagicMock()
+        service.save_file.return_value = "gs://bucket/BRA/doc.pdf"
+        service.get_signed_url.return_value = "https://signed-url"
+        mock_cls.return_value = service
+        yield service
+
+
+def create_test_document(db, **overrides):
+    defaults = dict(
+        id=uuid.uuid4(),
+        type=TypeDocument.CONVOCADO,
+        original_name="doc.pdf",
+        storage_path="gs://bucket/BRA/doc.pdf",
+        storage_url="gs://bucket/BRA/doc.pdf",
+        status=DocStatus.APPROVED.value,
+    )
+    defaults.update(overrides)
+    doc = Document(**defaults)
+    db.add(doc)
+    db.commit()
+    db.refresh(doc)
+    return doc
+
+
+def get_latest_audit_log(db, *, action=None, user_id=None, status=None):
+    query = db.query(AuditLog)
+    if action is not None:
+        query = query.filter_by(action=action)
+    if user_id is not None:
+        query = query.filter_by(user_id=user_id)
+    if status is not None:
+        query = query.filter_by(status=status)
+    return query.order_by(AuditLog.created_at.desc()).first()

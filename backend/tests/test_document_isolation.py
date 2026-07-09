@@ -1,4 +1,3 @@
-import pytest
 import io
 
 def test_upload_assigns_correct_selection_id(client, token_bra_staff):
@@ -53,7 +52,6 @@ def test_cross_selection_document_access_denied(
 
     assert response.status_code == 403
 
-@pytest.mark.xfail(reason="DELETE ainda não implementado")
 def test_cross_selection_delete_denied(
     client,
     token_bra_staff,
