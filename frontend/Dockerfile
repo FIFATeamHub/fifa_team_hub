@@ -1,13 +1,16 @@
-FROM node:22-alpine
-
+FROM python:3.11-slim
+ 
 WORKDIR /app
-
-COPY package*.json ./
-
-RUN npm install
-
-COPY . .
-
-EXPOSE 5173
-
-CMD ["npm", "run", "dev", "--", "--host"]
+ 
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+ 
+COPY backend/ .
+ 
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD python -c "import requests; requests.get('http://localhost:8080/health')"
+ 
+# Cloud Run usa PORT=8080 por padrão
+ENV PORT=8080
+ 
+CMD exec gunicorn --bind=0.0.0.0:${PORT} --workers=4 --timeout=60 "app:create_app()"

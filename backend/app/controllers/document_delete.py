@@ -46,4 +46,4 @@ def delete_document(current_user, document_id):
         "Documento removido."
     )
 
-    return jsonify({"message": "Documento removido"}), 200
+    return "", 204
