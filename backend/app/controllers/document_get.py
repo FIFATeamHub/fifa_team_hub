@@ -13,14 +13,8 @@ from zoneinfo import ZoneInfo
 
 
 
-def list_documents(current_user):  # Injetado pelo seu token_required
-    """
-    Endpoint GET /documents
-    Coleta parâmetros de busca dinâmicos e paginação da URL e delega ao Service.
-    """
-    # 1. CAPTURA DOS QUERY PARAMETERS DA URL de forma dinâmica
-    # Se o usuário acessar ?doc_type=RELATORIO_TATICO, capturamos aqui
-    doc_type_filter = request.args.get("type")
+def list_documents(current_user):
+    doc_type_filter = request.args.get("doc_type")
     
     # Captura a paginação tratando como inteiro e definindo os fallbacks padrão (1 e 10)
     page = request.args.get("page", 1, type=int)
@@ -47,12 +41,12 @@ def list_documents(current_user):  # Injetado pelo seu token_required
     for doc in paginated_result.items:
         data_list.append({
             "id": str(doc.id),
-            "original_name": doc.original_name,   #Mudado de doc.original_name para doc.filename
-            "doc_type": doc.type.value if hasattr(doc.type, "value") else str(doc.type), # Trata o Enum de forma segura
-            "storage_url": doc.storage_url, # Adicionado conforme o Model
+            "original_name": doc.original_name,
+            "doc_type": doc.type.value if hasattr(doc.type, "value") else str(doc.type),
+            "storage_url": doc.storage_url,
             "status": doc.status,
-            "uploaded_by_id": str(doc.uploaded_by), # Mapeado diretamente do relacionamento/FK do Model
-            "selection_id": str(doc.selection_id) if doc.selection_id else None,
+            "uploaded_by_id": str(doc.uploaded_by),
+            "selection_code": doc.selection.code if doc.selection else None,
             "created_at": doc.created_at.isoformat() + "Z" if doc.created_at else None
         })
 

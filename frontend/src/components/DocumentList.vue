@@ -147,9 +147,20 @@ th {
   font-weight: 600;
 }
 
-.badge.pendente   { background: #fef3c7; color: #92400e; }
-.badge.aprovado   { background: #d1fae5; color: #065f46; }
-.badge.rejeitado  { background: #fee2e2; color: #991b1b; }
+.badge.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge.approved {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.badge.rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
 
 .status-msg {
   color: #6b7280;
