@@ -1,8 +1,16 @@
+#!/bin/bash
+
 BUCKET_NAME="fifa-team-hub-documents"
-FAKE_GCS_URL="http://localhost:4443"
- 
-curl -X PUT "${FAKE_GCS_URL}/${BUCKET_NAME}"
- 
+FAKE_GCS_URL="http://fake-gcs:4443"
+PROJECT_ID="test-project"
+
+# Criar bucket
+curl -X POST "${FAKE_GCS_URL}/storage/v1/b?project=${PROJECT_ID}" \
+  -H "Content-Type: application/json" \
+  -d "{\"name\": \"${BUCKET_NAME}\"}"
+
+echo ""
 echo "✓ Bucket ${BUCKET_NAME} criado no fake-gcs"
- 
-curl -X GET "${FAKE_GCS_URL}/"
+
+# Listar buckets
+curl -X GET "${FAKE_GCS_URL}/storage/v1/b?project=${PROJECT_ID}"

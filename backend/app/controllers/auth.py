@@ -32,7 +32,7 @@ def register():
     # Cria o usuário com senha hasheada
     novo_user = User(
         email=dados["email"],
-        password_hash=hash_senha(dados["password"]),
+        password_hash=hash_password(dados["password"]),
         full_name=dados["full_name"],
         role=role,
         selection_id=dados.get("selection_id")
@@ -70,9 +70,13 @@ def login():
         # Busca user por email
         user = User.query.filter_by(email=email.lower()).first()
         # Credenciais inválidas
-        if not user or not verificar_senha(password, user.password_hash):
+        if not user or not verify_password(password, user.password_hash):
             return jsonify({"error": "Credenciais inválidas"}), 401
-        token = gerar_token(user)
+        token = create_access_token({
+        "sub": str(user.id),
+        "email": user.email,
+        "role": user.role.value
+        })
         return jsonify({
             "access_token": token,
             "token_type": "bearer"

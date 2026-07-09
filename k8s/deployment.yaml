@@ -16,7 +16,7 @@ spec:
       serviceAccountName: fifa-team-hub-ksa
       containers:
       - name: backend
-        image: gcr.io/projeto-fifa/fifa-team-hub:latest
+        image: gcr.io/fifa-team-hub/fifa-team-hub:latest
         ports:
         - containerPort: 8080
         env:
