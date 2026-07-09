@@ -43,15 +43,23 @@ class LocalStorageService(StorageService):
         stored_name: str,
         selection_id: str
     ) -> str:
+        safe_selection_id = os.path.basename(selection_id.strip())
+        safe_stored_name = os.path.basename(stored_name.strip())
 
-        target_dir = Path(self.local_path) / selection_id
+        if safe_selection_id != selection_id or safe_stored_name != stored_name:
+            raise ValueError("Invalid path components")
+
+        base_dir = Path(self.local_path).resolve()
+        target_dir = (base_dir / safe_selection_id).resolve()
+        target_dir.relative_to(base_dir)
 
         target_dir.mkdir(
             parents=True,
             exist_ok=True
         )
 
-        file_path = target_dir / stored_name
+        file_path = (target_dir / safe_stored_name).resolve()
+        file_path.relative_to(base_dir)
         
         file_stream.seek(0)
 

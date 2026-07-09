@@ -4,6 +4,9 @@ on:
   pull_request:         #Como não existe uma branch "develop", tirei esta restrição e agora o workflow só roda ao fazer um PR
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   backend-tests:
     runs-on: ubuntu-latest

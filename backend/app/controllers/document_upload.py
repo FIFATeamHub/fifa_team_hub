@@ -170,6 +170,5 @@ def upload_document(current_user):
         register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, f"Erro interno de banco de dados ao salvar documento: {str(e)}")
 
         return jsonify({
-            "error": "Erro interno ao salvar documento",
-            "details": str(e)
+            "error": "Erro interno ao salvar documento"
         }), 500
