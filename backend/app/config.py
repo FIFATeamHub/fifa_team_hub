@@ -36,3 +36,27 @@ class Config():
         ).split(",")
     )
     
+def check_required_env_vars():
+    # lista de variaveis 
+    required_vars = [
+        "SECRET_KEY",
+        "DATABASE_URL",
+        "JWT_SECRET_KEY"
+    ]
+
+    missing = [var for var in required_vars if not os.getenv(var)]
+
+    if missing:
+        raise RuntimeError(f"FALHA FATAL DE STARTUP: Faltam as seguintes variáveis "
+            f"obrigatórias em produção: {', '.join(missing)}"
+        )
+    
+    if os.getenv("STORAGE_BACKEND") == "gcs":
+        required_gcs = ["GCS_BUCKET_NAME", "GOOGLE_APPLICATION_CREDENTIALS"]
+        missing_gcs = [var for var in required_gcs if not os.getenv(var)]
+
+        if missing_gcs:
+            raise RuntimeError(
+                f"FALHA FATAL DE STORAGE: O STORAGE_BACKEND está definido como 'gcs', "
+                f"mas faltam as configurações da nuvem: {', '.join(missing_gcs)}"
+            )
