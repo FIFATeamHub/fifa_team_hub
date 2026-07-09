@@ -33,14 +33,13 @@
 
 
 
-<script setup>
+<script setup lang="ts">
 
 import { ref } from 'vue'
-import { useAuthStore } from '../stores/auth'
-import { useRouter, RouterLink } from 'vue-router'      
+import { useAuthStore } from '@/stores/auth.js'
+import { RouterLink } from 'vue-router'      
 
 const authStore = useAuthStore()
-const router = useRouter()
 
 const email = ref('')
 const password = ref('')
@@ -55,7 +54,8 @@ async function handleSubmit() {
     
     await authStore.login({ email: email.value, password: password.value })
 
-  } catch (error) {
+  } catch (err) {
+    const error = err as { status?: number }
     if (error.status === 401) {
       errorMessage.value = 'E-mail ou senha incorretos'
     }

@@ -26,3 +26,8 @@ Thumbs.db
 # Credenciais Cloud
 *service-account*.json
 *credentials*.json
+
+# 
+backend/storage/uploads/**
+!backend/storage/uploads/.gitkeep
+config/fifa-team-hub-key.json

@@ -10,44 +10,83 @@ services:
       PORT: 4443
       STORAGE_EMULATOR_HOST: http://fake-gcs:4443
 
-  backend:
-    build: ./backend
-    env_file:
-      - .env
-    environment:
-      PYTHONUNBUFFERED: 1
-      STORAGE_BACKEND: gcs
-      GCS_BUCKET_NAME: fifa-team-hub-documents
-      GCP_PROJECT_ID: test-project
-      GOOGLE_CLOUD_PROJECT: test-project
-      STORAGE_EMULATOR_HOST: http://fake-gcs:4443
-    depends_on:
-      - postgres
-      - fake-gcs
-    volumes:
-      - ./backend:/app
-    ports:
-      - "5000:5000"
-
   postgres:
-    image: postgres:15-alpine
-    env_file:
-      - .env
+    image: postgres:17
+
+    container_name: fifa_team_hub_db
+
+    restart: unless-stopped
+
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+
+      POSTGRES_DB: fifa_team_hub
+      POSTGRES_USER: fifa_user
+      POSTGRES_PASSWORD: fifa_password
+
+    ports:
+      - "15432:5432"
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    
+
+  # --- SERVIÇO DO BACKEND ---
+  backend:
+    environment:
+    - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    - JWT_ALGORITHM=${JWT_ALGORITHM}
+    - JWT_EXPIRE_MINUTES=${JWT_EXPIRE_MINUTES}
+    - STORAGE_BACKEND=${STORAGE_BACKEND}
+    - LOCAL_STORAGE_PATH=${LOCAL_STORAGE_PATH}
+    - MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB}
+    - ALLOWED_EXTENSIONS=${ALLOWED_EXTENSIONS}
+
+    - GCS_BUCKET_NAME=${GCS_BUCKET_NAME}
+    - GCP_PROJECT_ID=${GCP_PROJECT_ID}
+    - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
+    - STORAGE_EMULATOR_HOST=http://fake-gcs:4443
+
+    # Dentro do Docker, o banco é acessado pelo nome do serviço, não localhost
+    - DATABASE_URL=${DATABASE_URL}
+    build: ./backend 
+    container_name: fifa_backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/app 
+      - ./config/fifa-team-hub-key.json:/app/config/fifa-team-hub-key.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      fake-gcs:
+        condition: service_started
+    
+
+
+
+  # --- SERVIÇO DO FRONTEND ---
   frontend:
-    build: ./frontend
+    build: ./frontend 
+    container_name: fifa_frontend
     ports:
       - "5173:5173"
     volumes:
       - ./frontend:/app
+      - /app/node_modules
+    env_file:
+      - .env
+
+
 
 volumes:
   postgres_data:

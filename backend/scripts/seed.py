@@ -1,5 +1,5 @@
 from app import create_app
-from app.config.database import db
+from app.extensions import db
 from app.models.user import User
 from app.models.selection import Selection
 from app.models.enums.user_role import UserRole
