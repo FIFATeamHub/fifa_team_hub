@@ -64,7 +64,7 @@ export function useDocuments() {
       documents.value = response.data.data
       pagination.value = response.data.pagination
 
-    } catch (err) {
+    } catch {
 
       error.value = 'Erro ao carregar documentos.'
 
