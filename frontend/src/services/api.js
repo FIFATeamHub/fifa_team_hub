@@ -1,6 +1,11 @@
 import axios from 'axios'
 import router from '../router' // Importa o roteador para redirecionar se der erro 401
 
+/**
+ * Instância customizada do Axios com interceptors de autenticação.
+ * @type {import('axios').AxiosInstance}
+ */
+
 const api = axios.create({
   // Pega automaticamente a URL que você configurou no arquivo .env
   baseURL: import.meta.env.VITE_API_URL 
