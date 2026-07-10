@@ -11,7 +11,7 @@ from flask_migrate import Migrate  # type: ignore[import]
 
 
 
-from app.config.database import db  # type: ignore[import]
+
 from app.routes.auth import auth_bp
 from app.extensions import cors, db, migrate
 
