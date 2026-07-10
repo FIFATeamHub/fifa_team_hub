@@ -28,7 +28,28 @@ def create_app(test_config=None):
 
     check_required_env_vars()
 
-    app.config.from_object('app.config.Config')
+    app.config["STORAGE_BACKEND"] = os.getenv("STORAGE_BACKEND", "local")
+    app.config["LOCAL_STORAGE_PATH"] = os.getenv("LOCAL_STORAGE_PATH", "./storage/uploads")
+    app.config["GCS_BUCKET_NAME"] = os.getenv("GCS_BUCKET_NAME")
+    app.config["GCP_PROJECT_ID"] = os.getenv("GCP_PROJECT_ID")
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SQLALCHEMY_EXPIRE_ON_COMMIT"] = False
+
+    is_prod = bool(os.getenv("GOOGLE_CLOUD_PROJECT"))
+    if is_prod:
+        from app.services.gcp_secrets import get_secret
+        app.config["SECRET_KEY"] = get_secret("JWT_SECRET_KEY")
+        app.config["JWT_SECRET_KEY"] = get_secret("JWT_SECRET_KEY")
+        
+        db_user = os.getenv("DB_USER", "postgres")
+        db_pass = get_secret("DB_PASSWORD")
+        db_name = os.getenv("DB_NAME", "postgres")
+        db_instance_name = os.getenv("CLOUD_SQL_INSTANCE_NAME")
+        app.config["SQLALCHEMY_DATABASE_URI"] = f"postgresql+psycopg2://{db_user}:{db_pass}@/{db_name}?host=/cloudsql/{db_instance_name}"
+    else:
+        app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+        app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "local_fallback_secret")
+        app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
     
     #CORS permite que o navegador do cliente faça requisições ao backend mesmo que frontend e backend estejam em origens diferentes.
     
