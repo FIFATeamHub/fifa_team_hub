@@ -45,15 +45,22 @@ class LocalStorageService(StorageService):
         stored_name: str,
         selection_id: str
     ) -> str:
+        safe_selection_id = os.path.basename(selection_id.strip())
+        safe_stored_name = os.path.basename(stored_name.strip())
 
+        if safe_selection_id != selection_id or safe_stored_name != stored_name:
+            raise ValueError("Invalid path components")
+            
         base_path = Path(self.local_path).resolve()
         safe_selection_id = secure_filename(str(selection_id))
         safe_stored_name = secure_filename(str(stored_name))
+
         if not safe_selection_id:
             raise ValueError("selection_id inválido")
         if not safe_stored_name:
             safe_stored_name = uuid.uuid4().hex
         target_dir = (base_path / safe_selection_id).resolve()
+        target_dir.relative_to(base_path)
 
         target_dir.mkdir(
             parents=True,
