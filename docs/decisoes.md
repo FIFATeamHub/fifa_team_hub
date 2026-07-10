@@ -100,6 +100,10 @@ A estrutura de branches adotadas será:
 
 Exemplo: `S7_04_branch` ➡ Branch da Semana 7 para o Issue 04.
 
+## ADR-004: Exclusão de Documentos (Soft Delete + Hard Storage Delete)
+**Contexto**: Precisamos definir como a exclusão de documentos se comportará para respeitar as exigências de auditoria e otimização de nuvem.
+**Decisão**: O registro no banco de dados sofrerá *Soft Delete* (`status="DELETED"` e preenchimento de `deleted_at`) para compor trilhas de auditoria, garantindo a integridade referencial. Contudo, os arquivos físicos vinculados serão apagados do Storage (GCS/Local) para economizar custos.
+
 
 ### Commits
 
