@@ -7,6 +7,7 @@ from app.services.document import validate_file, validate_upload_permission
 from app.services.storage_service import LocalStorageService
 from app.services.storage_factory import get_storage_service
 from werkzeug.utils import secure_filename
+from google.api_core.exceptions import ResourceExhausted
 import uuid
 from uuid import UUID
 from datetime import datetime, timezone
@@ -14,7 +15,13 @@ from zoneinfo import ZoneInfo
 import traceback
 
 
-UUID_ZERADO = UUID("00000000-0000-0000-0000-000000000000") # UTILIZADO QUANDO OCORRER ERRO, PARA REGISTRAR O LOG DE FALHA
+UUID_ZERADO = uuid.uuid4()  # Sentinel para logs de falha sem recurso associado
+
+
+def _coerce_uuid(value):
+    if isinstance(value, UUID):
+        return value
+    return UUID(str(value))
 
 
 def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event, details_e = None):
@@ -22,10 +29,11 @@ def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event,
     try :
 
         with db.session.begin_nested():
+            
             log_falha = AuditLog(
                 user_id = user_id_e,
                 action = action_e,
-                resource_id = resource_id_e,
+                resource_id = _coerce_uuid(resource_id_e),
                 ip_address = request.remote_addr or "0.0.0.0",
                 status = status_e,
                 details = details_e,
@@ -160,6 +168,13 @@ def upload_document(current_user):
             "created_at": momento_requisicao.isoformat()
         }), 201
     
+    except ResourceExhausted as e:
+        db.session.rollback()
+        register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, f"Cota do storage excedida: {str(e)}")
+
+        return jsonify({
+            "error": "Serviço de armazenamento temporariamente indisponível (cota excedida).",
+        }), 503
 
     except Exception as e:
         db.session.rollback()
@@ -170,5 +185,5 @@ def upload_document(current_user):
         register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, f"Erro interno de banco de dados ao salvar documento: {str(e)}")
 
         return jsonify({
-            "error": "Erro interno ao salvar documento"
+            "error": "Erro interno ao salvar documento",
         }), 500

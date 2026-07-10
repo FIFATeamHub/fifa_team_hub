@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 from datetime import timedelta
+import uuid
 import shutil
 import os
 
 from google.cloud import storage as gcs_storage
+from werkzeug.utils import secure_filename
 
 class StorageService(ABC):
 
@@ -48,10 +50,17 @@ class LocalStorageService(StorageService):
 
         if safe_selection_id != selection_id or safe_stored_name != stored_name:
             raise ValueError("Invalid path components")
+            
+        base_path = Path(self.local_path).resolve()
+        safe_selection_id = secure_filename(str(selection_id))
+        safe_stored_name = secure_filename(str(stored_name))
 
-        base_dir = Path(self.local_path).resolve()
-        target_dir = (base_dir / safe_selection_id).resolve()
-        target_dir.relative_to(base_dir)
+        if not safe_selection_id:
+            raise ValueError("selection_id inválido")
+        if not safe_stored_name:
+            safe_stored_name = uuid.uuid4().hex
+        target_dir = (base_path / safe_selection_id).resolve()
+        target_dir.relative_to(base_path)
 
         target_dir.mkdir(
             parents=True,
@@ -59,7 +68,7 @@ class LocalStorageService(StorageService):
         )
 
         file_path = (target_dir / safe_stored_name).resolve()
-        file_path.relative_to(base_dir)
+        file_path.relative_to(base_path)
         
         file_stream.seek(0)
 

@@ -19,6 +19,11 @@ class Document(db.Model):
         nullable=True
     )
 
+    selection = db.relationship(
+        "Selection",
+        backref="documents"
+    )
+
     uploaded_by = db.Column(
         db.UUID(as_uuid=True),
         db.ForeignKey("users.id"),
