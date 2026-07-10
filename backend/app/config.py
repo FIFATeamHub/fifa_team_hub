@@ -24,7 +24,7 @@ class Config():
     )
 
     MAX_FILE_SIZE_BYTES = (
-        int(os.getenv("MAX_FILE_SIZE_MB", 10))
+        int(os.getenv("MAX_FILE_SIZE_MB") or 10)
         * 1024
         * 1024
     )
