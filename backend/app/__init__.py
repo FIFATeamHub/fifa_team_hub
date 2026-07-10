@@ -1,5 +1,8 @@
 import os
 
+from app.config import check_required_env_vars
+
+
 from dotenv import load_dotenv
 from pathlib import Path
 from flask import Flask  # type: ignore[import]
@@ -8,7 +11,7 @@ from flask_migrate import Migrate  # type: ignore[import]
 
 
 
-from app.config.database import db  # type: ignore[import]
+
 from app.routes.auth import auth_bp
 from app.extensions import cors, db, migrate
 
@@ -22,6 +25,8 @@ migrate = Migrate()
 def create_app(test_config=None):
 
     app = Flask(__name__)
+
+    check_required_env_vars()
 
     app.config["STORAGE_BACKEND"] = os.getenv("STORAGE_BACKEND", "local")
     app.config["LOCAL_STORAGE_PATH"] = os.getenv(
