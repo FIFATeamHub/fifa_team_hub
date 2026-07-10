@@ -1,4 +1,3 @@
-# ---------- Stage 1: Build ----------
     FROM node:22-alpine AS build
 
     WORKDIR /app
@@ -15,7 +14,6 @@
     
     RUN npm run build
     
-    # ---------- Stage 2: Runtime (nginx) ----------
     FROM nginx:alpine
     
     # Template do nginx (usa envsubst para injetar $PORT em runtime)
