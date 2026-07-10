@@ -28,16 +28,7 @@ def create_app(test_config=None):
 
     check_required_env_vars()
 
-    app.config["STORAGE_BACKEND"] = os.getenv("STORAGE_BACKEND", "local")
-    app.config["LOCAL_STORAGE_PATH"] = os.getenv(
-        "LOCAL_STORAGE_PATH",
-        "./storage/uploads"
-    )
-    app.config["GCS_BUCKET_NAME"] = os.getenv("GCS_BUCKET_NAME")
-    app.config["GCP_PROJECT_ID"] = os.getenv("GCP_PROJECT_ID")
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["SQLALCHEMY_EXPIRE_ON_COMMIT"] = False
+    app.config.from_object('app.config.Config')
     
     #CORS permite que o navegador do cliente faça requisições ao backend mesmo que frontend e backend estejam em origens diferentes.
     
@@ -45,12 +36,7 @@ def create_app(test_config=None):
         app,
         resources={
             r"/*": {
-                "origins": [
-                    "http://localhost:5173",
-                    "http://127.0.0.1:5173",
-                    "http://localhost:5000",
-                    "http://127.0.0.1:5000",
-                ]
+                "origins": "*"
             }
         },
     )
