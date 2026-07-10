@@ -6,6 +6,8 @@ from flask import Flask  # type: ignore[import]
 from flask_migrate import Migrate  # type: ignore[import]
 
 
+
+
 from app.config.database import db  # type: ignore[import]
 from app.routes.auth import auth_bp
 from app.extensions import cors, db, migrate
@@ -59,10 +61,13 @@ def create_app(test_config=None):
     from app.routes.documents import document_bp
     from app.routes.health import health_bp
     from app.routes.selection import selection_bp
+    from app.routes.audit import audit_bp
 
     app.register_blueprint(document_bp)
     app.register_blueprint(health_bp)
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(selection_bp)
+    app.register_blueprint(audit_bp, url_prefix="/api/audit")
+
     
     return app

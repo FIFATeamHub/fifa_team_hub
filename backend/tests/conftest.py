@@ -141,6 +141,22 @@ def organizer(app):
 
         return user
 
+@pytest.fixture
+def auditor(app):
+    with app.app_context():
+        user = User(
+            full_name="Auditor do Sistema",
+            email="auditor@test.com",
+            password_hash=hash_password("123456"),
+            role=UserRole.AUDITOR,
+            selection_id=None # <-- Repare que não amarramos a nenhuma seleção!
+        )
+        db.session.add(user)
+        db.session.commit()
+        db.session.refresh(user)
+        db.session.expunge(user)
+        return user
+
 
 @pytest.fixture
 def arg_staff(app, selection_arg):
@@ -178,6 +194,9 @@ def token_arg_staff(arg_staff):
 
     return create_access_token(user_to_token_payload(arg_staff))
 
+@pytest.fixture
+def token_auditor(auditor):
+    return create_access_token(user_to_token_payload(auditor))
 
 @pytest.fixture
 def token_organizer(organizer):
