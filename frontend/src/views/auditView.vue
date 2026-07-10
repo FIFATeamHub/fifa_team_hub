@@ -1,18 +1,24 @@
 <!-- frontend/src/views/auditView.vue -->
-<script setup>
+<script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { useAuditLogs } from '@/composables/useAuditLogs'
+import { useAuditLogs, type AuditLog } from '@/composables/useAuditLogs'
 import { ShieldCheck, ShieldAlert, Search, Calendar, Eye } from 'lucide-vue-next'
 
 const { logs, loading, error, filters, pagination, fetchAuditLogs } = useAuditLogs()
 
 // Estado para o modal de detalhes de segurança
-const selectedDetails = ref(null)
+const selectedDetails = ref<string | null>(null)
 const isModalOpen = ref(false)
 
-const openDetailsModal = (details) => {
+const openDetailsModal = (details: AuditLog['details']) => {
+  if (typeof details === 'string') {
+    selectedDetails.value = details
+    isModalOpen.value = true
+    return
+  }
+
   // Tratamento preventivo de segurança (Double-Guard Sanitization)
-  const sanitized = { ...details }
+  const sanitized: Record<string, unknown> = { ...details }
   if (sanitized.password) sanitized.password = '********'
   if (sanitized.token) sanitized.token = '********'
 
@@ -20,7 +26,7 @@ const openDetailsModal = (details) => {
   isModalOpen.value = true
 }
 
-const formatDate = (date) => {
+const formatDate = (date: string) => {
   return date ? new Date(date).toLocaleString('pt-BR') : '—'
 }
 

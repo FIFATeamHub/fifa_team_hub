@@ -10,7 +10,7 @@ export interface AuditLog {
   resource_id: string | null
   status: 'SUCCESS' | 'FAILED' | 'WARNING'
   ip_address: string
-  details: Record<string, any> | string
+  details: Record<string, unknown> | string
   created_at: string
 }
 
