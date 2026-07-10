@@ -14,7 +14,8 @@ gcloud run deploy ${SERVICE_NAME} \
   --region ${REGION} \
   --memory 512Mi \
   --timeout 60 \
-  --set-env-vars STORAGE_BACKEND=gcs,GCS_BUCKET_NAME=fifa-team-hub-documents,GCP_PROJECT_ID=${PROJECT_ID} \
+  --add-cloudsql-instances "fifa-team-hub:southamerica-east1:fifa-db-prod" \
+  --set-env-vars STORAGE_BACKEND=gcs,GCS_BUCKET_NAME=fifa-team-hub-documents,GCP_PROJECT_ID=${PROJECT_ID},CLOUD_SQL_INSTANCE_NAME="fifa-team-hub:southamerica-east1:fifa-db-prod",GOOGLE_CLOUD_PROJECT=${PROJECT_ID} \
   --service-account fifa-team-hub-app@${PROJECT_ID}.iam.gserviceaccount.com \
   --allow-unauthenticated \
   --min-instances 1 \
