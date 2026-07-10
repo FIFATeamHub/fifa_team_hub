@@ -1,5 +1,6 @@
+#!/bin/bash
 
-PROJECT_ID="fifa_team_hub"
+PROJECT_ID="fifa-team-hub"
 SERVICE_NAME="fifa-team-hub"
 REGION="us-central1"
 IMAGE_URL="gcr.io/${PROJECT_ID}/${SERVICE_NAME}:latest"
