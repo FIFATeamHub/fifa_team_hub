@@ -84,7 +84,16 @@ def create_app(test_config=None):
     app.register_blueprint(selection_bp)
     app.register_blueprint(audit_bp, url_prefix="/api/audit")
 
-    with app.app_context():
-        db.create_all()
-    
+    _tables_created = False
+
+    @app.before_request
+    def setup_db_tables():
+        nonlocal _tables_created
+        if not _tables_created:
+            try:
+                db.create_all()
+                _tables_created = True
+            except Exception as e:
+                app.logger.error(f"Erro ao criar tabelas no banco de dados: {e}")
+
     return app
