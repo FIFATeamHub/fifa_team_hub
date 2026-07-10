@@ -11,7 +11,7 @@ from app.services.storage_factory import get_storage_service
 
 def delete_document(current_user, document_id):
 
-    document = Document.query.get(document_id)
+    document = db.session.get(Document, document_id)
 
     if document is None:
         return jsonify({"error": "Documento não encontrado"}), 404
