@@ -3,9 +3,10 @@ from flask import send_file
 import os
 from app.services.document_get import DocumentService
 from app.models.enums.user_role import  LogAction
-from app.controllers.document_upload import register_audit_log
+from app.controllers.document_upload import register_audit_log, UUID_ZERADO
 from app.services.storage_service import LocalStorageService, GCSStorageService
 from app.services.storage_factory import get_storage_service
+from google.cloud.exceptions import NotFound
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
@@ -31,7 +32,7 @@ def list_documents(current_user):
     if paginated_result is None:
         fuso_sp = ZoneInfo("America/Sao_Paulo") 
         momento_requisicao = datetime.now(fuso_sp)
-        register_audit_log(current_user.id, LogAction.ACCESS_DENIED , "FAILURE", "00000000-0000-0000-0000-000000000000" ,momento_requisicao, "Acesso negado. Perfil inválido.")
+        register_audit_log(current_user.id, LogAction.ACCESS_DENIED , "FAILURE", UUID_ZERADO ,momento_requisicao, "Acesso negado. Perfil inválido.")
         return jsonify({"error": "Acesso negado. Perfil inválido."}), 403
 
     # 3. FORMATAÇÃO DO JSON DE RETORNO (Higienização de dados)
@@ -143,6 +144,11 @@ def download_document_url(current_user, document_id):
             "expires_in_minutes": 15,
             "filename": document.original_name
         }), 200
+
+    except NotFound as e:
+        print(f"[ERRO STORAGE - BLOB NÃO ENCONTRADO]: {str(e)}")
+        register_audit_log(current_user.id, LogAction.ACCESS_DENIED, "FAILURE", str(document_id), momento_requisicao, "Arquivo não encontrado no storage (removido ou corrompido).")
+        return jsonify({"error": "Arquivo não encontrado no storage."}), 410
 
     except Exception as e:
         print(f"[ERRO STORAGE]: {str(e)}")

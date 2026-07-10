@@ -29,5 +29,4 @@ def test_delete_document_success(client, token_bra_staff):
     )
     
     # Assert: Validar o nosso "Soft Delete" e limpeza de base
-    assert response.status_code == 200
-    assert response.json["message"] == "Documento removido"
+    assert response.status_code == 204
