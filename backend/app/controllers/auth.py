@@ -117,6 +117,18 @@ def login():
         return jsonify({"error": "Erro interno no servidor"}), 500
 
 
+def logout(current_user):
+    fuso_sp = ZoneInfo("America/Sao_Paulo")
+    momento_requisicao = datetime.now(fuso_sp)
+
+    register_audit_log(
+        current_user.id, LogAction.LOGOUT, "SUCCESS", current_user.id,
+        momento_requisicao, "Logout realizado com sucesso"
+    )
+
+    return jsonify({"message": "Logout realizado com sucesso"}), 200
+
+
 def me(current_user):
     if current_user is None:
         return jsonify({"error": "Usuário não encontrado"}), 404
