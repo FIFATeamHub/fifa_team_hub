@@ -73,7 +73,8 @@ class LocalStorageService(StorageService):
         if path.exists():
             path.unlink()
             
-    def get_signed_url(self, storage_path: str, expiration_minutes: int = 15) -> str:
+    def get_signed_url(self, storage_path: str, document_id: str = None, expiration_minutes: int = 15) -> str:
+
         path = Path(storage_path)
 
         if len(path.parts) >= 2:

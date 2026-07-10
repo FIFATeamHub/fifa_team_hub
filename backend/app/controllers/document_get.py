@@ -98,7 +98,7 @@ def get_document_by_id(current_user, document_id):
     storage_reference = document.storage_url if isinstance(storage, GCSStorageService) else document.storage_path
     url_visualizacao = storage.get_signed_url(storage_reference, expiration_minutes=15)
 
-    register_audit_log(current_user.id, LogAction.DOWNLOAD , "SUCESS" , document_id, momento_requisicao, "Arquivo adquirido com sucesso")
+    register_audit_log(current_user.id, LogAction.DOWNLOAD , "SUCCESS" , document_id, momento_requisicao, "Arquivo adquirido com sucesso")
 
     return jsonify({
         "id": str(document.id),
