@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 
 PROJECT_ID="fifa-team-hub"
 SERVICE_NAME="fifa-team-hub"
