@@ -98,6 +98,7 @@ def get_document_by_id(current_user, document_id):
     storage_reference = document.storage_url if isinstance(storage, GCSStorageService) else document.storage_path
     url_visualizacao = storage.get_signed_url(storage_reference, expiration_minutes=15)
 
+    register_audit_log(current_user.id, LogAction.DOWNLOAD , "SUCESS" , document_id, momento_requisicao, "Arquivo adquirido com sucesso")
 
     return jsonify({
         "id": str(document.id),
@@ -132,7 +133,7 @@ def download_document_url(current_user, document_id):
 
     try:
         # 2. Consumo agnóstico do Storage Provider
-        storage = get_storage_service()    # Chama a factory para decidir se é local ou cloud
+        storage = get_storage_service()    # Chama a f  actory para decidir se é local ou cloud
         url_final = storage.get_signed_url(
             storage_path=document.storage_url,
             document_id=str(document.id),
@@ -141,9 +142,8 @@ def download_document_url(current_user, document_id):
 
         # 3. Registrar o sucesso do download na auditoria da FIFA
         # Caso o enum LogAction não possua DOWNLOAD, use a string ou o mapeamento correto do seu enum
-        acao_download = LogAction.DOWNLOAD if hasattr(LogAction, 'DOWNLOAD') else LogAction.UPLOAD
-        register_audit_log(current_user.id, acao_download, "SUCCESS", str(document.id), momento_requisicao, f"URL de download gerada para: {document.original_name}")
-
+        
+        register_audit_log(current_user.id, LogAction.DOWNLOAD, "SUCCESS", str(document.id), momento_requisicao, f"URL de download gerada para: {document.original_name}")
         return jsonify({
             "url": url_final,
             "expires_in_minutes": 15,
