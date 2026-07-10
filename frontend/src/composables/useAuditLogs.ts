@@ -1,10 +1,12 @@
 import { ref, reactive, watch } from 'vue'
 import api from '@/services/api'
 
+export type LogAction = 'LOGIN' | 'LOGOUT' | 'DELETE' | 'UPLOAD' | 'DOWNLOAD' | 'ACCESS_DENIED'
+
 export interface AuditLog {
   id: string
   user_id: string
-  action: string
+  action: LogAction
   resource_id: string | null
   status: 'SUCCESS' | 'FAILED' | 'WARNING'
   ip_address: string

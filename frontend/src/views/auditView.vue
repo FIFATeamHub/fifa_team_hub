@@ -45,9 +45,12 @@ onMounted(() => {
         <label><Search :size="14" /> Filtrar por Ação</label>
         <select v-model="filters.action" class="custom-select">
           <option value="">Todas as ações operacionais</option>
-          <option value="USER_LOGIN">USER_LOGIN</option>
-          <option value="DOCUMENT_DELETE">DOCUMENT_DELETE</option>
-          <option value="PERMISSIONS_CHANGED">PERMISSIONS_CHANGED</option>
+          <option value="LOGIN">LOGIN</option>
+          <option value="LOGOUT">LOGOUT</option>
+          <option value="DELETE">DELETE</option>
+          <option value="UPLOAD">UPLOAD</option>
+          <option value="DOWNLOAD">DOWNLOAD</option>
+          <option value="ACCESS_DENIED">ACCESS_DENIED</option>
         </select>
       </div>
 
