@@ -2,6 +2,30 @@ from app.models.enums.user_role import LogAction
 from tests.conftest import get_latest_audit_log
 
 
+class TestLogout:
+    """Cobre o endpoint de logout e o registro de log de auditoria (AuditLog)."""
+
+    def test_logout_sem_token_retorna_401(self, client):
+        response = client.post("/auth/logout")
+
+        assert response.status_code == 401
+
+    def test_logout_sucesso_registra_audit_log(self, client, db, bra_staff, token_bra_staff):
+        response = client.post(
+            "/auth/logout",
+            headers={"Authorization": f"Bearer {token_bra_staff}"},
+        )
+
+        assert response.status_code == 200
+
+        audit_log = get_latest_audit_log(
+            db, action=LogAction.LOGOUT, user_id=bra_staff.id, status="SUCCESS"
+        )
+        assert audit_log is not None
+        assert audit_log.resource_id == bra_staff.id
+        assert audit_log.ip_address is not None
+
+
 class TestLoginAuditLog:
     """Cobre o registro de log de auditoria (AuditLog) no endpoint de login."""
 
