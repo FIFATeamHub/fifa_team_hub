@@ -38,11 +38,14 @@ def create_app(test_config=None):
     is_prod = bool(os.getenv("GOOGLE_CLOUD_PROJECT"))
     if is_prod:
         from app.services.gcp_secrets import get_secret
+        import urllib.parse
+        
         app.config["SECRET_KEY"] = get_secret("JWT_SECRET_KEY")
         app.config["JWT_SECRET_KEY"] = get_secret("JWT_SECRET_KEY")
         
         db_user = os.getenv("DB_USER", "postgres")
-        db_pass = get_secret("DB_PASSWORD")
+        raw_pass = get_secret("DB_PASSWORD")
+        db_pass = urllib.parse.quote_plus(raw_pass)
         db_name = os.getenv("DB_NAME", "postgres")
         db_instance_name = os.getenv("CLOUD_SQL_INSTANCE_NAME")
         app.config["SQLALCHEMY_DATABASE_URI"] = f"postgresql+psycopg2://{db_user}:{db_pass}@/{db_name}?host=/cloudsql/{db_instance_name}"
