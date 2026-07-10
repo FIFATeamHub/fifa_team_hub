@@ -51,7 +51,7 @@ def register():
         password_hash=hash_password(dados["password"]),
         full_name=dados["full_name"],
         role=role,
-        selection_id=dados.get("selection_id")
+        selection_id=dados.get("selection_id") if dados.get("selection_id") else None
     )
 
     db.session.add(novo_user)
