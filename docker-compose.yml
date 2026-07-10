@@ -65,7 +65,9 @@ services:
 
   # --- SERVIÇO DO FRONTEND ---
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
     container_name: fifa_frontend
     ports:
       - "5173:5173"
