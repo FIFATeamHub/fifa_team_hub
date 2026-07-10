@@ -8,14 +8,9 @@ from pathlib import Path
 from flask import Flask  # type: ignore[import]
 from flask_migrate import Migrate  # type: ignore[import]
 
-
-
-
-
 from app.routes.auth import auth_bp
 from app.extensions import cors, db, migrate
 
-# O .env está na raiz do projeto, um nível acima de /backend
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 from app.models import *
@@ -25,8 +20,6 @@ migrate = Migrate()
 def create_app(test_config=None):
 
     app = Flask(__name__)
-
-    check_required_env_vars()
 
     app.config["STORAGE_BACKEND"] = os.getenv("STORAGE_BACKEND", "local")
     app.config["LOCAL_STORAGE_PATH"] = os.getenv(
@@ -38,6 +31,12 @@ def create_app(test_config=None):
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SQLALCHEMY_EXPIRE_ON_COMMIT"] = False
+
+    if test_config:
+        app.config.update(test_config)
+
+    if not app.config.get("TESTING"):
+        check_required_env_vars()
     
     #CORS permite que o navegador do cliente faça requisições ao backend mesmo que frontend e backend estejam em origens diferentes.
     
@@ -54,9 +53,6 @@ def create_app(test_config=None):
             }
         },
     )
-
-    if test_config:
-        app.config.update(test_config)
 
     db.init_app(app)
     migrate.init_app(app, db)
