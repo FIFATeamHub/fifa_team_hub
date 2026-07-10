@@ -38,6 +38,8 @@ jobs:
           STORAGE_BACKEND: gcs
           GCS_BUCKET_NAME: test-bucket
           GCP_PROJECT_ID: test-project
+          SECRET_KEY: ci-secret-key
+          GOOGLE_APPLICATION_CREDENTIALS: fake.json
         run: python -m pytest backend/tests/ -v --tb=short
 
   frontend-lint:
