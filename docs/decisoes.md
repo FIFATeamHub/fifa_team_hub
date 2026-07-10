@@ -120,5 +120,11 @@ Exemplo de mensagem no commit:
 "feat: adicionando X função"
 "docs: adicionando informação no decisoes.md"
 
+## ADR-005: Logout (sem Blacklist de Token)
+
+**Contexto**: Precisávamos de um endpoint de logout que ao menos deixasse rastro de auditoria (`LogAction.LOGOUT`) do encerramento de sessão.
+
+**Decisão**: Por ora, `POST /auth/logout` apenas registra o `AuditLog` de sucesso e retorna 200 — o JWT em si **não é invalidado** no backend (ele continua tecnicamente válido até expirar). A invalidação real, via blacklist/revogação de token (ex.: tabela de tokens revogados ou Redis com TTL), fica como **melhoria futura (follow-up)**, fora do escopo desta sprint para economizar tempo/tokens.
+
 
 
