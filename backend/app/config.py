@@ -16,7 +16,7 @@ class Config():
         
         db_user = os.getenv("DB_USER", "postgres")
         db_pass = get_secret("DB_PASSWORD")
-        db_name = os.getenv("DB_NAME", "fifa_db")
+        db_name = os.getenv("DB_NAME", "postgres")
         db_instance_name = os.getenv("CLOUD_SQL_INSTANCE_NAME")
         SQLALCHEMY_DATABASE_URI = f"postgresql+psycopg2://{db_user}:{db_pass}@/{db_name}?host=/cloudsql/{db_instance_name}"
     else:
@@ -65,7 +65,9 @@ def check_required_env_vars():
             )
     
     if os.getenv("STORAGE_BACKEND") == "gcs":
-        required_gcs = ["GCS_BUCKET_NAME", "GOOGLE_APPLICATION_CREDENTIALS"]
+        required_gcs = ["GCS_BUCKET_NAME"]
+        if not is_production:
+            required_gcs.append("GOOGLE_APPLICATION_CREDENTIALS")
         missing_gcs = [var for var in required_gcs if not os.getenv(var)]
 
         if missing_gcs:
