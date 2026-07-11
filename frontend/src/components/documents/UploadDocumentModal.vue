@@ -19,8 +19,8 @@
                 <label>Tipo de documento</label>
                 <select v-model="selectedType" :disabled="isLoading">
                     <option value="" disabled>Selecione...</option>
-                    <option value="CONVOCADO">Convocação</option>
-                    <option value="PASSPORT">Passaporte</option>
+                    <option value="CONVOCACAO">Convocação</option>
+                    <option value="PASSAPORTE">Passaporte</option>
                     <option value="LAUDO_MEDICO">Laudo Médico</option>
                     <option value="RELATORIO_TATICO">Relatório Tático</option>
                     <option value="ESQUEMA_JOGADAS">Esquema de Jogadas</option>
@@ -93,7 +93,7 @@ async function handleSubmit() {
   uploadProgress.value = 0
 
   const formData = new FormData()
-  formData.append('file', selectedFile.value)
+  formData.append('file', selectedFile.value)   // agora TypeScript sabe que não é null
   formData.append('doc_type', selectedType.value)
 
   try {
@@ -103,10 +103,11 @@ async function handleSubmit() {
       )
     })
 
-    props.onSuccess?.(resposta.data)
+    props.onSuccess?.(resposta.data)   // ?. evita erro se props for undefined
     props.onClose?.()
 
   } catch (erro) {
+    // TypeScript não sabe o tipo do erro no catch — fazemos um cast
     const err = erro as { response?: { status?: number } }
     const status = err.response?.status
 

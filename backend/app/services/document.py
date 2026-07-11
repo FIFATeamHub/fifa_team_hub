@@ -56,8 +56,8 @@ def validate_upload_permission(user_role, doc_type_enum):
     elif user_role == UserRole.TECHNICAL_STAFF:
         if doc_type_enum.name in ["CONVOCADO", "RELATORIO_TATICO", "ESQUEMA_JOGADAS"]:
             return True, DocStatus.APPROVED.value
-        
-        if doc_type_enum == TypeDocument.PASSPORT:
+
+        if doc_type_enum.name in ["PASSPORT", "LAUDO_MEDICO"]:
             return True, DocStatus.PENDING.value
 
 
