@@ -30,7 +30,7 @@ class StorageService(ABC):
         
     @abstractmethod
     def get_signed_url(self, storage_path: str, document_id: str = None,expiration_minutes: int = 15) -> str:
-        #Gera URL temporária assinada (apenas GCS)
+
         pass
     
     
@@ -38,7 +38,6 @@ class StorageService(ABC):
 class LocalStorageService(StorageService):
     def __init__(self, local_path: str = "./storage/uploads"):
         self.local_path = local_path
-        # Garante que a pasta raiz do storage exista localmente
         os.makedirs(self.local_path, exist_ok=True)
 
     def save_file(
@@ -110,17 +109,7 @@ class GCSStorageService(StorageService):
 
         self.bucket_name = bucket_name
         self.project_id = project_id
-        # Host usado apenas para montar a signed URL devolvida ao navegador (ex:
-        # http://localhost:4443 em dev com fake-gcs). O backend continua falando
-        # com o storage via STORAGE_EMULATOR_HOST normalmente; None preserva o
-        # comportamento padrão (client.api_endpoint / storage.googleapis.com).
         self.public_url = public_url
-        # Credenciais explícitas: quando STORAGE_EMULATOR_HOST está setado (dev local
-        # com fake-gcs), o SDK ignora silenciosamente as credenciais padrão e força
-        # AnonymousCredentials, o que quebra generate_signed_url() (sem chave privada)
-        # e derruba o fallback para a IAM SignBlob API real do Google. Passando as
-        # credenciais explicitamente, a assinatura V4 é feita localmente com a chave
-        # privada da service account, sem depender de rede externa.
         credentials, _ = google.auth.default()
         self.client = gcs_storage.Client(project=project_id, credentials=credentials)
         self.bucket = self.client.bucket(bucket_name)
@@ -140,7 +129,6 @@ class GCSStorageService(StorageService):
 
 
     def delete_file(self, storage_path: str) -> None:
-        # Extrai o caminho relativo tirando o 'gs://nome-do-bucket/'
         prefixo = f"gs://{self.bucket_name}/"
         if storage_path.startswith(prefixo):
             blob_path = storage_path.replace(prefixo, "")
@@ -158,15 +146,12 @@ class GCSStorageService(StorageService):
         if storage_path.startswith(prefixo):
             blob_path = storage_path.replace(prefixo, "")
         else:
-            # Fallback caso apenas o caminho interno sem o gs:// tenha sido passado
             partes = storage_path.replace("\\", "/").split("/")
             blob_path = "/".join(partes[-2:]) if len(partes) >= 2 else partes[-1]
 
         blob = self.bucket.blob(blob_path)
 
         try:
-            # Caminho padrão: funciona quando as credenciais têm chave privada
-            # (ex: GOOGLE_APPLICATION_CREDENTIALS com JSON de service account, em dev local)
             return blob.generate_signed_url(
                 version="v4",
                 expiration=timedelta(minutes=expiration_minutes),
@@ -174,8 +159,6 @@ class GCSStorageService(StorageService):
                 api_access_endpoint=self.public_url
             )
         except AttributeError:
-            # Credenciais do metadata server (Cloud Run/GCE) não têm chave privada.
-            # Assina via IAM SignBlob API usando a identidade da própria service account.
             credentials, _ = google.auth.default()
             credentials.refresh(google_auth_requests.Request())
 

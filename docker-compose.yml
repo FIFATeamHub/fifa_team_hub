@@ -10,7 +10,6 @@ services:
       PORT: 4443
       STORAGE_EMULATOR_HOST: http://fake-gcs:4443
 
-  # Cria o bucket no fake-gcs assim que ele fica pronto para responder.
   gcs-init:
     image: curlimages/curl:8.10.1
     depends_on:

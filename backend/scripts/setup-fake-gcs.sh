@@ -9,7 +9,6 @@ until curl -sf -o /dev/null "${FAKE_GCS_URL}/storage/v1/b?project=${PROJECT_ID}"
   sleep 1
 done
 
-# Idempotente: só cria o bucket se ele ainda não existir
 if curl -sf -o /dev/null "${FAKE_GCS_URL}/storage/v1/b/${BUCKET_NAME}"; then
   echo "✓ Bucket ${BUCKET_NAME} já existe no fake-gcs"
 else
