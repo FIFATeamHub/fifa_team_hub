@@ -31,6 +31,7 @@ const { can } = usePermissions()
 
 const authStore = useAuthStore()
 
+// Roda fetchDocuments assim que a página/componente é carregado.
 onMounted(async () => {
     await fetchDocuments()
 })
@@ -59,6 +60,7 @@ async function previousPage() {
     }
 }
 
+// confirmação de delete
 async function handleDelete(id: string) {
 
     const confirmed = confirm(
@@ -105,7 +107,7 @@ async function handleView(doc: Documento) {
                         Todos os tipos
                     </option>
 
-                    <option value="PASSPORT">
+                    <option value="PASSAPORTE">
                         Passaporte
                     </option>
 
