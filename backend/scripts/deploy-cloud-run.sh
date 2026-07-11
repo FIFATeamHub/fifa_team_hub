@@ -14,6 +14,11 @@ fi
 docker build -t ${IMAGE_URL} ./backend
 docker push ${IMAGE_URL}
 
+gcloud iam service-accounts add-iam-policy-binding \
+  fifa-team-hub-app@${PROJECT_ID}.iam.gserviceaccount.com \
+  --member="serviceAccount:fifa-team-hub-app@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role="roles/iam.serviceAccountTokenCreator"
+
 gcloud run deploy ${SERVICE_NAME} \
   --image ${IMAGE_URL} \
   --platform managed \
