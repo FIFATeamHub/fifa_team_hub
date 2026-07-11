@@ -149,7 +149,24 @@ def auditor(app):
             email="auditor@test.com",
             password_hash=hash_password("123456"),
             role=UserRole.AUDITOR,
-            selection_id=None # <-- Repare que não amarramos a nenhuma seleção!
+            selection_id=None
+        )
+        db.session.add(user)
+        db.session.commit()
+        db.session.refresh(user)
+        db.session.expunge(user)
+        return user
+
+
+@pytest.fixture
+def bra_auditor(app, selection_bra):
+    with app.app_context():
+        user = User(
+            full_name="Auditor Brasil",
+            email="auditor.bra@test.com",
+            password_hash=hash_password("123456"),
+            role=UserRole.AUDITOR,
+            selection_id=selection_bra
         )
         db.session.add(user)
         db.session.commit()
@@ -199,6 +216,10 @@ def token_auditor(auditor):
     return create_access_token(user_to_token_payload(auditor))
 
 @pytest.fixture
+def token_bra_auditor(bra_auditor):
+    return create_access_token(user_to_token_payload(bra_auditor))
+
+@pytest.fixture
 def token_organizer(organizer):
 
     return create_access_token(user_to_token_payload(organizer))
@@ -218,7 +239,7 @@ def arg_document(app, arg_staff, selection_arg):
             uploaded_by=arg_staff.id,
             type=TypeDocument.RELATORIO_TATICO,
             original_name="relatorio.pdf",
-            storage_url="/tmp/relatorio.pdf",
+            storage_path="/tmp/relatorio.pdf",
             status=DocStatus.APPROVED.value
         )
 

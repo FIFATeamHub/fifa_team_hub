@@ -94,12 +94,12 @@ def login():
         if not user or not verify_password(password, user.password_hash):
             if user:
                 register_audit_log(
-                    user.id, LogAction.LOGIN, "FAILED", user.id,
-                    momento_requisicao, "Senha incorreta"
+                    user.id, LogAction.LOGIN, "FAILURE", user.id,
+                    momento_requisicao, "Senha incorreta", selection_id_e=user.selection_id
                 )
             else:
                 register_audit_log(
-                    None, LogAction.LOGIN, "FAILED", UUID_LOGIN_SEM_USUARIO,
+                    None, LogAction.LOGIN, "FAILURE", UUID_LOGIN_SEM_USUARIO,
                     momento_requisicao, "Tentativa de login com e-mail não cadastrado"
                 )
             return jsonify({"error": "Credenciais inválidas"}), 401
@@ -108,7 +108,7 @@ def login():
 
         register_audit_log(
             user.id, LogAction.LOGIN, "SUCCESS", user.id,
-            momento_requisicao, "Login realizado com sucesso"
+            momento_requisicao, "Login realizado com sucesso", selection_id_e=user.selection_id
         )
 
         return jsonify({
@@ -116,9 +116,7 @@ def login():
             "token_type": "bearer"
         }), 200
     except Exception as e:
-        # Se QUALQUER coisa der errado (banco cair, erro de digitação no código),
-        # a gente captura aqui para não dar erro 500 seco no navegador.
-        print(f"Erro no login: {e}") # Isso vai pro terminal
+        print(f"Erro no login: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
 
 
@@ -128,7 +126,7 @@ def logout(current_user):
 
     register_audit_log(
         current_user.id, LogAction.LOGOUT, "SUCCESS", current_user.id,
-        momento_requisicao, "Logout realizado com sucesso"
+        momento_requisicao, "Logout realizado com sucesso", selection_id_e=current_user.selection_id
     )
 
     return jsonify({"message": "Logout realizado com sucesso"}), 200

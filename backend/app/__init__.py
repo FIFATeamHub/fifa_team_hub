@@ -9,7 +9,7 @@ from flask import Flask  # type: ignore[import]
 from flask_migrate import Migrate  # type: ignore[import]
 
 from app.routes.auth import auth_bp
-from app.extensions import cors, db, migrate
+from app.extensions import cors, db, migrate, limiter
 
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
@@ -50,27 +50,32 @@ def create_app(test_config=None):
         app.config["SQLALCHEMY_DATABASE_URI"] = f"postgresql+psycopg2://{db_user}:{db_pass}@/{db_name}?host=/cloudsql/{db_instance_name}"
     else:
         app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
-        app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "local_fallback_secret")
+        app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
         app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 
-    # Reaplica o test_config por cima dos valores derivados de env/GCP acima,
-    # garantindo que overrides de teste (ex.: SQLite em memória) não sejam sobrescritos.
     if test_config:
         app.config.update(test_config)
 
-    #CORS permite que o navegador do cliente faça requisições ao backend mesmo que frontend e backend estejam em origens diferentes.
-    
+    cors_env = os.getenv("CORS_ALLOWED_ORIGINS")
+    if cors_env:
+        cors_origins = [origin.strip() for origin in cors_env.split(",") if origin.strip()]
+    elif os.getenv("FLASK_ENV") == "development":
+        cors_origins = "*"
+    else:
+        cors_origins = []
+
     cors.init_app(
         app,
         resources={
             r"/*": {
-                "origins": "*"
+                "origins": cors_origins
             }
         },
     )
 
     db.init_app(app)
     migrate.init_app(app, db)
+    limiter.init_app(app)
 
     # Registra os blueprints
     from app.routes.auth import auth_bp

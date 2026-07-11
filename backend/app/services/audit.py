@@ -11,7 +11,7 @@ def _coerce_uuid(value):
     return UUID(str(value))
 
 
-def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event, details_e = None):
+def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event, details_e = None, selection_id_e = None):
 
     try :
 
@@ -24,11 +24,11 @@ def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event,
                 ip_address = request.remote_addr or "0.0.0.0",
                 status = status_e,
                 details = details_e,
-                created_at = date_event
+                created_at = date_event,
+                selection_id = selection_id_e
             )
             db.session.add(log_falha)
 
-        # Commita a transação global para garantir a persistência imediata
         db.session.commit()
 
 
@@ -39,19 +39,18 @@ def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event,
 
 class AuditService:
     @staticmethod
-    def list_logs(page=1, per_page=10, action_filter=None, user_id_filter=None, start_date=None, end_date=None):
+    def list_logs(current_user, page=1, per_page=10, action_filter=None, user_id_filter=None, start_date=None, end_date=None):
         query = AuditLog.query
 
-        # Filtrar por tipo de Ação (ex: LOGIN, UPLOAD, DELETE)
+        query = query.filter(AuditLog.selection_id == current_user.selection_id)
+
         if action_filter:
             query = query.filter(AuditLog.action == action_filter)
 
         # Filtrar pelo autor da ação
         if user_id_filter:
             query = query.filter(AuditLog.user_id == user_id_filter)
-        
-        # Ordenar dos mais recentes para os mais antigos
+
         query = query.order_by(AuditLog.created_at.desc())
 
-        # Dispara a paginação do próprio SQLAlchemy
         return query.paginate(page=page, per_page=per_page, error_out=False)
