@@ -40,7 +40,7 @@ steps:
           --memory 512Mi \
           --timeout 60 \
           --add-cloudsql-instances "$${INSTANCE_CONN_NAME}" \
-          --set-env-vars STORAGE_BACKEND=gcs,GCS_BUCKET_NAME=fifa-team-hub-documents,GCP_PROJECT_ID=$PROJECT_ID,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,JWT_EXPIRE_MINUTES=30,FRONTEND_URL=${_FRONTEND_URL} \
+          --set-env-vars STORAGE_BACKEND=gcs,GCS_BUCKET_NAME=fifa-team-hub-documents,GCP_PROJECT_ID=$PROJECT_ID,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,JWT_EXPIRE_MINUTES=30,FRONTEND_URL=${_FRONTEND_URL},CLOUD_SQL_INSTANCE_NAME=$${INSTANCE_CONN_NAME} \
           --set-secrets DATABASE_URL=DATABASE_URL:latest,JWT_SECRET_KEY=JWT_SECRET_KEY:latest,SECRET_KEY=SECRET_KEY:latest \
           --service-account ${_SERVICE_ACCOUNT} \
           --allow-unauthenticated \
