@@ -106,12 +106,23 @@ class LocalStorageService(StorageService):
 
 class GCSStorageService(StorageService):
 
-    def __init__(self, bucket_name: str, project_id: str):
-            
+    def __init__(self, bucket_name: str, project_id: str, public_url: str = None):
+
         self.bucket_name = bucket_name
         self.project_id = project_id
-        # Inicializa o cliente vinculando diretamente ao ID do projeto correto
-        self.client = gcs_storage.Client(project=project_id)
+        # Host usado apenas para montar a signed URL devolvida ao navegador (ex:
+        # http://localhost:4443 em dev com fake-gcs). O backend continua falando
+        # com o storage via STORAGE_EMULATOR_HOST normalmente; None preserva o
+        # comportamento padrão (client.api_endpoint / storage.googleapis.com).
+        self.public_url = public_url
+        # Credenciais explícitas: quando STORAGE_EMULATOR_HOST está setado (dev local
+        # com fake-gcs), o SDK ignora silenciosamente as credenciais padrão e força
+        # AnonymousCredentials, o que quebra generate_signed_url() (sem chave privada)
+        # e derruba o fallback para a IAM SignBlob API real do Google. Passando as
+        # credenciais explicitamente, a assinatura V4 é feita localmente com a chave
+        # privada da service account, sem depender de rede externa.
+        credentials, _ = google.auth.default()
+        self.client = gcs_storage.Client(project=project_id, credentials=credentials)
         self.bucket = self.client.bucket(bucket_name)
 
     def save_file(self, file_stream, stored_name: str, selection_id: str) -> str:
@@ -159,7 +170,8 @@ class GCSStorageService(StorageService):
             return blob.generate_signed_url(
                 version="v4",
                 expiration=timedelta(minutes=expiration_minutes),
-                method="GET"
+                method="GET",
+                api_access_endpoint=self.public_url
             )
         except AttributeError:
             # Credenciais do metadata server (Cloud Run/GCE) não têm chave privada.
@@ -172,5 +184,6 @@ class GCSStorageService(StorageService):
                 expiration=timedelta(minutes=expiration_minutes),
                 method="GET",
                 service_account_email=credentials.service_account_email,
-                access_token=credentials.token
+                access_token=credentials.token,
+                api_access_endpoint=self.public_url
             )

@@ -8,7 +8,8 @@ def gcs_service():
     Prepara o ambiente de testes substituindo o cliente real do Google 
     por um dublê (Mock) e instancia o serviço com dados fictícios.
     """
-    with patch('google.cloud.storage.Client'):
+    with patch('google.cloud.storage.Client'), \
+         patch('google.auth.default', return_value=(Mock(), "test-project")):
         return GCSStorageService(bucket_name="test-bucket", project_id="test-project")
 
 def test_gcs_save_file(gcs_service):
@@ -59,6 +60,28 @@ def test_gcs_get_signed_url(gcs_service):
     
     # Garante que as configurações de segurança da URL (V4, GET, 15 minutos) foram enviadas ao Google
     mock_blob.generate_signed_url.assert_called_once()
+
+    # Sem public_url configurado, api_access_endpoint deve ser None (comportamento padrão)
+    assert mock_blob.generate_signed_url.call_args.kwargs["api_access_endpoint"] is None
+
+
+def test_gcs_get_signed_url_uses_public_url_for_browser(gcs_service):
+    """
+    Quando GCS_PUBLIC_URL está configurado (dev local com fake-gcs), a signed URL
+    deve ser montada com esse host, para que o navegador consiga resolvê-lo
+    (ex: http://localhost:4443), em vez do hostname interno do Docker.
+    """
+    gcs_service.public_url = "http://localhost:4443"
+
+    mock_blob = Mock()
+    mock_blob.generate_signed_url.return_value = "http://localhost:4443/test-bucket/BRA/document.pdf?token=..."
+    gcs_service.bucket.blob.return_value = mock_blob
+
+    url = gcs_service.get_signed_url("gs://test-bucket/BRA/document.pdf", expiration_minutes=15)
+
+    assert url.startswith("http://localhost:4443/")
+    assert mock_blob.generate_signed_url.call_args.kwargs["api_access_endpoint"] == "http://localhost:4443"
+
 
 def test_gcs_delete_file(gcs_service):
     """
