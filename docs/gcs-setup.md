@@ -91,7 +91,7 @@ services:
       - ./config/fifa-team-hub-key.json:/app/config/fifa-team-hub-key.json:ro
 ```
 
-**Nota para o futuro (Produção):** Quando fizermos o deploy no Cloud Run, este arquivo JSON deixará de ser necessário devido ao Workload Identity, onde o próprio ecossistema do Google injeta as permissões nativamente no container de produção.
+**Nota para Produção (Cloud Run):** O arquivo JSON é exclusivo para desenvolvimento local. Em produção no Cloud Run, utilizamos a identidade de serviço nativa (Workload Identity). Durante o deploy, associamos a conta de serviço `fifa-team-hub-app` ao container (através da flag `--service-account`), permitindo que a aplicação acesse o GCS de forma transparente sem a necessidade de chaves fixas, garantindo segurança máxima.
 
 ## 6. Script e Teste de Conectividade Real
 

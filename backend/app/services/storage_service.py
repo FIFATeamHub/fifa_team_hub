@@ -5,6 +5,8 @@ import uuid
 import shutil
 import os
 
+import google.auth
+from google.auth.transport import requests as google_auth_requests
 from google.cloud import storage as gcs_storage
 from werkzeug.utils import secure_filename
 
@@ -28,7 +30,7 @@ class StorageService(ABC):
         
     @abstractmethod
     def get_signed_url(self, storage_path: str, document_id: str = None,expiration_minutes: int = 15) -> str:
-        #Gera URL temporária assinada (apenas GCS)
+
         pass
     
     
@@ -36,7 +38,6 @@ class StorageService(ABC):
 class LocalStorageService(StorageService):
     def __init__(self, local_path: str = "./storage/uploads"):
         self.local_path = local_path
-        # Garante que a pasta raiz do storage exista localmente
         os.makedirs(self.local_path, exist_ok=True)
 
     def save_file(
@@ -104,12 +105,13 @@ class LocalStorageService(StorageService):
 
 class GCSStorageService(StorageService):
 
-    def __init__(self, bucket_name: str, project_id: str):
-            
+    def __init__(self, bucket_name: str, project_id: str, public_url: str = None):
+
         self.bucket_name = bucket_name
         self.project_id = project_id
-        # Inicializa o cliente vinculando diretamente ao ID do projeto correto
-        self.client = gcs_storage.Client(project=project_id)
+        self.public_url = public_url
+        credentials, _ = google.auth.default()
+        self.client = gcs_storage.Client(project=project_id, credentials=credentials)
         self.bucket = self.client.bucket(bucket_name)
 
     def save_file(self, file_stream, stored_name: str, selection_id: str) -> str:
@@ -127,7 +129,6 @@ class GCSStorageService(StorageService):
 
 
     def delete_file(self, storage_path: str) -> None:
-        # Extrai o caminho relativo tirando o 'gs://nome-do-bucket/'
         prefixo = f"gs://{self.bucket_name}/"
         if storage_path.startswith(prefixo):
             blob_path = storage_path.replace(prefixo, "")
@@ -145,16 +146,27 @@ class GCSStorageService(StorageService):
         if storage_path.startswith(prefixo):
             blob_path = storage_path.replace(prefixo, "")
         else:
-            # Fallback caso apenas o caminho interno sem o gs:// tenha sido passado
             partes = storage_path.replace("\\", "/").split("/")
             blob_path = "/".join(partes[-2:]) if len(partes) >= 2 else partes[-1]
 
         blob = self.bucket.blob(blob_path)
-        
-        # Solicita à API do Google a geração do link temporário assinado criptograficamente
-        url = blob.generate_signed_url(
-            version="v4",
-            expiration=timedelta(minutes=expiration_minutes),
-            method="GET"
-        )
-        return url
+
+        try:
+            return blob.generate_signed_url(
+                version="v4",
+                expiration=timedelta(minutes=expiration_minutes),
+                method="GET",
+                api_access_endpoint=self.public_url
+            )
+        except AttributeError:
+            credentials, _ = google.auth.default()
+            credentials.refresh(google_auth_requests.Request())
+
+            return blob.generate_signed_url(
+                version="v4",
+                expiration=timedelta(minutes=expiration_minutes),
+                method="GET",
+                service_account_email=credentials.service_account_email,
+                access_token=credentials.token,
+                api_access_endpoint=self.public_url
+            )

@@ -41,19 +41,22 @@ docker-compose exec backend flask db upgrade
 
 ### Criando o bucket no fake-gcs
 
-O `fake-gcs-server` não vem com nenhum bucket pré-criado. Rode o script de setup uma vez, com os containers já de pé:
+O `fake-gcs-server` não vem com nenhum bucket pré-criado. O `docker-compose.yml` já cuida disso automaticamente: o serviço `gcs-init` espera o `fake-gcs` responder e cria o bucket `fifa-team-hub-documents` antes do `backend` subir (`depends_on: gcs-init: condition: service_completed_successfully`). Não é preciso nenhum passo manual em `docker-compose up`.
+
+Se precisar recriar o bucket manualmente (por exemplo, depois de mexer nos dados do fake-gcs), o script continua disponível e é idempotente — rodar de novo não dá erro se o bucket já existir:
 
 ```bash
 docker-compose exec backend bash scripts/setup-fake-gcs.sh
 ```
 
 Esse script:
-1. Cria o bucket `fifa-team-hub-documents` via API JSON do GCS (`POST /storage/v1/b`).
-2. Lista os buckets existentes para confirmar a criação.
+1. Espera o `fake-gcs` responder antes de tentar criar o bucket.
+2. Cria o bucket `fifa-team-hub-documents` via API JSON do GCS (`POST /storage/v1/b`) apenas se ele ainda não existir.
+3. Lista os buckets existentes para confirmar a criação.
 
 > **Nota técnica**: o `fake-gcs-server` expõe a mesma API JSON do GCS real (`/storage/v1/b/...`), não uma API simplificada. Chamadas como `PUT /{bucket}` (formato de acesso direto a objetos) retornam 404 — o formato correto de criação de bucket é `POST /storage/v1/b?project={project_id}` com o nome no corpo da requisição.
 
-> **Nota sobre rede**: como o script roda *dentro* do container `backend`, ele se conecta ao fake-gcs pelo nome do serviço Docker (`http://fake-gcs:4443`), não por `localhost`. Containers na mesma rede Docker se enxergam pelo nome do serviço, não pelo host da máquina.
+> **Nota sobre rede**: o serviço `gcs-init` (e o script, quando rodado dentro do `backend`) se conecta ao fake-gcs pelo nome do serviço Docker (`http://fake-gcs:4443`), não por `localhost`. Containers na mesma rede Docker se enxergam pelo nome do serviço, não pelo host da máquina.
 
 ### Verificando que tudo subiu corretamente
 

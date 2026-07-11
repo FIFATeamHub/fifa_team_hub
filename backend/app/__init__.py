@@ -1,12 +1,14 @@
 import os
+import re
 
 from app.config import check_required_env_vars
 
 
 from dotenv import load_dotenv
 from pathlib import Path
-from flask import Flask  # type: ignore[import]
+from flask import Flask, jsonify, request  # type: ignore[import]
 from flask_migrate import Migrate  # type: ignore[import]
+from werkzeug.exceptions import HTTPException
 
 from app.routes.auth import auth_bp
 from app.extensions import cors, db, migrate, limiter
@@ -17,6 +19,13 @@ from app.models import *
 
 migrate = Migrate()
 
+LOCAL_NETWORK_ORIGIN_REGEX = re.compile(
+    r"^https?://(localhost|127\.0\.0\.1"
+    r"|10\.\d{1,3}\.\d{1,3}\.\d{1,3}"
+    r"|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}"
+    r"|192\.168\.\d{1,3}\.\d{1,3}):\d+$"
+)
+
 def create_app(test_config=None):
 
     app = Flask(__name__)
@@ -25,6 +34,7 @@ def create_app(test_config=None):
     app.config["LOCAL_STORAGE_PATH"] = os.getenv("LOCAL_STORAGE_PATH", "./storage/uploads")
     app.config["GCS_BUCKET_NAME"] = os.getenv("GCS_BUCKET_NAME")
     app.config["GCP_PROJECT_ID"] = os.getenv("GCP_PROJECT_ID")
+    app.config["GCS_PUBLIC_URL"] = os.getenv("GCS_PUBLIC_URL")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SQLALCHEMY_EXPIRE_ON_COMMIT"] = False
 
@@ -56,13 +66,17 @@ def create_app(test_config=None):
     if test_config:
         app.config.update(test_config)
 
-    cors_env = os.getenv("CORS_ALLOWED_ORIGINS")
+    cors_env = os.getenv("CORS_ALLOWED_ORIGINS") or os.getenv("FRONTEND_URL")
     if cors_env:
         cors_origins = [origin.strip() for origin in cors_env.split(",") if origin.strip()]
-    elif os.getenv("FLASK_ENV") == "development":
-        cors_origins = "*"
-    else:
+    elif is_prod:
         cors_origins = []
+    else:
+        cors_origins = [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            LOCAL_NETWORK_ORIGIN_REGEX,
+        ]
 
     cors.init_app(
         app,
@@ -89,6 +103,15 @@ def create_app(test_config=None):
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(selection_bp)
     app.register_blueprint(audit_bp, url_prefix="/api/audit")
+
+    @app.errorhandler(Exception)
+    def handle_unhandled_exception(e):
+        if isinstance(e, HTTPException):
+            return e
+        app.logger.exception(
+            "Unhandled exception on %s %s", request.method, request.path
+        )
+        return jsonify({"error": "Internal server error"}), 500
 
     _tables_created = False
 

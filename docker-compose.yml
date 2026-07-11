@@ -1,7 +1,7 @@
 services:
   fake-gcs:
     image: fsouza/fake-gcs-server:latest
-    command: ["-scheme", "http"]
+    command: ["-scheme", "http", "-public-host", "localhost:4443"]
     ports:
       - "4443:4443"
     volumes:
@@ -9,6 +9,18 @@ services:
     environment:
       PORT: 4443
       STORAGE_EMULATOR_HOST: http://fake-gcs:4443
+
+  gcs-init:
+    image: curlimages/curl:8.10.1
+    depends_on:
+      - fake-gcs
+    volumes:
+      - ./backend/scripts:/scripts:ro
+    environment:
+      FAKE_GCS_URL: http://fake-gcs:4443
+      GCS_BUCKET_NAME: ${GCS_BUCKET_NAME}
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID}
+    entrypoint: ["sh", "/scripts/setup-fake-gcs.sh"]
 
   postgres:
     image: postgres:17
@@ -53,6 +65,7 @@ services:
       - GCP_PROJECT_ID=${GCP_PROJECT_ID}
       - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
       - STORAGE_EMULATOR_HOST=http://fake-gcs:4443
+      - GCS_PUBLIC_URL=http://localhost:4443
       - DATABASE_URL=${DATABASE_URL}
     volumes:
       - ./backend:/app
@@ -62,6 +75,8 @@ services:
         condition: service_healthy
       fake-gcs:
         condition: service_started
+      gcs-init:
+        condition: service_completed_successfully
 
   # --- SERVIÇO DO FRONTEND ---
   frontend:
