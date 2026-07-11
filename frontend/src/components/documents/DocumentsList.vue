@@ -1,33 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useDocuments, type Documento } from '@/composables/useDocuments'
 import { usePermissions } from '@/composables/usePermissions';
 import { useAuthStore } from '@/stores/auth.js'
 
 const selectedType = ref('')
 
-const filteredDocuments = computed(() => {
+watch(selectedType, async () => {
 
-    let docs = documents.value
-
-    // Restrição do ORGANIZER
-    if (authStore.user?.role === 'ORGANIZER') {
-
-        docs = docs.filter(doc =>
-            doc.doc_type === 'PASSAPORTE' ||
-            doc.doc_type === 'CONVOCADO'
-        )
-
-    }
-
-    // Filtro selecionado pelo usuário
-    if (!selectedType.value) {
-        return docs
-    }
-
-    return docs.filter(doc =>
-        doc.doc_type === selectedType.value
-    )
+    await fetchDocuments({
+        doc_type: selectedType.value || undefined,
+        page: 1
+    })
 
 })
 
@@ -38,17 +22,24 @@ const {
     error,
     pagination,
     fetchDocuments,
-    deleteDocument
+    deleteDocument,
+    downloadDocument,
+    previewDocument
 } = useDocuments()
 
 const { can } = usePermissions()
 
 const authStore = useAuthStore()
 
-// Roda fetchDocuments assim que a página/componente é carregado.
 onMounted(async () => {
     await fetchDocuments()
 })
+
+function formatDate(date: string) {
+
+    return new Date(date).toLocaleString('pt-BR')
+
+}
 
 async function nextPage() {
     if (pagination.value.page < pagination.value.pages) {
@@ -68,7 +59,6 @@ async function previousPage() {
     }
 }
 
-// confirmação de delete
 async function handleDelete(id: string) {
 
     const confirmed = confirm(
@@ -80,16 +70,12 @@ async function handleDelete(id: string) {
     await deleteDocument(id)
 }
 
-function handleDownload(doc: Documento) {
-
-    alert(`Baixando ${doc.original_name}`)
-
+async function handleDownload(doc: Documento) {
+    await downloadDocument(doc.id, doc.original_name)
 }
 
-function handleView(doc: Documento) {
-
-    alert(`Visualizar ${doc.original_name}`)
-
+async function handleView(doc: Documento) {
+    await previewDocument(doc.id)
 }
 
 </script>
@@ -119,7 +105,7 @@ function handleView(doc: Documento) {
                         Todos os tipos
                     </option>
 
-                    <option value="PASSAPORTE">
+                    <option value="PASSPORT">
                         Passaporte
                     </option>
 
@@ -155,20 +141,25 @@ function handleView(doc: Documento) {
                     <th>Status</th>
                     <th>Ações</th>
                 </tr>
+                <th v-if="authStore.user?.role === 'ORGANIZER'">
+                    Seleção
+                </th>
             </thead>
 
             <tbody>
 
-
                 <tr
-                    v-for="doc in filteredDocuments"
+                    v-for="doc in documents"
                     :key="doc.id"
                 >
-            
+                <td v-if="authStore.user?.role === 'ORGANIZER'">
+                    {{ doc.selection_code }}
+                </td>
+                
                 <td>{{ doc.original_name }}</td>
                 <td>{{ doc.doc_type }}</td>
                 <td>{{ doc.uploaded_by_id }}</td>
-                <td>{{ doc.created_at }}</td>
+                <td>{{ formatDate(doc.created_at) }}</td>
                 <!--status-->
                 <td>
 
@@ -217,7 +208,10 @@ function handleView(doc: Documento) {
                 <td>
 
                     <button
-                        v-if="can('upload:documents')"
+                        v-if="
+                            can('upload:documents') &&
+                            authStore.user?.id === doc.uploaded_by_id
+                        "
                         @click="handleDelete(doc.id)">
                             Deletar
                     </button>

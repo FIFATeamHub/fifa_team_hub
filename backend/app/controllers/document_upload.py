@@ -7,6 +7,7 @@ from app.services.document import validate_file, validate_upload_permission
 from app.services.storage_service import LocalStorageService
 from app.services.storage_factory import get_storage_service
 from werkzeug.utils import secure_filename
+from google.api_core.exceptions import ResourceExhausted
 import uuid
 from uuid import UUID
 from datetime import datetime, timezone
@@ -14,7 +15,13 @@ from zoneinfo import ZoneInfo
 import traceback
 
 
-UUID_ZERADO = UUID("00000000-0000-0000-0000-000000000000") # UTILIZADO QUANDO OCORRER ERRO, PARA REGISTRAR O LOG DE FALHA
+UUID_ZERADO = uuid.uuid4()
+
+
+def _coerce_uuid(value):
+    if isinstance(value, UUID):
+        return value
+    return UUID(str(value))
 
 
 def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event, details_e = None):
@@ -24,6 +31,7 @@ def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event,
         resource_id_uuid = UUID(resource_id_e) if isinstance(resource_id_e, str) else resource_id_e
 
         with db.session.begin_nested():
+            
             log_falha = AuditLog(
                 user_id = user_id_e,
                 action = action_e,
@@ -35,7 +43,6 @@ def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event,
             )
             db.session.add(log_falha)
         
-        # Commita a transação global para garantir a persistência imediata
         db.session.commit()
 
 
@@ -109,7 +116,6 @@ def upload_document(current_user):
 
         id_exclusivo_doc = uuid.uuid4()
 
-        # 2. Monte o nome único usando o UUID gerado
         extensao = nome_original.rsplit('.', 1)[1].lower() if '.' in nome_original else 'pdf'
         nome_unico_arquivo = f"{id_exclusivo_doc}.{extensao}"
 
@@ -128,6 +134,7 @@ def upload_document(current_user):
             # filename=nome_unico_arquivo, 
             original_name= nome_original_limpo,
             storage_path=caminho_armazenamento,
+            storage_url=caminho_armazenamento,
             status=status_documento,
             created_at=momento_requisicao
         )
@@ -162,16 +169,21 @@ def upload_document(current_user):
             "created_at": momento_requisicao.isoformat()
         }), 201
     
+    except ResourceExhausted as e:
+        db.session.rollback()
+        register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, f"Cota do storage excedida: {str(e)}")
+
+        return jsonify({
+            "error": "Serviço de armazenamento temporariamente indisponível (cota excedida).",
+        }), 503
 
     except Exception as e:
         db.session.rollback()
         traceback.print_exc()
         print(f"Erro no banco de dados durante upload: {e}")
         
-        # Loga a quebra crítica de banco de dados com o datetime original
         register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, f"Erro interno de banco de dados ao salvar documento: {str(e)}")
 
         return jsonify({
             "error": "Erro interno ao salvar documento",
-            "details": str(e)
         }), 500

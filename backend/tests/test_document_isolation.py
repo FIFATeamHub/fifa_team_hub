@@ -1,4 +1,3 @@
-import pytest
 import io
 from uuid import UUID
 
@@ -57,7 +56,6 @@ def test_cross_selection_document_access_denied(
 
     assert response.status_code == 403
 
-@pytest.mark.xfail(reason="DELETE ainda não implementado")
 def test_cross_selection_delete_denied(
     client,
     token_bra_staff,

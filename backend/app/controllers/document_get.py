@@ -3,23 +3,18 @@ from flask import send_file
 import os
 from app.services.document_get import DocumentService
 from app.models.enums.user_role import  LogAction
-from app.controllers.document_upload import register_audit_log
+from app.controllers.document_upload import register_audit_log, UUID_ZERADO
 from app.services.storage_service import LocalStorageService, GCSStorageService
 from app.services.storage_factory import get_storage_service
+from google.cloud.exceptions import NotFound
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 
 
 
-def list_documents(current_user):  # Injetado pelo seu token_required
-    """
-    Endpoint GET /documents
-    Coleta parâmetros de busca dinâmicos e paginação da URL e delega ao Service.
-    """
-    # 1. CAPTURA DOS QUERY PARAMETERS DA URL de forma dinâmica
-    # Se o usuário acessar ?doc_type=RELATORIO_TATICO, capturamos aqui
-    doc_type_filter = request.args.get("type")
+def list_documents(current_user):
+    doc_type_filter = request.args.get("doc_type")
     
     # Captura a paginação tratando como inteiro e definindo os fallbacks padrão (1 e 10)
     page = request.args.get("page", 1, type=int)
@@ -37,7 +32,7 @@ def list_documents(current_user):  # Injetado pelo seu token_required
     if paginated_result is None:
         fuso_sp = ZoneInfo("America/Sao_Paulo") 
         momento_requisicao = datetime.now(fuso_sp)
-        register_audit_log(current_user.id, LogAction.ACCESS_DENIED , "FAILURE", "00000000-0000-0000-0000-000000000000" ,momento_requisicao, "Acesso negado. Perfil inválido.")
+        register_audit_log(current_user.id, LogAction.ACCESS_DENIED , "FAILURE", UUID_ZERADO ,momento_requisicao, "Acesso negado. Perfil inválido.")
         return jsonify({"error": "Acesso negado. Perfil inválido."}), 403
 
     # 3. FORMATAÇÃO DO JSON DE RETORNO (Higienização de dados)
@@ -46,12 +41,12 @@ def list_documents(current_user):  # Injetado pelo seu token_required
     for doc in paginated_result.items:
         data_list.append({
             "id": str(doc.id),
-            "original_name": doc.original_name,   #Mudado de doc.original_name para doc.filename
-            "doc_type": doc.type.value if hasattr(doc.type, "value") else str(doc.type), # Trata o Enum de forma segura
-            "storage_url": doc.storage_url, # Adicionado conforme o Model
+            "original_name": doc.original_name,
+            "doc_type": doc.type.value if hasattr(doc.type, "value") else str(doc.type),
+            "storage_url": doc.storage_url,
             "status": doc.status,
-            "uploaded_by_id": str(doc.uploaded_by), # Mapeado diretamente do relacionamento/FK do Model
-            "selection_id": str(doc.selection_id) if doc.selection_id else None,
+            "uploaded_by_id": str(doc.uploaded_by),
+            "selection_code": doc.selection.code if doc.selection else None,
             "created_at": doc.created_at.isoformat() + "Z" if doc.created_at else None
         })
 
@@ -149,6 +144,11 @@ def download_document_url(current_user, document_id):
             "expires_in_minutes": 15,
             "filename": document.original_name
         }), 200
+
+    except NotFound as e:
+        print(f"[ERRO STORAGE - BLOB NÃO ENCONTRADO]: {str(e)}")
+        register_audit_log(current_user.id, LogAction.ACCESS_DENIED, "FAILURE", str(document_id), momento_requisicao, "Arquivo não encontrado no storage (removido ou corrompido).")
+        return jsonify({"error": "Arquivo não encontrado no storage."}), 410
 
     except Exception as e:
         print(f"[ERRO STORAGE]: {str(e)}")

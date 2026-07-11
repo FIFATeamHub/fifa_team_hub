@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fifa-team-hub
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fifa-team-hub
+  template:
+    metadata:
+      labels:
+        app: fifa-team-hub
+    spec:
+      serviceAccountName: fifa-team-hub-ksa
+      containers:
+      - name: backend
+        image: gcr.io/fifa-team-hub/fifa-team-hub:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: STORAGE_BACKEND
+          value: gcs
+        - name: GCS_BUCKET_NAME
+          value: fifa-team-hub-documents
+        - name: GCP_PROJECT_ID
+          value: fifa-team-hub
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 40
+          periodSeconds: 10

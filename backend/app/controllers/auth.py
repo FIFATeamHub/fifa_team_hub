@@ -1,14 +1,20 @@
 from flask import request, jsonify, Blueprint
 
 import re
+import uuid
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from app.routes.schema import RegisterSchema, LoginSchema
 from app.extensions import db
 from app.models.user import User
-from app.models.enums.user_role import UserRole
+from app.models.enums.user_role import UserRole, LogAction
+from app.controllers.document_upload import register_audit_log
 
 from app.services.auth import hash_password, verify_password, create_access_token
 
 auth_bp = Blueprint("auth", __name__)
+
+UUID_LOGIN_SEM_USUARIO = uuid.uuid4()
 
 
 def register():
@@ -39,13 +45,18 @@ def register():
     if User.query.filter_by(email=dados["email"]).first():
         return jsonify({"error": "Email já cadastrado"}), 409
 
+    raw_selection_id = dados.get("selection_id")
+    selection_id = None
+    if raw_selection_id and str(raw_selection_id).strip() not in ("", "null", "undefined", "None"):
+        selection_id = raw_selection_id
+
     # Cria o usuário com senha hasheada
     novo_user = User(
         email=dados["email"],
         password_hash=hash_password(dados["password"]),
         full_name=dados["full_name"],
         role=role,
-        selection_id=dados.get("selection_id")
+        selection_id=selection_id
     )
 
     db.session.add(novo_user)
@@ -60,6 +71,9 @@ def register():
     }), 201
 
 def login():
+    fuso_sp = ZoneInfo("America/Sao_Paulo")
+    momento_requisicao = datetime.now(fuso_sp)
+
     dados = request.get_json()
 
     schema = LoginSchema()
@@ -78,17 +92,46 @@ def login():
         user = User.query.filter_by(email=email.lower()).first()
         # Credenciais inválidas
         if not user or not verify_password(password, user.password_hash):
+            if user:
+                register_audit_log(
+                    user.id, LogAction.LOGIN, "FAILED", user.id,
+                    momento_requisicao, "Senha incorreta"
+                )
+            else:
+                register_audit_log(
+                    None, LogAction.LOGIN, "FAILED", UUID_LOGIN_SEM_USUARIO,
+                    momento_requisicao, "Tentativa de login com e-mail não cadastrado"
+                )
             return jsonify({"error": "Credenciais inválidas"}), 401
+
         token = create_access_token(user)
+
+        register_audit_log(
+            user.id, LogAction.LOGIN, "SUCCESS", user.id,
+            momento_requisicao, "Login realizado com sucesso"
+        )
+
         return jsonify({
             "access_token": token,
             "token_type": "bearer"
         }), 200
     except Exception as e:
-        # Se QUALQUER coisa der errado (banco cair, erro de digitação no código), 
+        # Se QUALQUER coisa der errado (banco cair, erro de digitação no código),
         # a gente captura aqui para não dar erro 500 seco no navegador.
         print(f"Erro no login: {e}") # Isso vai pro terminal
         return jsonify({"error": "Erro interno no servidor"}), 500
+
+
+def logout(current_user):
+    fuso_sp = ZoneInfo("America/Sao_Paulo")
+    momento_requisicao = datetime.now(fuso_sp)
+
+    register_audit_log(
+        current_user.id, LogAction.LOGOUT, "SUCCESS", current_user.id,
+        momento_requisicao, "Logout realizado com sucesso"
+    )
+
+    return jsonify({"message": "Logout realizado com sucesso"}), 200
 
 
 def me(current_user):
