@@ -5,12 +5,25 @@ load_dotenv()
 
 
 class Config():
-    
+
     def __init__(self):
         pass
-    
-    SECRET_KEY = os.getenv("SECRET_KEY")
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
+
+    is_production = bool(os.getenv("GOOGLE_CLOUD_PROJECT"))
+
+    if is_production:
+        from app.services.gcp_secrets import get_secret
+
+        SECRET_KEY = get_secret("JWT_SECRET_KEY")
+        db_user = os.getenv("DB_USER", "postgres")
+        db_pass = get_secret("DB_PASSWORD")
+        db_name = os.getenv("DB_NAME", "postgres")
+        db_instance_name = os.getenv("CLOUD_SQL_INSTANCE_NAME")
+        SQLALCHEMY_DATABASE_URI = f"postgresql+psycopg2://{db_user}:{db_pass}@/{db_name}?host=/cloudsql/{db_instance_name}"
+    else:
+        SECRET_KEY = os.getenv("SECRET_KEY")
+        SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     STORAGE_BACKEND = os.getenv(
@@ -24,7 +37,7 @@ class Config():
     )
 
     MAX_FILE_SIZE_BYTES = (
-        int(os.getenv("MAX_FILE_SIZE_MB", 10))
+        int(os.getenv("MAX_FILE_SIZE_MB") or 10)
         * 1024
         * 1024
     )
@@ -44,12 +57,13 @@ def check_required_env_vars():
         "JWT_SECRET_KEY"
     ]
 
-    missing = [var for var in required_vars if not os.getenv(var)]
-
-    if missing:
-        raise RuntimeError(f"FALHA FATAL DE STARTUP: Faltam as seguintes variáveis "
-            f"obrigatórias em produção: {', '.join(missing)}"
-        )
+    is_production = bool(os.getenv("GOOGLE_CLOUD_PROJECT"))
+    if not is_production:
+        missing = [var for var in required_vars if not os.getenv(var)]
+        if missing:
+            raise RuntimeError(f"FALHA FATAL DE STARTUP: Faltam as seguintes variáveis "
+                f"obrigatórias no seu .env local: {', '.join(missing)}"
+            )
     
     if os.getenv("STORAGE_BACKEND") == "gcs":
         is_running_on_cloud_run = os.getenv("K_SERVICE") is not None
