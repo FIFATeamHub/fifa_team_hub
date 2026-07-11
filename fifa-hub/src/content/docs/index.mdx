@@ -1,15 +1,15 @@
 ---
-title: FIFA Hub
-description: Sistema de Gestão de Seleções
+title: FIFA Team Hub
+description: Portal seguro de gestão de documentos para seleções nacionais de futebol
 template: splash
 
 hero:
-  tagline: Sistema de Gestão de Seleções
+  tagline: Gestão de documentos, isolamento de seleções e auditoria de segurança em um único portal cloud-native
   image:
     file: ../../assets/2026_FIFA__emblem.png
     alt: Logo FIFA Team Hub
   actions:
-    - text: Documentação
+    - text: Visão Geral do Projeto
       link: home/sobre/
       icon: right-arrow
     - text: GitHub
@@ -20,27 +20,29 @@ hero:
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-## Sobre o FIFA Hub
+## O que é o FIFA Team Hub
 
-Nossa equipe é composta por estudantes de Engenharia de Software da Universidade de Brasília (UnB), trabalhando em conjunto no desenvolvimento do **FIFA Team Hub** — uma solução segura e escalável para centralizar convocações, documentações de viagem, laudos médicos e relatórios táticos de seleções nacionais.
+O **FIFA Team Hub** é um portal para comissões técnicas de seleções nacionais de futebol centralizarem convocações, passaportes, laudos médicos, relatórios táticos e esquemas de jogadas — documentos hoje trocados por e-mail e drives compartilhadas, sem rastreabilidade e sem isolamento entre seleções. O sistema substitui esse fluxo por upload controlado, permissões por perfil e um log de auditoria imutável de toda ação sensível.
+
+Desenvolvido por estudantes de Engenharia de Software da Universidade de Brasília (UnB) no programa **AILAB Makers — Fase 2**, com backend em Flask, frontend em Vue 3 e infraestrutura rodando no Google Cloud (Cloud Run + Cloud SQL + Cloud Storage).
 
 ## Principais Funcionalidades
 
 <CardGrid stagger>
-  <Card title="Gestão de Documentos" icon="document">
-    Upload centralizado e organizado de listas oficiais de convocação, passaportes, laudos médicos e relatórios táticos.
+  <Card title="Isolamento de Seleções" icon="shield">
+    Cada seleção só acessa seus próprios documentos. O isolamento é aplicado na camada de aplicação em toda leitura, escrita e exclusão — validado por testes automatizados de acesso cruzado.
   </Card>
 
-  <Card title="Isolamento Multitenant" icon="shield">
-    Ambientes totalmente segregados por federação, garantindo que uma seleção nunca tenha acesso aos dados de outra.
+  <Card title="Auditoria de Segurança" icon="list">
+    Login, logout, upload, download, exclusão e tentativas de acesso negado geram um registro imutável — sem rota de edição ou exclusão de logs.
   </Card>
 
-  <Card title="Logs Auditáveis" icon="list">
-    Histórico completo e imutável de uploads, alterações em documentos e registros de acesso.
+  <Card title="Upload de Documentos Sensíveis" icon="document">
+    Passaportes, laudos médicos, relatórios táticos e esquemas de jogadas com validação real de tipo de arquivo (MIME), limite de tamanho e nomes de arquivo gerados de forma segura.
   </Card>
 
-  <Card title="Níveis de Acesso" icon="lock">
-    Controle rigoroso de permissões para atletas, comissão técnica, equipe médica e organizadores.
+  <Card title="Controle de Acesso por Perfil" icon="lock">
+    Cinco perfis (atleta, comissão técnica, equipe médica, organizador e auditor) com permissões distintas de upload, leitura e visibilidade entre seleções.
   </Card>
 </CardGrid>
 
@@ -51,7 +53,7 @@ Nossa equipe é composta por estudantes de Engenharia de Software da Universidad
     <img src="https://github.com/camposs04.png" alt="Júlia Campos" class="team-photo" />
     <div class="team-info">
       <h3>Júlia Campos</h3>
-      <p class="team-role">Scrum Master & Product Owner</p>
+      <p class="team-role">Tech Lead / DevOps / Backend</p>
       <a href="https://github.com/camposs04" class="team-github">@camposs04</a>
     </div>
   </div>
@@ -60,7 +62,7 @@ Nossa equipe é composta por estudantes de Engenharia de Software da Universidad
     <img src="https://github.com/jvsauma.png" alt="João Sauma" class="team-photo" />
     <div class="team-info">
       <h3>João Sauma</h3>
-      <p class="team-role">Frontend (Vue.js)</p>
+      <p class="team-role">Backend / Frontend / Integração</p>
       <a href="https://github.com/jvsauma" class="team-github">@jvsauma</a>
     </div>
   </div>
@@ -69,7 +71,7 @@ Nossa equipe é composta por estudantes de Engenharia de Software da Universidad
     <img src="https://github.com/caio-nascime.png" alt="Caio Felipe" class="team-photo" />
     <div class="team-info">
       <h3>Caio Felipe</h3>
-      <p class="team-role">Backend (Python/DRF) & Análise de Requisitos</p>
+      <p class="team-role">Frontend / UI/UX</p>
       <a href="https://github.com/caio-nascime" class="team-github">@caio-nascime</a>
     </div>
   </div>
@@ -78,7 +80,7 @@ Nossa equipe é composta por estudantes de Engenharia de Software da Universidad
     <img src="https://github.com/arthurmgl99.png" alt="Arthur Miguel" class="team-photo" />
     <div class="team-info">
       <h3>Arthur Miguel</h3>
-      <p class="team-role">Project Owner & Modelagem de Dados</p>
+      <p class="team-role">Backend / Cloud / Deploy</p>
       <a href="https://github.com/arthurmgl99" class="team-github">@arthurmgl99</a>
     </div>
   </div>
@@ -87,7 +89,7 @@ Nossa equipe é composta por estudantes de Engenharia de Software da Universidad
     <img src="https://github.com/JosefWojtyla.png" alt="Josef Wojtyla" class="team-photo" />
     <div class="team-info">
       <h3>Josef Wojtyla</h3>
-      <p class="team-role">DevOps/Infraestrutura & Qualidade (QA)</p>
+      <p class="team-role">Backend / Autenticação</p>
       <a href="https://github.com/JosefWojtyla" class="team-github">@JosefWojtyla</a>
     </div>
   </div>

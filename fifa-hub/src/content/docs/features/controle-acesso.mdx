@@ -1,0 +1,43 @@
+---
+title: Controle de Acesso (RBAC)
+description: Papéis, permissões e autenticação do FIFA Team Hub
+---
+
+import { Card } from '@astrojs/starlight/components';
+
+O controle de acesso combina autenticação stateless via JWT com um modelo de permissões baseado em papéis (RBAC), aplicado individualmente em cada endpoint — não existe um único middleware genérico de autorização; cada serviço decide o que seu perfil pode ver ou fazer.
+
+## Perfis do sistema
+
+| Perfil | Escopo |
+|---|---|
+| **ATHELETE** | Upload e leitura do próprio passaporte e laudo médico, restrito à própria seleção |
+| **MEDICAL_STAFF** | Upload e leitura de laudos médicos da própria seleção |
+| **TECHNICAL_STAFF** | Upload e leitura de convocações, relatórios táticos e esquemas de jogadas da própria seleção; único perfil autorizado a excluir documentos que ele mesmo enviou |
+| **ORGANIZER** | Leitura de convocações e passaportes de **todas** as seleções; não realiza uploads |
+| **AUDITOR** | Consulta ao painel de logs de auditoria, escopado à própria seleção |
+
+## Autenticação
+
+<Card title="JWT stateless" icon="seti:lock">
+  No login, o backend emite um token JWT assinado contendo o identificador do usuário, seu perfil e o `selection_id` — os três dados que toda decisão de autorização subsequente consulta. O token tem expiração configurável (60 minutos por padrão) e é enviado em todo request subsequente via cabeçalho `Authorization: Bearer &lt;token&gt;`.
+</Card>
+
+Senhas nunca são armazenadas em texto plano — são transformadas em hash antes de qualquer gravação, e o hash nunca é retornado em nenhuma resposta da API.
+
+<div class="tech-note">
+  <strong>Limitação conhecida:</strong> o logout não invalida o token no servidor (não há lista de revogação/blacklist) — ele apenas registra o evento no log de auditoria. O token permanece tecnicamente válido até sua expiração natural. Essa é uma decisão registrada explicitamente pela equipe, não um descuido.
+</div>
+
+## Proteção contra força bruta
+
+O endpoint de login é limitado a 5 tentativas por minuto por endereço IP. As demais rotas não têm limite de taxa dedicado — a defesa nelas é a própria checagem de autenticação e autorização em cada requisição.
+
+## Onde a autorização é aplicada
+
+- **Upload** — matriz de permissão por tipo de documento e perfil (ver [Upload de Documentos Sensíveis](/fifa_team_hub/features/upload-documentos/)).
+- **Leitura** — filtros por perfil e seleção em toda consulta (ver [Isolamento de Seleções](/fifa_team_hub/features/isolamento-selecoes/)).
+- **Exclusão** — restrita ao perfil que originalmente enviou o documento.
+- **Auditoria** — restrita ao perfil `AUDITOR`, com resultado ainda filtrado pela seleção do auditor.
+
+Cada uma dessas decisões de autorização negada é registrada como evento `ACCESS_DENIED` no log de auditoria.

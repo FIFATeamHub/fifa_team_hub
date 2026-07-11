@@ -45,9 +45,9 @@ Nossa equipe é composta por estudantes de Engenharia de Software da Universidad
   </div>
 
   <div class="team-card">
-    <img src="https://github.com/JosefWojtyla.png" alt="Josef Woljtyla" class="team-photo">
+    <img src="https://github.com/JosefWojtyla.png" alt="Josef Wojtyla" class="team-photo">
     <div class="team-info">
-      <h3>Josef Woljtyla</h3>
+      <h3>Josef Wojtyla</h3>
       <p class="team-role">Backend / Autenticação</p>
       <a href="https://github.com/JosefWojtyla" class="team-github">@JosefWojtyla</a>
     </div>
@@ -56,4 +56,4 @@ Nossa equipe é composta por estudantes de Engenharia de Software da Universidad
 
 ## Nossa Abordagem
 
-Trabalhamos seguindo metodologias ágeis e uma forte cultura de automação (CI/CD), com foco rigoroso em segurança da informação e isolamento lógico de dados (*multi-tenancy*). Nosso objetivo é entregar um sistema robusto, auditável e de alta performance para a Fase 2 do AILAB Makers.
+Trabalhamos seguindo metodologias ágeis (Scrum adaptado, ver [Processo de Desenvolvimento](/fifa_team_hub/home/processo/)) com sprints semanais, rotação de papéis entre backend/frontend/DevOps e foco em qualidade desde o início — testes de isolamento entre seleções são bloqueadores de merge em CI, não um extra.

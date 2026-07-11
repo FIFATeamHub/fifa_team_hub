@@ -1,0 +1,46 @@
+---
+title: Ambiente Local (Docker Compose)
+description: Como rodar o FIFA Team Hub localmente com paridade de produção
+---
+
+O ambiente local é orquestrado por `docker-compose.yml` na raiz do repositório, com cinco serviços que reproduzem, o mais fielmente possível, as peças usadas em produção — inclusive o armazenamento em nuvem, via um emulador de GCS.
+
+## Serviços
+
+| Serviço | Imagem/Build | Porta local | Papel |
+|---|---|---|---|
+| `postgres` | `postgres:17` | `15432` → 5432 | Mesma versão major usada em produção (Cloud SQL) |
+| `fake-gcs` | `fsouza/fake-gcs-server` | `4443` | Emulador de Google Cloud Storage |
+| `gcs-init` | script utilitário | — | Cria o bucket no emulador de forma idempotente antes do backend subir |
+| `backend` | build de `./backend` | `5000` | API Flask, com hot-reload do código montado como volume |
+| `frontend` | build de `./frontend` (Dockerfile.dev) | `5173` | Vite dev server |
+
+## Por que um emulador de GCS, e não armazenamento local puro
+
+O backend já tem um backend de armazenamento local mais simples (`STORAGE_BACKEND=local`), mas o Docker Compose padrão do projeto sobe o **emulador de GCS** para que o código que efetivamente roda em produção — geração de URL assinada, tratamento de blobs, etc. — seja exercitado também em desenvolvimento, e não apenas em CI (onde esse caminho é coberto por mocks).
+
+Isso introduz um problema conhecido de rede: o backend fala com o emulador pelo endereço interno da rede Docker (`http://fake-gcs:4443`), mas o navegador do desenvolvedor, fora dos containers, precisa de um endereço acessível (`http://localhost:4443`) para seguir a URL assinada de download. O serviço `backend` resolve isso com duas variáveis distintas — `STORAGE_EMULATOR_HOST` (conexão interna) e `GCS_PUBLIC_URL` (endereço usado ao assinar a URL) — mantendo o mesmo código de assinatura usado em produção, onde `GCS_PUBLIC_URL` simplesmente fica vazio.
+
+## Subindo o ambiente
+
+```bash
+git clone https://github.com/FIFATeamHub/fifa_team_hub.git
+cd fifa_team_hub
+cp .env.example .env   # ajustar variáveis conforme necessário
+docker compose up --build
+```
+
+Ordem de inicialização controlada por `depends_on` com `condition`: o backend só sobe depois que o Postgres reporta saudável e o bucket do emulador de GCS já foi criado pelo serviço `gcs-init`.
+
+## Variáveis de ambiente principais
+
+| Variável | Uso |
+|---|---|
+| `DATABASE_URL` | String de conexão PostgreSQL |
+| `JWT_SECRET_KEY`, `JWT_ALGORITHM`, `JWT_EXPIRE_MINUTES` | Configuração de emissão/validação do token |
+| `STORAGE_BACKEND` | `local` ou `gcs` |
+| `GCS_BUCKET_NAME`, `GCP_PROJECT_ID` | Identificação do bucket/projeto (real ou emulado) |
+| `STORAGE_EMULATOR_HOST` | Endereço interno do emulador de GCS (apenas dev) |
+| `GCS_PUBLIC_URL` | Endereço público usado para assinar URLs em dev (vazio em produção) |
+
+Depois de subir, o backend fica em `http://localhost:5000`, o frontend em `http://localhost:5173`, e o console do emulador de GCS em `http://localhost:4443`.

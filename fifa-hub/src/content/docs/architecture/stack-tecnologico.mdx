@@ -1,0 +1,100 @@
+---
+title: Stack Tecnológico
+description: Tecnologias usadas em cada camada do FIFA Team Hub e por quê
+---
+
+Cada escolha de tecnologia foi registrada como decisão de arquitetura da equipe (ADR), priorizando simplicidade de operação e maturidade das ferramentas sobre novidade.
+
+## Frontend
+
+<div class="tech-grid">
+  <div class="tech-card">
+    <p class="tech-category">Framework</p>
+    <h4>Vue 3 + Vite</h4>
+    <p>SPA reativa com build rápido via Vite; escolhido no lugar de React pela curva de aprendizado mais suave para a equipe.</p>
+  </div>
+  <div class="tech-card">
+    <p class="tech-category">Estado</p>
+    <h4>Pinia</h4>
+    <p>Store para estado de autenticação (usuário logado, token). Dados de documentos e auditoria vivem em composables dedicados, não em um store global.</p>
+  </div>
+  <div class="tech-card">
+    <p class="tech-category">HTTP</p>
+    <h4>Axios</h4>
+    <p>Instância única com interceptors para anexar o token JWT em toda requisição e redirecionar ao login em caso de resposta 401.</p>
+  </div>
+  <div class="tech-card">
+    <p class="tech-category">Estilo</p>
+    <h4>CSS puro (scoped)</h4>
+    <p>Sem framework de utilitários — decisão deliberada da equipe para manter controle total do CSS enquanto o time aprendia os fundamentos.</p>
+  </div>
+</div>
+
+## Backend
+
+<div class="tech-grid">
+  <div class="tech-card">
+    <p class="tech-category">Framework</p>
+    <h4>Flask 3 (Python 3.11)</h4>
+    <p>Escolhido no lugar de FastAPI/Express pela simplicidade de configuração inicial, organizado em Blueprints por domínio (auth, documents, selection, audit).</p>
+  </div>
+  <div class="tech-card">
+    <p class="tech-category">Persistência</p>
+    <h4>SQLAlchemy + Alembic</h4>
+    <p>ORM e migrações versionadas — todo o histórico de alterações de schema (incluindo os novos valores de tipo de documento) fica em migrações rastreáveis.</p>
+  </div>
+  <div class="tech-card">
+    <p class="tech-category">Autenticação</p>
+    <h4>python-jose + Werkzeug</h4>
+    <p>Tokens JWT assinados via python-jose; hash de senha via utilitários de segurança do Werkzeug (scrypt).</p>
+  </div>
+  <div class="tech-card">
+    <p class="tech-category">Servidor de produção</p>
+    <h4>Gunicorn</h4>
+    <p>Serve a aplicação Flask dentro do container publicado no Cloud Run.</p>
+  </div>
+</div>
+
+## Dados & Armazenamento
+
+<div class="tech-grid">
+  <div class="tech-card">
+    <p class="tech-category">Banco relacional</p>
+    <h4>PostgreSQL 17</h4>
+    <p>Mesma versão usada em desenvolvimento (Docker Compose), CI (container de serviço) e produção (Cloud SQL) — reduz surpresas entre ambientes.</p>
+  </div>
+  <div class="tech-card">
+    <p class="tech-category">Arquivos</p>
+    <h4>Google Cloud Storage</h4>
+    <p>Escolhido no lugar de uma solução self-hosted (como MinIO) por já fazer parte do mesmo projeto GCP do restante da infraestrutura.</p>
+  </div>
+</div>
+
+## Infraestrutura & Deploy
+
+<div class="tech-grid">
+  <div class="tech-card">
+    <p class="tech-category">Empacotamento</p>
+    <h4>Docker</h4>
+    <p>Backend e frontend são construídos como imagens Docker independentes.</p>
+  </div>
+  <div class="tech-card">
+    <p class="tech-category">Runtime</p>
+    <h4>Google Cloud Run</h4>
+    <p>Serviços gerenciados, sem servidor para administrar, com escala a zero para o frontend e mínimo de uma instância ativa para o backend.</p>
+  </div>
+  <div class="tech-card">
+    <p class="tech-category">Build & Deploy</p>
+    <h4>Google Cloud Build</h4>
+    <p>Pipeline declarado em <code>cloudbuild.yaml</code>: constrói as imagens, publica no Google Container Registry, roda a migração de banco e então atualiza os serviços do Cloud Run.</p>
+  </div>
+  <div class="tech-card">
+    <p class="tech-category">Integração Contínua</p>
+    <h4>GitHub Actions</h4>
+    <p>Testes de backend e lint/type-check de frontend em toda Pull Request para <code>main</code>.</p>
+  </div>
+</div>
+
+## Documentação
+
+Este próprio site é gerado com **Astro + Starlight** e publicado no **GitHub Pages** a cada push na branch de documentação — a mesma filosofia de automação aplicada ao produto se estende à documentação.

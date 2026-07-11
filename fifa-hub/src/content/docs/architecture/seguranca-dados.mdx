@@ -1,0 +1,35 @@
+---
+title: Segurança e Isolamento de Dados
+description: Decisões de segurança que sustentam o FIFA Team Hub
+---
+
+Esta página reúne, num só lugar, as decisões de segurança que atravessam todas as camadas do sistema — a maioria delas registradas como decisões de arquitetura explícitas pela equipe, não como padrões implícitos de framework.
+
+## Isolamento por seleção é aplicação, não banco de dados
+
+O isolamento entre seleções é garantido por filtros explícitos nas consultas SQLAlchemy (`selection_id` do usuário autenticado, nunca do corpo da requisição), aplicados em toda leitura, escrita e exclusão. A equipe avaliou usar Row-Level Security nativa do PostgreSQL e optou por não adotá-la nesta fase — a lógica de isolamento fica centralizada nos serviços Python, onde pode ser testada diretamente. Detalhes de comportamento em [Isolamento de Seleções](/fifa_team_hub/features/isolamento-selecoes/).
+
+## Senhas e tokens
+
+- **Hash de senha:** feito com os utilitários de segurança do Werkzeug (baseados em scrypt) — a senha em texto plano nunca é persistida nem logada.
+- **Sessão:** stateless via JWT assinado (python-jose), carregando identificador do usuário, perfil e seleção. Sem estado de sessão no servidor.
+- **Expiração:** token expira em 60 minutos por padrão; não há renovação automática silenciosa.
+- **Logout:** limitação conhecida — o logout registra o evento de auditoria mas não invalida o token no servidor (sem lista de revogação). O token permanece válido até expirar naturalmente.
+
+## Exclusão de dados: soft delete + hard delete de arquivo
+
+Excluir um documento nunca remove a linha do banco de dados — ela é marcada como excluída, preservando o histórico para auditoria futura. O arquivo binário correspondente, por outro lado, é removido de fato do armazenamento (GCS ou disco local), evitando reter arquivos sensíveis além do necessário.
+
+## Validação de arquivos além da extensão
+
+Todo upload passa por checagem de tipo real de arquivo (leitura dos bytes iniciais, não da extensão do nome) antes de ser aceito — uma tentativa de disfarçar um arquivo malicioso trocando apenas a extensão é rejeitada com `415`. O tamanho máximo por arquivo é de 10 MB.
+
+## Superfícies sem proteção adicional (hoje)
+
+Para manter a documentação honesta sobre o estado atual, vale registrar explicitamente o que **não** está implementado:
+
+- Não há Row-Level Security no banco — o isolamento depende inteiramente da correção do código de aplicação.
+- Não há blacklist de tokens — logout é apenas cosmético do ponto de vista de validade do JWT.
+- Rate limiting existe apenas no endpoint de login (5 tentativas por minuto por IP); as demais rotas não têm limite de taxa dedicado.
+
+Nenhum desses pontos é uma falha não percebida — são trade-offs conscientes de escopo, registrados nas decisões de arquitetura do projeto, e candidatos naturais a evolução em versões futuras.

@@ -1,0 +1,48 @@
+---
+title: Isolamento de Seleções
+description: Como o FIFA Team Hub garante que uma seleção nunca acesse dados de outra
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+Cada seleção nacional opera como um compartimento isolado dentro do mesmo banco de dados. Um usuário da seleção BRA nunca deve conseguir ler, baixar ou apagar um documento pertencente à seleção ARG — essa é a garantia central do produto, e ela é aplicada de forma consistente em toda a camada de aplicação.
+
+## Como o isolamento é modelado
+
+A tabela `selection` é a raiz do isolamento: `User`, `Document` e `AuditLog` carregam uma coluna `selection_id` que amarra cada registro à sua seleção. No login, o token JWT emitido carrega o `selection_id` do usuário — é esse valor, extraído do token, que a API usa em toda decisão de acesso, nunca um valor vindo do corpo da requisição.
+
+<div class="tech-note">
+  <strong>Decisão de arquitetura:</strong> o isolamento é implementado inteiramente na camada de aplicação — filtros explícitos nas queries SQLAlchemy — e não via Row-Level Security (RLS) do PostgreSQL. A equipe considerou RLS e optou por não adotá-lo nesta fase, mantendo a lógica de isolamento centralizada e testável no código Python.
+</div>
+
+## Onde o isolamento é aplicado
+
+<CardGrid>
+  <Card title="Leitura (listagem)" icon="magnifier">
+    Toda consulta de documentos filtra por `Document.selection_id == selection_id` do usuário autenticado, combinada com o tipo de documento permitido para o seu perfil. Apenas o perfil `ORGANIZER` consulta múltiplas seleções — e mesmo assim restrito a convocações e passaportes.
+  </Card>
+  <Card title="Leitura (documento único)" icon="document">
+    Antes de qualquer verificação de tipo ou permissão, o serviço aplica uma checagem primária: se `document.selection_id` for diferente da seleção do usuário, o acesso é negado com `403`, independentemente do perfil.
+  </Card>
+  <Card title="Escrita (upload)" icon="add-document">
+    O `selection_id` do documento criado é sempre o do usuário autenticado — o cliente não pode enviar um `selection_id` diferente no formulário de upload.
+  </Card>
+  <Card title="Exclusão" icon="close">
+    A exclusão reaplica a mesma checagem de seleção antes de permitir o soft-delete do registro e a remoção física do arquivo.
+  </Card>
+</CardGrid>
+
+## Armazenamento também é particionado por seleção
+
+No Google Cloud Storage e no armazenamento local de desenvolvimento, cada arquivo é salvo sob um prefixo/pasta com o `selection_id`: `{bucket}/{selection_id}/{nome-gerado}`. Isso significa que, mesmo que alguém obtivesse acesso direto ao bucket, os arquivos de cada seleção já estariam fisicamente segregados por caminho. Veja [Armazenamento & Google Cloud Storage](/fifa_team_hub/architecture/armazenamento-gcs/) para detalhes.
+
+## Validado por testes automatizados
+
+O isolamento não é apenas uma intenção de design — é coberto por testes que rodam em todo Pull Request, incluindo cenários com o backend de armazenamento local e com GCS mockado:
+
+- Usuário da comissão técnica de uma seleção não enxerga documentos de outra seleção na listagem.
+- Tentativa de acessar (`GET`) um documento de outra seleção retorna `403`, mesmo conhecendo o UUID do documento.
+- Tentativa de excluir (`DELETE`) um documento de outra seleção retorna `403`.
+- Perfil `ORGANIZER` não consegue acessar relatórios táticos (fora do seu escopo de tipos permitidos), mesmo sendo cross-seleção para convocação/passaporte.
+
+Essas verificações são bloqueadoras: se um teste de isolamento falhar, o Pull Request não pode ser mesclado (ver [Pipeline de CI](/fifa_team_hub/deploy/ci-pipeline/)).

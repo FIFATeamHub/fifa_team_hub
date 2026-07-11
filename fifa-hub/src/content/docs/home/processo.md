@@ -75,22 +75,22 @@ docs/s9-auth-documentation
 
 ## Pipeline CI/CD
 
-Cada PR dispara automaticamente:
+Toda Pull Request para `main` dispara automaticamente `.github/workflows/ci.yml`:
 
 ```yaml
 jobs:
   backend-tests:
-    - pytest (com PostgreSQL service container)
-    - flake8 (linting)
-    - cobertura mínima: 60%
+    # sobe um container de serviço postgres:17
+    - pip install -r backend/requirements.txt
+    - pytest backend/tests/ -v --tb=short
 
-  frontend-lint-type-tests:
-    - ESLint
-    - vue-tsc (type-check)
-    - Vitest
+  frontend-lint:
+    - npm ci (frontend/)
+    - npm run lint
+    - npm run type-check
 ```
 
-**Falha = bloqueio de merge.** Não existe exceção.
+**Falha = bloqueio de merge.** Testes de isolamento entre seleções (`test_document_isolation.py`, `test_gcs_isolation.py`) rodam nesse mesmo job e são obrigatórios. Detalhes completos em [Pipeline de CI](/fifa_team_hub/deploy/ci-pipeline/).
 
 ---
 
@@ -98,13 +98,11 @@ jobs:
 
 | Área | Padrão |
 |------|--------|
-| **Testes BE** | pytest, coverage ≥ 60%, testes de isolamento obrigatórios |
-| **Testes FE** | Vitest + @vue/test-utils, jsdom |
-| **Linting BE** | flake8 / ruff sem erros |
+| **Testes BE** | pytest, com PostgreSQL 17 real como serviço em CI, testes de isolamento obrigatórios |
 | **Linting FE** | ESLint sem warnings |
-| **Tipagem FE** | TypeScript strict mode, vue-tsc clean |
+| **Tipagem FE** | TypeScript strict mode (`type-check`) |
 | **Segurança** | Testes cross-selection bloqueadores em CI |
-| **Auditoria** | 100% dos eventos registados em AuditLog |
+| **Auditoria** | Toda mutação sensível (login, upload, download, delete, acesso negado) registrada em AuditLog |
 
 ---
 

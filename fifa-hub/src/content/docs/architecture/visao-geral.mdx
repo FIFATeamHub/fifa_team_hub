@@ -1,0 +1,63 @@
+---
+title: Visão Geral da Arquitetura
+description: Como o frontend, backend, banco de dados e armazenamento do FIFA Team Hub se conectam
+---
+
+O FIFA Team Hub é uma aplicação de três camadas clássica — SPA, API REST e armazenamento de dados/arquivos — com cada camada publicada como um serviço independente no Google Cloud.
+
+<div class="arch-flow">
+  <div class="arch-layer">
+    <h4>Cliente — Vue 3 SPA</h4>
+    <p>Interface autenticada consumida no navegador. Faz todas as chamadas à API via Axios, anexando o token JWT em cada requisição.</p>
+    <div class="arch-tags">
+      <span class="arch-tag">Vue 3</span>
+      <span class="arch-tag">Vite</span>
+      <span class="arch-tag">Pinia</span>
+      <span class="arch-tag">Vue Router</span>
+    </div>
+  </div>
+
+  <div class="arch-connector">↓ HTTPS / JSON + multipart</div>
+
+  <div class="arch-layer">
+    <h4>API — Flask</h4>
+    <p>Organizada em <code>routes → controllers → services/models</code>. As rotas apenas conectam URL e método HTTP ao controller correspondente; controllers orquestram validação, RBAC e chamadas de serviço; services concentram regra de negócio reutilizável (armazenamento, auditoria, autenticação).</p>
+    <div class="arch-tags">
+      <span class="arch-tag">Flask 3</span>
+      <span class="arch-tag">Python 3.11</span>
+      <span class="arch-tag">SQLAlchemy + Alembic</span>
+      <span class="arch-tag">python-jose (JWT)</span>
+      <span class="arch-tag">Gunicorn</span>
+    </div>
+  </div>
+
+  <div class="arch-connector">↓</div>
+
+  <div class="arch-layer">
+    <h4>Dados — PostgreSQL (Cloud SQL)</h4>
+    <p>Armazena usuários, seleções, metadados de documentos e o log de auditoria. Em produção, a conexão é feita via socket Unix do Cloud SQL a partir do Cloud Run; localmente, um container PostgreSQL 17 via Docker Compose.</p>
+    <div class="arch-tags">
+      <span class="arch-tag">PostgreSQL 17</span>
+      <span class="arch-tag">Cloud SQL</span>
+    </div>
+  </div>
+
+  <div class="arch-connector">↓</div>
+
+  <div class="arch-layer">
+    <h4>Arquivos — Google Cloud Storage</h4>
+    <p>Os arquivos binários dos documentos nunca passam pelo banco de dados — ficam em um bucket do GCS, organizado por pasta de seleção, e são entregues ao cliente via URLs assinadas temporárias.</p>
+    <div class="arch-tags">
+      <span class="arch-tag">Google Cloud Storage</span>
+      <span class="arch-tag">Signed URLs v4</span>
+    </div>
+  </div>
+</div>
+
+## Por que essa separação
+
+- **Frontend e backend são publicados e escalados independentemente** — dois serviços Cloud Run distintos, cada um com seus próprios recursos de CPU/memória e política de auto-scaling.
+- **Arquivos ficam fora do banco de dados.** O PostgreSQL guarda apenas o caminho do arquivo (`storage_path`) e metadados; o binário do documento nunca trafega pela camada de aplicação além do momento do upload — downloads acontecem diretamente entre o navegador e o Cloud Storage, via link assinado.
+- **A lógica de negócio fica concentrada no backend.** O frontend não decide isolamento, permissões ou validação de arquivo — ele apenas reflete o que a API retorna, o que evita duplicar (e divergir) regras de segurança entre duas camadas.
+
+Para o detalhamento de cada peça, veja [Stack Tecnológico](/fifa_team_hub/architecture/stack-tecnologico/), [Armazenamento & Google Cloud Storage](/fifa_team_hub/architecture/armazenamento-gcs/) e [Segurança e Isolamento de Dados](/fifa_team_hub/architecture/seguranca-dados/).

@@ -1,0 +1,53 @@
+---
+title: Upload de Documentos Sensíveis
+description: Como o FIFA Team Hub valida, autoriza e armazena documentos enviados
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+O upload é o ponto de entrada mais sensível do sistema: recebe arquivos de terceiros, decide se o usuário pode enviar aquele tipo de documento e só então grava o arquivo em armazenamento persistente. Cada uma dessas etapas é validada antes da próxima começar.
+
+## Tipos de documento suportados
+
+- **CONVOCADO** — lista oficial de convocação
+- **PASSPORT** — passaporte do atleta
+- **LAUDO_MEDICO** — laudo médico
+- **RELATORIO_TATICO** — relatório tático da comissão técnica
+- **ESQUEMA_JOGADAS** — esquemas de jogadas
+
+## Matriz de permissão por perfil
+
+Nem todo perfil pode enviar todo tipo de documento, e o status inicial do documento também depende de quem o enviou:
+
+| Perfil | Pode enviar | Status inicial |
+|---|---|---|
+| **AUDITOR** | Passaporte | Aprovado |
+| **TECHNICAL_STAFF** | Convocação, relatório tático, esquema de jogadas | Aprovado |
+| **TECHNICAL_STAFF** | Passaporte, laudo médico | Pendente |
+| **MEDICAL_STAFF** | Laudo médico | Aprovado |
+| **MEDICAL_STAFF** | Passaporte | Pendente |
+| **ATHELETE** | Passaporte, laudo médico | Pendente |
+| **ORGANIZER** | — | Perfil de leitura entre seleções; não realiza uploads |
+
+## Etapas de validação
+
+<CardGrid>
+  <Card title="1. Presença dos campos" icon="pencil">
+    O arquivo e o tipo de documento (`doc_type`) são obrigatórios no formulário; ausência de qualquer um deles interrompe a requisição antes de qualquer processamento.
+  </Card>
+  <Card title="2. Permissão por perfil" icon="lock">
+    O tipo de documento é validado contra a matriz de permissões do perfil do usuário autenticado. Fora da matriz, a resposta é `403`.
+  </Card>
+  <Card title="3. Validação real do arquivo" icon="magnifier">
+    O tamanho não pode exceder 10&nbsp;MB. O tipo do arquivo é verificado lendo os primeiros bytes com uma biblioteca de detecção de MIME type — não a extensão do nome do arquivo — contra uma lista de formatos aceitos (PDF, JPEG, PNG, DOCX). Isso impede que alguém renomeie um executável para `.pdf` e o envie como se fosse um documento legítimo.
+  </Card>
+  <Card title="4. Nome de arquivo seguro" icon="seti:lock">
+    O nome original é sanitizado apenas para exibição. O arquivo físico é salvo sob um identificador único gerado no servidor — o nome enviado pelo usuário nunca determina o caminho no armazenamento.
+  </Card>
+</CardGrid>
+
+## Armazenamento
+
+Depois de validado, o arquivo é entregue ao serviço de armazenamento configurado (armazenamento local em desenvolvimento, Google Cloud Storage em produção — ver [Armazenamento & Google Cloud Storage](/fifa_team_hub/architecture/armazenamento-gcs/)), sempre gravado sob a pasta da seleção do usuário autenticado. Só depois de o arquivo estar persistido é que o registro do documento é criado no banco, com o status calculado pela matriz de permissão acima.
+
+Qualquer falha nesse caminho — permissão negada, arquivo inválido, indisponibilidade momentânea do armazenamento — é registrada no log de auditoria (ver [Auditoria de Segurança](/fifa_team_hub/features/auditoria-seguranca/)) antes de a resposta de erro ser devolvida ao cliente.

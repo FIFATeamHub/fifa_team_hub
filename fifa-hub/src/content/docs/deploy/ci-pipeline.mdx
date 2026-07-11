@@ -1,0 +1,46 @@
+---
+title: Pipeline de CI (GitHub Actions)
+description: O que roda automaticamente em cada Pull Request do FIFA Team Hub
+---
+
+O workflow `.github/workflows/ci.yml` dispara em toda Pull Request aberta contra a branch `main` e roda dois jobs em paralelo. Nenhum dos dois publica nada — o propósito deste workflow é exclusivamente **bloquear merge de código quebrado**; o deploy é um processo separado (ver [Deploy em Cloud Run](/fifa_team_hub/deploy/deploy-cloud-run/)).
+
+## `backend-tests`
+
+```yaml
+services:
+  postgres:
+    image: postgres:17
+    env:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: fifa_test
+    ports: ["5432:5432"]
+
+steps:
+  - actions/setup-python@v5 (python 3.11)
+  - pip install -r backend/requirements.txt
+  - python -m pytest backend/tests/ -v --tb=short
+```
+
+O job sobe um container de serviço com **PostgreSQL 17 real** — a mesma versão usada em produção — em vez de um banco em memória, para que os testes exerçam o mesmo dialeto SQL e as mesmas constraints que rodam no Cloud SQL. As variáveis de ambiente do job desativam o acesso real ao GCS (`STORAGE_BACKEND=gcs` com credenciais falsas), então os testes que envolvem armazenamento em nuvem usam mocks — não uma conta GCP real.
+
+Essa suíte inclui os testes de isolamento entre seleções (com armazenamento local e com GCS mockado) — se um desses testes falhar, o Pull Request fica bloqueado.
+
+## `frontend-lint`
+
+```yaml
+steps:
+  - actions/setup-node@v4 (node 20)
+  - npm ci (frontend/)
+  - npm run lint
+  - npm run type-check
+```
+
+Garante que o código Vue/TypeScript do frontend não quebre lint nem checagem de tipos antes de ser mesclado.
+
+## Escopo deste workflow
+
+<div class="tech-note">
+  Este pipeline cobre apenas <strong>testes e verificação estática</strong>. Ele não constrói imagens Docker, não publica em nenhum registry e não interage com o Google Cloud — essas etapas são feitas por um pipeline separado, descrito em <a href="/fifa_team_hub/deploy/deploy-cloud-run/">Deploy em Cloud Run</a>.
+</div>

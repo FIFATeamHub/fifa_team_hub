@@ -1,0 +1,79 @@
+---
+title: "API — Auditoria"
+description: Endpoint de leitura dos logs de auditoria do FIFA Team Hub
+---
+
+import { Card } from '@astrojs/starlight/components';
+
+# 🛡️ API — Auditoria
+
+Endpoint exclusivo de **leitura** dos registros de auditoria e segurança do sistema. Nenhuma rota de edição ou exclusão é disponibilizada — por regra de negócio, o log de auditoria é imutável.
+
+---
+
+## 🔍 GET /api/audit
+
+Retorna, de forma paginada e ordenada, os eventos registrados na plataforma.
+
+- **Autenticação Requerida:** ✅ `Bearer <token>` (role: `AUDITOR`)
+
+### 🎛️ Parâmetros de Query (Opcionais)
+
+| Parâmetro | Tipo | Padrão | Descrição |
+| :--- | :--- | :--- | :--- |
+| `page` | Integer | 1 | Número da página atual |
+| `per_page` | Integer | 20 | Registros por página |
+| `action` | String | — | Filtra por tipo de ação (`LOGIN`, `LOGOUT`, `UPLOAD`, `DOWNLOAD`, `DELETE`, `ACCESS_DENIED`) |
+| `user_id` | UUID | — | Filtra pelos logs gerados por um autor específico |
+
+<div class="tech-note">
+  <strong>Nota de precisão:</strong> a visibilidade deste endpoint é escopada pela seleção do auditor autenticado — um `AUDITOR` vinculado a uma seleção enxerga apenas os eventos daquela seleção, não um painel global do sistema. Apenas um auditor sem seleção vinculada tem visão ampla. Ver <a href="/fifa_team_hub/features/auditoria-seguranca/">Auditoria de Segurança</a>.
+</div>
+
+### 📦 Ver Resposta de Sucesso (200)
+
+```json
+{
+  "data": [
+    {
+      "id": "abc-123",
+      "action": "UPLOAD",
+      "user_id": "xyz-987",
+      "resource_id": "doc-555",
+      "status": "SUCCESS",
+      "ip_address": "192.168.1.1",
+      "details": "Upload via painel",
+      "created_at": "2026-07-09T18:00:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "per_page": 20,
+    "total": 150,
+    "pages": 8
+  }
+}
+```
+
+### 📊 Respostas e Códigos de Status
+
+| Status | Descrição |
+| :--- | :--- |
+| `200` | Logs retornados com sucesso |
+| `401` | Token ausente, inválido ou expirado |
+| `403` | Perfil autenticado não é `AUDITOR` |
+
+---
+
+## 🛠️ Regras de Negócio
+
+> 
+- **Imutabilidade:** não existe rota de `PUT`/`PATCH`/`DELETE` para registros de auditoria
+- **Escopo por seleção:** um `AUDITOR` só vê eventos da própria seleção, exceto quando sua conta não está vinculada a nenhuma
+- **Resiliência:** falha ao gravar um log não interrompe a operação principal que o originou — a escrita do log roda em sua própria transação
+
+---
+
+<Card title="🚀 Testando localmente" icon="download">
+Ainda não há uma coleção Postman dedicada para este endpoint no repositório — use a coleção de autenticação (`docs/postman/Auth Endpoints.postman_collection.json`) para obter um token de um usuário `AUDITOR` e então chame `GET /api/audit` manualmente.
+</Card>

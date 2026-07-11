@@ -1,0 +1,53 @@
+---
+title: Deploy em Cloud Run (Cloud Build + GCR)
+description: Como o FIFA Team Hub é publicado em produção no Google Cloud
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+O deploy de produção é feito por um pipeline do **Google Cloud Build**, declarado em `cloudbuild.yaml` na raiz do repositório. Backend e frontend são construídos, publicados e implantados como dois serviços independentes do **Google Cloud Run**.
+
+<div class="tech-note">
+  <strong>Nota de precisão:</strong> o pipeline atual publica as imagens no <strong>Google Container Registry</strong> (<code>gcr.io</code>) e não usa Workload Identity Federation — a autenticação do Cloud Build com o projeto GCP é a integração nativa do próprio Cloud Build, e o deploy roda via <code>gcloud</code> CLI dentro dos steps do pipeline. Não há, hoje, um workflow de GitHub Actions que faça deploy para o GCP.
+</div>
+
+## Passo a passo do pipeline
+
+<CardGrid>
+  <Card title="1. Build" icon="rocket">
+    Duas imagens Docker são construídas: <code>gcr.io/$PROJECT_ID/fifa-team-hub:latest</code> (backend) e <code>gcr.io/$PROJECT_ID/fifa-team-hub-frontend:latest</code> (frontend, recebendo a URL do backend como build-arg).
+  </Card>
+  <Card title="2. Push" icon="up-caret">
+    Ambas as imagens são publicadas no Google Container Registry do projeto.
+  </Card>
+  <Card title="3. Migração de banco" icon="setting">
+    Antes de atualizar o serviço, um <strong>Cloud Run Job</strong> dedicado (<code>fifa-team-hub-migrate</code>) roda <code>flask db upgrade</code> contra o Cloud SQL e é executado de forma síncrona (o pipeline espera sua conclusão) antes do deploy do serviço principal.
+  </Card>
+  <Card title="4. Deploy do backend" icon="cloud">
+    <code>gcloud run deploy fifa-team-hub</code> na região <code>us-central1</code>, conectado ao Cloud SQL via socket Unix, com segredos (<code>DATABASE_URL</code>, <code>JWT_SECRET_KEY</code>, <code>SECRET_KEY</code>) injetados a partir do Secret Manager — nunca como variável de ambiente em texto plano no pipeline.
+  </Card>
+  <Card title="5. Deploy do frontend" icon="cloud">
+    <code>gcloud run deploy fifa-team-hub-frontend</code>, servido por Nginx dentro do container, com escala a zero permitida (<code>--min-instances=0</code>) já que é um serviço estático.
+  </Card>
+</CardGrid>
+
+## Configuração dos serviços Cloud Run
+
+| | Backend (`fifa-team-hub`) | Frontend (`fifa-team-hub-frontend`) |
+|---|---|---|
+| Memória | 512Mi | 256Mi |
+| Instâncias mín./máx. | 1 – 10 | 0 – 5 |
+| Acesso | Não autenticado (`--allow-unauthenticated`) | Não autenticado |
+| Conta de serviço | `fifa-team-hub-app@…iam.gserviceaccount.com` | — |
+| Cloud SQL | Conectado via `--add-cloudsql-instances` | — |
+
+O backend mantém sempre ao menos uma instância ativa (evita cold start em requisições de upload/download), enquanto o frontend — servindo apenas arquivos estáticos — pode escalar a zero quando ocioso.
+
+## Banco de dados em produção
+
+O PostgreSQL de produção roda como uma instância **Cloud SQL** (`fifa-db-prod`). O Cloud Run se conecta a ela via socket Unix (`/cloudsql/{connection_name}`), sem expor a instância a um IP público — o mesmo padrão recomendado pelo Google para cargas de trabalho no Cloud Run.
+
+## Alternativas previstas no repositório
+
+- **Scripts manuais** (`backend/scripts/deploy-cloud-run.sh` e `deploy-all.sh`) reproduzem os mesmos passos do Cloud Build via `gcloud` CLI direto, para deploys pontuais fora do pipeline automatizado.
+- **Manifesto Kubernetes** (`k8s/deployment.yaml`) documentado como alternativa para cenários que rodem em GKE em vez de Cloud Run gerenciado — não é o caminho de produção atual, mas está mantido no repositório.

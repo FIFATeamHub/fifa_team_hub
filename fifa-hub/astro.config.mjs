@@ -18,7 +18,7 @@ export default defineConfig({
 				{
 					icon: "github",
 					label: "GitHub",
-					href: "https://github.com/fifa_team_hub/fifa-hub",
+					href: "https://github.com/FIFATeamHub/fifa_team_hub",
 				},
 			],
 			customCss: ['./src/styles/custom.css'],
@@ -27,7 +27,7 @@ export default defineConfig({
 					label: "Início",
 					items: [
 						{
-							label: "Sobre o Projeto",
+							label: "Visão Geral do Projeto",
 							slug: "home/sobre",
 						},
 						{
@@ -37,86 +37,116 @@ export default defineConfig({
 					],
 				},
 				{
-					label: "Visão de Produto",
+					label: "Features Principais",
 					items: [
 						{
-							label: "Contexto",
-							slug: "visao/cenario",
+							label: "Isolamento de Seleções",
+							slug: "features/isolamento-selecoes",
 						},
 						{
-							label: "Solução",
-							slug: "visao/solucao",
+							label: "Auditoria de Segurança",
+							slug: "features/auditoria-seguranca",
 						},
 						{
-							label: "Processo de Engenharia de Software",
-							slug: "visao/processo-sw",
+							label: "Upload de Documentos Sensíveis",
+							slug: "features/upload-documentos",
 						},
 						{
-							label: "Cronograma",
-							slug: "visao/cronograma",
-						},
-						{
-							label: "Processo de Engenharia de Requisitos",
-							slug: "visao/engenharia-requisitos",
-						},
-						{
-							label: "Requisitos de Software",
-							slug: "visao/levantamento-parcial",
-						},
-						{
-							label: "Backlog",
-							slug: "visao/backlog",
+							label: "Controle de Acesso (RBAC)",
+							slug: "features/controle-acesso",
 						},
 					],
 				},
 				{
-					label: "Sprints",
+					label: "Arquitetura & Cloud",
 					items: [
 						{
-							label: "Semanas 7 e 8 — Planejamento",
-							slug: "sprints/semanas-7-8",
+							label: "Visão Geral da Arquitetura",
+							slug: "architecture/visao-geral",
 						},
 						{
-							label: "Semanas 9 — Autenticação",
-							slug: "sprints/semana-9",
+							label: "Stack Tecnológico",
+							slug: "architecture/stack-tecnologico",
 						},
 						{
-							label: "Semanas 10 — Upload e Listagem",
-							slug: "sprints/semana-10",
+							label: "Armazenamento & Google Cloud Storage",
+							slug: "architecture/armazenamento-gcs",
 						},
 						{
-							label: "Semanas 11 — Cloud Storage",
-							slug: "sprints/semana-11",
+							label: "Segurança e Isolamento de Dados",
+							slug: "architecture/seguranca-dados",
 						},
 					],
 				},
 				{
-					label: "Atas de Reunião",
+					label: "Deploy & CI/CD",
 					items: [
 						{
-							label: "Reunião 01 — 28/05/2026",
-							slug: "atas/reuniao-01",
+							label: "Pipeline de CI (GitHub Actions)",
+							slug: "deploy/ci-pipeline",
 						},
 						{
-							label: "Reunião 02 — 09/06/2026",
-							slug: "atas/reuniao-02",
+							label: "Deploy em Cloud Run (Cloud Build + GCR)",
+							slug: "deploy/deploy-cloud-run",
 						},
 						{
-							label: "Reunião 03 — 18/06/2026",
-							slug: "atas/reuniao-03",
+							label: "Ambiente Local (Docker Compose)",
+							slug: "deploy/ambiente-local",
 						},
 					],
 				},
 				{
-					label: "API",
+					label: "Referência de API",
 					items: [
 						{
-						label: "Autenticação",
-						slug: "api/auth",
+							label: "Autenticação",
+							slug: "api/auth",
 						},
 						{
-						label: "Documentos",
-						slug: "api/documents",
+							label: "Documentos",
+							slug: "api/documents",
+						},
+						{
+							label: "Auditoria",
+							slug: "api/auditoria",
+						},
+					],
+				},
+				{
+					label: "Processo & Entregas",
+					items: [
+						{
+							label: "Processo de Desenvolvimento",
+							slug: "home/processo",
+						},
+						{
+							label: "Visão de Produto",
+							items: [
+								{ label: "Contexto", slug: "visao/cenario" },
+								{ label: "Solução", slug: "visao/solucao" },
+								{ label: "Processo de Engenharia de Software", slug: "visao/processo-sw" },
+								{ label: "Cronograma", slug: "visao/cronograma" },
+								{ label: "Processo de Engenharia de Requisitos", slug: "visao/engenharia-requisitos" },
+								{ label: "Requisitos de Software", slug: "visao/levantamento-parcial" },
+								{ label: "Backlog", slug: "visao/backlog" },
+							],
+						},
+						{
+							label: "Sprints",
+							items: [
+								{ label: "Semanas 7 e 8 — Planejamento", slug: "sprints/semanas-7-8" },
+								{ label: "Semana 9 — Autenticação", slug: "sprints/semana-9" },
+								{ label: "Semana 10 — Upload e Listagem", slug: "sprints/semana-10" },
+								{ label: "Semana 11 — Cloud Storage", slug: "sprints/semana-11" },
+							],
+						},
+						{
+							label: "Atas de Reunião",
+							items: [
+								{ label: "Reunião 01 — 28/05/2026", slug: "atas/reuniao-01" },
+								{ label: "Reunião 02 — 09/06/2026", slug: "atas/reuniao-02" },
+								{ label: "Reunião 03 — 18/06/2026", slug: "atas/reuniao-03" },
+							],
 						},
 					],
 				},

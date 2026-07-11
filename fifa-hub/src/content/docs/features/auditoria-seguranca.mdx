@@ -1,0 +1,51 @@
+---
+title: Auditoria de Segurança
+description: Log de auditoria centralizado e imutável do FIFA Team Hub
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+Toda ação sensível do sistema — autenticação, upload, download, exclusão e tentativas de acesso negado — gera um registro em uma tabela de auditoria dedicada. O objetivo é dar a uma seleção capacidade de responder, a qualquer momento, "quem acessou o quê, quando e de onde".
+
+## O que é registrado
+
+<CardGrid>
+  <Card title="LOGIN / LOGOUT" icon="approve-check">
+    Sucesso e falha de autenticação, incluindo tentativas com credenciais inválidas.
+  </Card>
+  <Card title="UPLOAD" icon="up-caret">
+    Toda tentativa de envio de documento — sucesso e também as falhas (permissão negada, arquivo inválido, tipo não suportado, indisponibilidade do storage).
+  </Card>
+  <Card title="DOWNLOAD" icon="down-caret">
+    Geração de link de download assinado. O evento é registrado no momento em que a URL assinada é emitida, não no instante em que o arquivo é efetivamente baixado — a API não tem como observar o download em si depois que a URL sai do backend.
+  </Card>
+  <Card title="DELETE / ACCESS_DENIED" icon="warning">
+    Exclusões de documentos e qualquer tentativa de acesso barrada por regra de RBAC ou isolamento entre seleções.
+  </Card>
+</CardGrid>
+
+## Estrutura do registro de auditoria
+
+Cada entrada de log grava:
+
+| Campo | Descrição |
+|---|---|
+| `id` | Identificador único do evento |
+| `user_id` | Autor da ação (pode ser nulo, para registrar tentativas de login com usuário inexistente) |
+| `action` | Um dos seis tipos de evento acima |
+| `resource_id` | Documento ou recurso afetado |
+| `selection_id` | Seleção associada ao evento |
+| `ip_address` | Endereço IP de origem da requisição |
+| `status` | Resultado da ação (sucesso, falha ou acesso negado) |
+| `details` | Descrição legível do que ocorreu |
+| `created_at` | Timestamp do evento |
+
+## Imutabilidade
+
+Não existe, em nenhuma rota da API, uma forma de editar ou apagar um registro de auditoria — apenas leitura é exposta. Isso é uma decisão deliberada: um log que pode ser alterado deixa de ser confiável como evidência.
+
+## Quem pode consultar
+
+O painel de auditoria (`GET /api/audit`) é restrito ao perfil `AUDITOR`. É importante notar que essa visibilidade **também respeita o isolamento por seleção**: um auditor vê os eventos da sua própria seleção, e não um painel global do sistema — a única exceção é um auditor cuja conta não esteja vinculada a nenhuma seleção específica, o que o torna, na prática, um auditor independente com visão ampla. Esse comportamento é coberto por teste automatizado dedicado (garantindo que um auditor de uma seleção não veja logs de outra).
+
+Falhas ao gravar um log de auditoria não derrubam a requisição principal — a escrita do log é isolada em sua própria transação, então uma falha inesperada na auditoria não impede, por exemplo, que um upload válido seja concluído.

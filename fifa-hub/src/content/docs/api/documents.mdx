@@ -13,9 +13,6 @@ Todos os endpoints desta seção requerem obrigatoriamente autenticação via Be
 
 ## 📋 Modelo de Dados (Document Entity)
 
-### 📋 Modelo de Dados (Document Entity)
-
-
 | Campo | Tipo | Descrição |
 | :--- | :--- | :--- |
 | `id` | UUID | Identificador único |
@@ -34,8 +31,12 @@ Todos os endpoints desta seção requerem obrigatoriamente autenticação via Be
 ---
 
 **🏷️ Enums Disponíveis:**
-- **DocType:** `CONVOCACAO` \| `PASSAPORTE` \| `LAUDO_MEDICO` \| `RELATORIO_TATICO` \| `ESQUEMA_JOGADAS`
+- **DocType:** `CONVOCADO` \| `PASSPORT` \| `LAUDO_MEDICO` \| `RELATORIO_TATICO` \| `ESQUEMA_JOGADAS`
 - **DocStatus:** `PENDING` \| `APPROVED` \| `REJECTED`
+
+<div class="tech-note">
+  <strong>Nota de precisão:</strong> o campo <code>status</code> retornado no corpo da resposta de <code>POST /documents/upload</code> reflete sempre o valor inicial calculado pela matriz de permissão (ver <a href="/fifa_team_hub/features/upload-documentos/">Upload de Documentos Sensíveis</a>); consulte <code>GET /documents</code> para o status atualizado de um documento já existente.
+</div>
 
 
 ---
@@ -44,7 +45,7 @@ Todos os endpoints desta seção requerem obrigatoriamente autenticação via Be
 
 Faz upload de documento para a seleção do utilizador autenticado.
 
-- **Autenticação Requerida:** ✅ `Bearer <token>` (role: `TECHNICAL_STAFF`)
+- **Autenticação Requerida:** ✅ `Bearer <token>` — quem pode enviar qual `doc_type` segue uma matriz por perfil (ver [Upload de Documentos Sensíveis](/fifa_team_hub/features/upload-documentos/)); o perfil `ORGANIZER` não pode enviar documentos.
 - **Content-Type:** `multipart/form-data`
 
 ### 📥 Parâmetros do Formulário
@@ -61,7 +62,7 @@ Faz upload de documento para a seleção do utilizador autenticado.
 {
   "id": "uuid",
   "original_name": "convocacao_brasil.pdf",
-  "doc_type": "CONVOCACAO",
+  "doc_type": "CONVOCADO",
   "file_size_kb": 245,
   "status": "PENDING",
   "uploaded_by": "uuid-do-user",
@@ -100,9 +101,9 @@ Lista documentos filtrados pelo perfil do utilizador autenticado.
 
 
 > 
-- **`TECHNICAL_STAFF`:** Retorna documentos da própria seleção (todos os tipos)
-- **`ORGANIZER`:** Retorna `CONVOCACAO` e `PASSAPORTE` de todas as seleções
-- **`AUDITOR`:** HTTP `403` (Acesso negado)
+- **`TECHNICAL_STAFF` / `MEDICAL_STAFF` / `ATHELETE`:** Retorna documentos da própria seleção, restritos aos tipos permitidos ao perfil (ver [Controle de Acesso](/fifa_team_hub/features/controle-acesso/))
+- **`ORGANIZER`:** Retorna `CONVOCADO` e `PASSPORT` de **todas** as seleções
+- **`AUDITOR`:** HTTP `403` (este perfil só acessa o endpoint de auditoria, não a listagem de documentos)
 
 
 ### 📦 Ver Resposta de Sucesso (200)
@@ -114,7 +115,7 @@ Lista documentos filtrados pelo perfil do utilizador autenticado.
     {
       "id": "uuid",
       "original_name": "convocacao.pdf",
-      "doc_type": "CONVOCACAO",
+      "doc_type": "CONVOCADO",
       "file_size_kb": 245,
       "status": "PENDING",
       "uploaded_by_name": "Josef Woljtyla",
@@ -167,7 +168,7 @@ Gera um link temporário e assinado para a realização do download seguro do ar
 
 Realiza a exclusão lógica do documento (*soft delete*).
 
-- **Autenticação Requerida:** ✅ `Bearer <token>` (role: `TECHNICAL_STAFF` — apenas o próprio autor do upload)
+- **Autenticação Requerida:** ✅ `Bearer <token>` — restrito ao perfil `TECHNICAL_STAFF`, e apenas ao próprio autor do upload (outro `TECHNICAL_STAFF` da mesma seleção não pode excluir um documento que não enviou)
 
 ### 📊 Respostas e Códigos de Status
 
@@ -192,6 +193,6 @@ Realiza a exclusão lógica do documento (*soft delete*).
 
 ---
 
-<Card title="🚀 Postman Collection" icon="download">
-Importe o arquivo `docs/postman/s10_documents.json` para testar localmente todos os fluxos e validações (Upload válido, erro 413, erro 415, bloqueio 403, listagem condicional, download e remoção).
+<Card title="🚀 Testando localmente" icon="download">
+Ainda não há uma coleção Postman dedicada a documentos no repositório — use a coleção de autenticação (`docs/postman/Auth Endpoints.postman_collection.json`) para obter um token e então exercite manualmente os fluxos de upload, listagem, download e remoção.
 </Card>

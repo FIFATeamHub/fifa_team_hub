@@ -1,13 +1,15 @@
 ---
-title: Sobre o Projeto
+title: Visão Geral do Projeto
 description: FIFA Team Hub — Portal seguro de gestão de documentos para seleções nacionais
 ---
+
+import { Card, CardGrid } from '@astrojs/starlight/components'
 
 # FIFA Team Hub
 
 **Portal seguro de gestão de documentos para comissões técnicas de seleções nacionais de futebol.**
 
-Desenvolvido no programa **AILAB Makers Fase 2** (Sprints 7–14), o projeto substitui processos manuais por um portal auditável com isolamento absoluto entre seleções.
+Desenvolvido no programa **AILAB Makers — Fase 2** (Sprints 7–14), o projeto substitui processos manuais por um portal auditável com isolamento entre seleções, implantado em produção no Google Cloud.
 
 ---
 
@@ -15,25 +17,25 @@ Desenvolvido no programa **AILAB Makers Fase 2** (Sprints 7–14), o projeto sub
 
 Comissões técnicas de seleções nacionais gerenciam documentos críticos — convocações, passaportes, laudos médicos, relatórios táticos — através de e-mails, drives compartilhadas e planilhas. Isso gera:
 
-- ❌ Risco de vazamento de informações entre seleções
-- ❌ Falta de rastreabilidade (quem acessou o quê e quando)
-- ❌ Conflitos de versão e documentos desatualizados
-- ❌ Sem conformidade com LGPD
+- Risco de vazamento de informações entre seleções
+- Falta de rastreabilidade (quem acessou o quê e quando)
+- Conflitos de versão e documentos desatualizados
+- Ausência de um histórico auditável para conformidade com a LGPD
 
 ## A Solução
 
 <CardGrid>
-  <Card title="🔐 Isolamento Inviolável" icon="shield">
-    Row-level filtering obrigatório em todas as queries. Tecnicamente impossível acessar dados de outra seleção.
+  <Card title="Isolamento por Seleção" icon="shield">
+    Toda consulta, upload e exclusão é filtrada pela seleção do usuário autenticado. Tentativas de acesso cruzado são bloqueadas e registradas.
   </Card>
-  <Card title="📁 Gestão Centralizada" icon="document">
-    Upload de convocações, passaportes, laudos médicos e relatórios táticos num portal único.
+  <Card title="Gestão Centralizada" icon="document">
+    Upload de convocações, passaportes, laudos médicos, relatórios táticos e esquemas de jogadas num portal único.
   </Card>
-  <Card title="🔍 Auditoria Completa" icon="magnifier">
-    Logs imutáveis de LOGIN, UPLOAD, DOWNLOAD, DELETE com timestamp, IP e responsável.
+  <Card title="Auditoria Completa" icon="magnifier">
+    Logs imutáveis de LOGIN, LOGOUT, UPLOAD, DOWNLOAD, DELETE e ACCESS_DENIED, com timestamp, IP e responsável.
   </Card>
-  <Card title="☁️ Cloud Nativo" icon="cloud">
-    Armazenamento no Google Cloud Storage com links temporários assinados (15 min).
+  <Card title="Cloud Nativo" icon="cloud">
+    Armazenamento no Google Cloud Storage com links de download temporários e assinados (15 min), backend e frontend publicados no Cloud Run.
   </Card>
 </CardGrid>
 
@@ -43,25 +45,25 @@ Comissões técnicas de seleções nacionais gerenciam documentos críticos — 
 
 | Camada | Tecnologia |
 |--------|------------|
-| **Frontend** | Vue 3 + TypeScript + Pinia |
-| **Backend** | Flask (Python 3.11) + Blueprint Pattern |
+| **Frontend** | Vue 3 + Vite + Pinia |
+| **Backend** | Flask 3 (Python 3.11), organizado em routes → controllers → services |
 | **ORM / Migrations** | SQLAlchemy + Alembic |
-| **Banco de Dados** | PostgreSQL 15 |
-| **Autenticação** | python-jose (JWT) + bcrypt |
-| **Storage** | Google Cloud Storage |
-| **Deploy** | Google Cloud Run + Docker |
-| **CI/CD** | GitHub Actions |
+| **Banco de Dados** | PostgreSQL 17 (Cloud SQL em produção) |
+| **Autenticação** | JWT (python-jose) + hash de senha via Werkzeug |
+| **Storage** | Google Cloud Storage, com abstração local para desenvolvimento |
+| **Deploy** | Docker + Google Cloud Run, imagens publicadas no Google Container Registry |
+| **CI** | GitHub Actions (testes de backend e lint/type-check de frontend em cada PR) |
 | **Documentação** | Astro Starlight + GitHub Pages |
-
----
 
 ## Perfis de Acesso
 
 | Perfil | Acesso |
 |--------|--------|
-| **TECHNICAL_STAFF** | Upload e listagem dos documentos da própria seleção |
-| **ORGANIZER** | Visualização de CONVOCACAO e PASSAPORTE de todas as seleções |
-| **AUDITOR** | Painel de logs e auditoria de eventos |
+| **ATHELETE** | Upload e leitura do próprio passaporte e laudo médico, dentro da própria seleção |
+| **TECHNICAL_STAFF** | Upload e listagem de convocações, relatórios táticos e esquemas de jogadas da própria seleção |
+| **MEDICAL_STAFF** | Upload e leitura de laudos médicos da própria seleção |
+| **ORGANIZER** | Leitura de convocações e passaportes de todas as seleções |
+| **AUDITOR** | Consulta ao painel de logs de auditoria da própria seleção |
 
 ---
 

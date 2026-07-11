@@ -1,0 +1,37 @@
+---
+title: Armazenamento & Google Cloud Storage
+description: Como o FIFA Team Hub abstrai e implementa o armazenamento de arquivos
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+O backend nunca acessa um provedor de armazenamento diretamente a partir dos controllers — toda leitura e escrita de arquivo passa por uma interface de armazenamento, escolhida em tempo de execução por uma variável de ambiente. Isso permite desenvolver e testar localmente sem depender do Google Cloud, mantendo o mesmo código de aplicação para os dois ambientes.
+
+<CardGrid>
+  <Card title="Armazenamento Local" icon="laptop">
+    Usado em desenvolvimento. Grava arquivos em disco sob uma pasta por seleção, com validação rígida de caminho (impedindo tentativas de escapar do diretório base via `../`). O "link de download" é servido por uma rota própria do backend que faz streaming do arquivo.
+  </Card>
+  <Card title="Google Cloud Storage" icon="cloud">
+    Usado em produção. Cada arquivo é gravado como um blob em um único bucket, sob o prefixo `{selection_id}/{nome-gerado}` — funcionando como uma pasta por seleção dentro do bucket. Downloads são feitos via URL assinada, nunca por acesso direto e permanente ao blob.
+  </Card>
+</CardGrid>
+
+## Geração de links de download
+
+Em produção, cada solicitação de download gera uma **URL assinada v4** do Google Cloud Storage, válida por um tempo limitado (15 minutos). O backend nunca expõe o caminho real de armazenamento (`storage_path`) nas respostas da API — apenas a URL temporária. Passado o prazo de expiração, a URL deixa de funcionar e uma nova precisa ser solicitada.
+
+Quando as credenciais padrão não incluem uma chave privada localmente disponível (como é o caso do Cloud Run, que usa a identidade da conta de serviço anexada ao serviço em vez de um arquivo de chave), a geração da assinatura cai automaticamente para a API IAM de assinatura de blobs — sem exigir uma chave JSON em produção.
+
+## Separação de host interno e externo em ambiente local
+
+Um desafio real de rodar um emulador de GCS localmente via Docker Compose: o backend precisa falar com o emulador pelo nome do serviço Docker (endereço interno da rede de containers), mas a URL assinada devolvida ao navegador do desenvolvedor precisa apontar para um endereço acessível de fora dos containers. Usar o endereço interno nas duas pontas quebra o download no navegador.
+
+A solução adotada foi parametrizar o endpoint de assinatura: o backend continua se conectando ao emulador pelo endereço interno da rede Docker, mas a URL assinada é construída com um endereço público configurável, resolvido separadamente. Em produção essa configuração fica vazia, preservando o comportamento padrão de assinatura contra o Google Cloud Storage real.
+
+## Exclusão de arquivos
+
+O padrão adotado é **soft delete no banco, hard delete no armazenamento**: ao excluir um documento, o registro no banco não é removido — ele recebe um status de exclusão e um timestamp — mas o blob correspondente é apagado de fato do bucket (ou do disco local). Isso preserva o histórico e a rastreabilidade no banco de dados, sem manter arquivos órfãos ocupando armazenamento.
+
+## Limite de quota
+
+Se o Google Cloud Storage recusar uma escrita por indisponibilidade momentânea ou limite de quota, a API responde com `503` em vez de um erro genérico — permitindo que o cliente distinga uma falha transitória de armazenamento de um erro de validação do próprio arquivo.
