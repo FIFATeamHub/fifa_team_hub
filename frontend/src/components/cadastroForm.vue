@@ -83,7 +83,7 @@ onMounted(async () => {
     try {
         const response = await api.get('/api/selection/')
         selections.value = response.data
-    } catch (err) {
+    } catch {
         console.error(err)
     }
 })
