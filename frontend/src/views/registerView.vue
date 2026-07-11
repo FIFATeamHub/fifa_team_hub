@@ -20,13 +20,10 @@ import cadastroForm from '@/components/cadastroForm.vue'
 
 <style scoped>
 
-    :global(html),
-    :global(body),
-    :global(#app) {
-        margin: 0;
-        padding: 0; 
-        box-sizing: border-box;
-        background-color: #dfdfdf;
+    .page {
+        min-height: 100vh;
+        background-color: var(--color-bg-base);
+        padding: var(--padding-section) var(--padding-page-x);
     }
 
 </style>

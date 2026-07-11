@@ -1,12 +1,18 @@
 <template>
-    <div class="upload-view">
-      <h1>Página de Upload</h1>
+    <div class="documents-view">
+        <DocumentsList />
     </div>
 </template>
 
+<script setup lang="ts">
+
+import DocumentsList from '@/components/documents/DocumentsList.vue'
+
+</script>
+
 <style scoped>
 
-.upload-view {
+.documents-view {
     min-height: 100vh;
     max-width: var(--max-width);
     margin: 0 auto;

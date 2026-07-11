@@ -18,7 +18,7 @@
 
 
 <template>
-  <Navbar />
+  <Navbar v-if="route.name !== 'login'" />
 
   <main>
     <RouterView />
@@ -27,7 +27,10 @@
 
 <script setup lang="ts">
 
+import { useRoute } from 'vue-router'
 import Navbar from '@/components/navbar.vue'
+
+const route = useRoute()
 
 </script>
 

@@ -4,6 +4,7 @@ import teamView from '../views/teamView.vue'
 import loginView from '../views/loginView.vue'
 import registerView from '../views/registerView.vue'
 import dashboardView from '../views/dashboardView.vue'
+import documentsView from '../views/documentsView.vue'
 import uploadView from '../views/uploadView.vue'
 import auditView from '../views/auditView.vue'
 import noAcessView from '../views/403View.vue'
@@ -16,6 +17,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
+      meta: {requiresAuth: true},
       component: homeView
     },
     {
@@ -38,6 +40,12 @@ const router = createRouter({
       name: 'dashboard',
       meta: {requiresAuth: true},
       component: dashboardView
+    },
+    {
+      path: '/documentos',
+      name: 'documentos',
+      meta: {requiresAuth: true},
+      component: documentsView
     },
     {
       path: '/upload',
