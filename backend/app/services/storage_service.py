@@ -5,6 +5,8 @@ import uuid
 import shutil
 import os
 
+import google.auth
+from google.auth.transport import requests as google_auth_requests
 from google.cloud import storage as gcs_storage
 from werkzeug.utils import secure_filename
 
@@ -150,11 +152,25 @@ class GCSStorageService(StorageService):
             blob_path = "/".join(partes[-2:]) if len(partes) >= 2 else partes[-1]
 
         blob = self.bucket.blob(blob_path)
-        
-        # Solicita à API do Google a geração do link temporário assinado criptograficamente
-        url = blob.generate_signed_url(
-            version="v4",
-            expiration=timedelta(minutes=expiration_minutes),
-            method="GET"
-        )
-        return url
+
+        try:
+            # Caminho padrão: funciona quando as credenciais têm chave privada
+            # (ex: GOOGLE_APPLICATION_CREDENTIALS com JSON de service account, em dev local)
+            return blob.generate_signed_url(
+                version="v4",
+                expiration=timedelta(minutes=expiration_minutes),
+                method="GET"
+            )
+        except AttributeError:
+            # Credenciais do metadata server (Cloud Run/GCE) não têm chave privada.
+            # Assina via IAM SignBlob API usando a identidade da própria service account.
+            credentials, _ = google.auth.default()
+            credentials.refresh(google_auth_requests.Request())
+
+            return blob.generate_signed_url(
+                version="v4",
+                expiration=timedelta(minutes=expiration_minutes),
+                method="GET",
+                service_account_email=credentials.service_account_email,
+                access_token=credentials.token
+            )

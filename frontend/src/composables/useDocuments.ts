@@ -110,6 +110,10 @@ export function useDocuments() {
         throw new Error('Este documento foi removido permanentemente.')
       }
 
+      if (apiError.response?.status === 503) {
+        throw new Error('Serviço de armazenamento temporariamente indisponível. Tente novamente em instantes.')
+      }
+
       console.error(error)
       throw error
     }

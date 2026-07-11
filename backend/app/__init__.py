@@ -1,12 +1,14 @@
 import os
+import re
 
 from app.config import check_required_env_vars
 
 
 from dotenv import load_dotenv
 from pathlib import Path
-from flask import Flask  # type: ignore[import]
+from flask import Flask, jsonify, request  # type: ignore[import]
 from flask_migrate import Migrate  # type: ignore[import]
+from werkzeug.exceptions import HTTPException
 
 from app.routes.auth import auth_bp
 from app.extensions import cors, db, migrate, limiter
@@ -16,6 +18,16 @@ load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 from app.models import *
 
 migrate = Migrate()
+
+# Cobre localhost e faixas de IP privado (RFC1918), usado apenas quando nenhuma
+# origem explícita é injetada (ambiente de dev, testando a partir de outro
+# dispositivo na mesma rede local).
+LOCAL_NETWORK_ORIGIN_REGEX = re.compile(
+    r"^https?://(localhost|127\.0\.0\.1"
+    r"|10\.\d{1,3}\.\d{1,3}\.\d{1,3}"
+    r"|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}"
+    r"|192\.168\.\d{1,3}\.\d{1,3}):\d+$"
+)
 
 def create_app(test_config=None):
 
@@ -56,13 +68,21 @@ def create_app(test_config=None):
     if test_config:
         app.config.update(test_config)
 
-    cors_env = os.getenv("CORS_ALLOWED_ORIGINS")
+    cors_env = os.getenv("CORS_ALLOWED_ORIGINS") or os.getenv("FRONTEND_URL")
     if cors_env:
+        # Produção (ou dev com override explícito): usa estritamente o que foi injetado
         cors_origins = [origin.strip() for origin in cors_env.split(",") if origin.strip()]
-    elif os.getenv("FLASK_ENV") == "development":
-        cors_origins = "*"
-    else:
+    elif is_prod:
+        # Produção sem variável configurada: não libera nenhuma origem
         cors_origins = []
+    else:
+        # Dev sem variável configurada: localhost fixo + qualquer IP de rede local,
+        # para permitir testar o frontend a partir de outro dispositivo na mesma rede
+        cors_origins = [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            LOCAL_NETWORK_ORIGIN_REGEX,
+        ]
 
     cors.init_app(
         app,
@@ -89,6 +109,18 @@ def create_app(test_config=None):
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(selection_bp)
     app.register_blueprint(audit_bp, url_prefix="/api/audit")
+
+    @app.errorhandler(Exception)
+    def handle_unhandled_exception(e):
+        # Deixa exceções HTTP (404, 401, 429, etc.) seguirem seu tratamento
+        # normal do Flask — só exceções realmente não tratadas (bugs, erros
+        # de banco, etc.) devem cair aqui.
+        if isinstance(e, HTTPException):
+            return e
+        app.logger.exception(
+            "Unhandled exception on %s %s", request.method, request.path
+        )
+        return jsonify({"error": "Internal server error"}), 500
 
     _tables_created = False
 
