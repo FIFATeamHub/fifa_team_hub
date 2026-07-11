@@ -45,13 +45,18 @@ def register():
     if User.query.filter_by(email=dados["email"]).first():
         return jsonify({"error": "Email já cadastrado"}), 409
 
+    raw_selection_id = dados.get("selection_id")
+    selection_id = None
+    if raw_selection_id and str(raw_selection_id).strip() not in ("", "null", "undefined", "None"):
+        selection_id = raw_selection_id
+
     # Cria o usuário com senha hasheada
     novo_user = User(
         email=dados["email"],
         password_hash=hash_password(dados["password"]),
         full_name=dados["full_name"],
         role=role,
-        selection_id=dados.get("selection_id")
+        selection_id=selection_id
     )
 
     db.session.add(novo_user)
