@@ -66,11 +66,13 @@ def check_required_env_vars():
             )
     
     if os.getenv("STORAGE_BACKEND") == "gcs":
+        is_running_on_cloud_run = os.getenv("K_SERVICE") is not None
+
         required_gcs = ["GCS_BUCKET_NAME"]
-        if not is_production:
+
+        if not is_running_on_cloud_run:
             required_gcs.append("GOOGLE_APPLICATION_CREDENTIALS")
         missing_gcs = [var for var in required_gcs if not os.getenv(var)]
-
         if missing_gcs:
             raise RuntimeError(
                 f"FALHA FATAL DE STORAGE: O STORAGE_BACKEND está definido como 'gcs', "

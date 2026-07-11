@@ -15,7 +15,7 @@ from zoneinfo import ZoneInfo
 import traceback
 
 
-UUID_ZERADO = uuid.uuid4()  # Sentinel para logs de falha sem recurso associado
+UUID_ZERADO = uuid.uuid4()
 
 
 def _coerce_uuid(value):
@@ -41,7 +41,6 @@ def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event,
             )
             db.session.add(log_falha)
         
-        # Commita a transação global para garantir a persistência imediata
         db.session.commit()
 
 
@@ -115,7 +114,6 @@ def upload_document(current_user):
 
         id_exclusivo_doc = uuid.uuid4()
 
-        # 2. Monte o nome único usando o UUID gerado
         extensao = nome_original.rsplit('.', 1)[1].lower() if '.' in nome_original else 'pdf'
         nome_unico_arquivo = f"{id_exclusivo_doc}.{extensao}"
 
@@ -134,6 +132,7 @@ def upload_document(current_user):
             # filename=nome_unico_arquivo, 
             original_name= nome_original_limpo,
             storage_path=caminho_armazenamento,
+            storage_url=caminho_armazenamento,
             status=status_documento,
             created_at=momento_requisicao
         )
@@ -181,7 +180,6 @@ def upload_document(current_user):
         traceback.print_exc()
         print(f"Erro no banco de dados durante upload: {e}")
         
-        # Loga a quebra crítica de banco de dados com o datetime original
         register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, f"Erro interno de banco de dados ao salvar documento: {str(e)}")
 
         return jsonify({
