@@ -19,9 +19,6 @@ from app.models import *
 
 migrate = Migrate()
 
-# Cobre localhost e faixas de IP privado (RFC1918), usado apenas quando nenhuma
-# origem explícita é injetada (ambiente de dev, testando a partir de outro
-# dispositivo na mesma rede local).
 LOCAL_NETWORK_ORIGIN_REGEX = re.compile(
     r"^https?://(localhost|127\.0\.0\.1"
     r"|10\.\d{1,3}\.\d{1,3}\.\d{1,3}"
@@ -37,6 +34,7 @@ def create_app(test_config=None):
     app.config["LOCAL_STORAGE_PATH"] = os.getenv("LOCAL_STORAGE_PATH", "./storage/uploads")
     app.config["GCS_BUCKET_NAME"] = os.getenv("GCS_BUCKET_NAME")
     app.config["GCP_PROJECT_ID"] = os.getenv("GCP_PROJECT_ID")
+    app.config["GCS_PUBLIC_URL"] = os.getenv("GCS_PUBLIC_URL")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SQLALCHEMY_EXPIRE_ON_COMMIT"] = False
 
@@ -70,14 +68,10 @@ def create_app(test_config=None):
 
     cors_env = os.getenv("CORS_ALLOWED_ORIGINS") or os.getenv("FRONTEND_URL")
     if cors_env:
-        # Produção (ou dev com override explícito): usa estritamente o que foi injetado
         cors_origins = [origin.strip() for origin in cors_env.split(",") if origin.strip()]
     elif is_prod:
-        # Produção sem variável configurada: não libera nenhuma origem
         cors_origins = []
     else:
-        # Dev sem variável configurada: localhost fixo + qualquer IP de rede local,
-        # para permitir testar o frontend a partir de outro dispositivo na mesma rede
         cors_origins = [
             "http://localhost:5173",
             "http://127.0.0.1:5173",
@@ -112,9 +106,6 @@ def create_app(test_config=None):
 
     @app.errorhandler(Exception)
     def handle_unhandled_exception(e):
-        # Deixa exceções HTTP (404, 401, 429, etc.) seguirem seu tratamento
-        # normal do Flask — só exceções realmente não tratadas (bugs, erros
-        # de banco, etc.) devem cair aqui.
         if isinstance(e, HTTPException):
             return e
         app.logger.exception(
