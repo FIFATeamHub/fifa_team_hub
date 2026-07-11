@@ -304,3 +304,31 @@ Retorna os metadados do documento com sucesso. O campo `storage_url` é omitido 
   "details": "Mensagem detalhada do erro gerado pela conexão com a tabela."
 }
 ```
+
+
+
+## 📝 Decisões de Arquitetura e Auditoria
+
+### Rastreamento de Logs de Download (`LogAction.DOWNLOAD`)
+
+* **Contexto**: O enum `LogAction.DOWNLOAD` foi mapeado no ecossistema da aplicação para auditar o fluxo de consumo de arquivos pelas delegações técnicas e organizadores da FIFA.
+* **Decisão de Escopo**: O evento de auditoria será registrado de forma síncrona no exato momento em que a URL assinada (*Signed URL*) do Google Cloud Storage for gerada com sucesso pelo backend através do endpoint `/document/<id>/download`.
+* **Justificativa Técnica**: Rastrear o download definitivo (o momento exato em que o cliente baixa os bytes do bucket do GCS) exigiria a implementação de webhooks, microsserviços de mensageria ou *callbacks* adicionais de infraestrutura em nuvem, o que foi classificado como fora de escopo para os objetivos e prazos da sprint atual.
+* **Mitigação de Ambiguidades**: Para garantir total transparência e clareza para o **AUDITOR** do sistema, o campo `details` salvo no banco de dados especificará explicitamente a natureza do evento, evitando que a geração do link temporário seja interpretada erroneamente como a conclusão da transferência do arquivo pelo cliente.
+
+#### Critérios de Conformidade Validada
+* [x] **Geração de Registro**: Chamada integrada à função centralizada `register_audit_log` sob o status `SUCCESS` e ação `DOWNLOAD`.
+* [x] **Transparência de Detalhes**: Injeção da string explicativa no parâmetro de metadados do log.
+* [x] **Isolamento de Segurança**: Garantia de que logs com o status `ACCESS_DENIED` continuem disparados imediatamente caso haja quebra de isolamento de *multi-tenant* (ex: Staff do Brasil tentando ler documentos da Argentina) antes da geração do link.## 📝 Decisões de Arquitetura e Auditoria
+
+### Rastreamento de Logs de Download (`LogAction.DOWNLOAD`)
+
+* **Contexto**: O enum `LogAction.DOWNLOAD` foi mapeado no ecossistema da aplicação para auditar o fluxo de consumo de arquivos pelas delegações técnicas e organizadores da FIFA.
+* **Decisão de Escopo**: O evento de auditoria será registrado de forma síncrona no exato momento em que a URL assinada (*Signed URL*) do Google Cloud Storage for gerada com sucesso pelo backend através do endpoint `/document/<id>/download`.
+* **Justificativa Técnica**: Rastrear o download definitivo (o momento exato em que o cliente baixa os bytes do bucket do GCS) exigiria a implementação de webhooks, microsserviços de mensageria ou *callbacks* adicionais de infraestrutura em nuvem, o que foi classificado como fora de escopo para os objetivos e prazos da sprint atual.
+* **Mitigação de Ambiguidades**: Para garantir total transparência e clareza para o **AUDITOR** do sistema, o campo `details` salvo no banco de dados especificará explicitamente a natureza do evento, evitando que a geração do link temporário seja interpretada erroneamente como a conclusão da transferência do arquivo pelo cliente.
+
+#### Critérios de Conformidade Validada
+* [x] **Geração de Registro**: Chamada integrada à função centralizada `register_audit_log` sob o status `SUCCESS` e ação `DOWNLOAD`.
+* [x] **Transparência de Detalhes**: Injeção da string explicativa no parâmetro de metadados do log.
+* [x] **Isolamento de Segurança**: Garantia de que logs com o status `ACCESS_DENIED` continuem disparados imediatamente caso haja quebra de isolamento de *multi-tenant* antes da geração do link.

@@ -128,3 +128,12 @@ Exemplo de mensagem no commit:
 
 
 
+## ADR-004 · Auditoria de Downloads
+
+### Decisão
+
+A auditoria de downloads registra a geração da URL assinada, e não o download efetivo do arquivo.
+
+### Justificativa
+
+Os documentos são disponibilizados por meio de URLs assinadas. Após a geração da URL, o download ocorre diretamente no serviço de armazenamento, sem retornar ao backend. Dessa forma, o backend consegue auditar de forma confiável quem solicitou acesso ao documento, mesmo não sendo possível confirmar se o arquivo foi efetivamente baixado.

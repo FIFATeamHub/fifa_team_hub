@@ -54,7 +54,7 @@ async function handleSubmit() {
     
     await authStore.login({ email: email.value, password: password.value })
 
-  } catch (err) {
+  } catch {
     const error = err as { status?: number }
     if (error.status === 401) {
       errorMessage.value = 'E-mail ou senha incorretos'

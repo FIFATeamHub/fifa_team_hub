@@ -28,12 +28,14 @@ def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event,
 
     try :
 
+        resource_id_uuid = UUID(resource_id_e) if isinstance(resource_id_e, str) else resource_id_e
+
         with db.session.begin_nested():
             
             log_falha = AuditLog(
                 user_id = user_id_e,
                 action = action_e,
-                resource_id = _coerce_uuid(resource_id_e),
+                resource_id = resource_id_uuid,
                 ip_address = request.remote_addr or "0.0.0.0",
                 status = status_e,
                 details = details_e,
