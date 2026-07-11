@@ -6,50 +6,16 @@ from app.models.enums.user_role import TypeDocument, LogAction
 from app.services.document import validate_file, validate_upload_permission
 from app.services.storage_service import LocalStorageService
 from app.services.storage_factory import get_storage_service
+from app.services.audit import register_audit_log
 from werkzeug.utils import secure_filename
 from google.api_core.exceptions import ResourceExhausted
 import uuid
-from uuid import UUID
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 import traceback
 
 
 UUID_ZERADO = uuid.uuid4()  # Sentinel para logs de falha sem recurso associado
-
-
-def _coerce_uuid(value):
-    if isinstance(value, UUID):
-        return value
-    return UUID(str(value))
-
-
-def register_audit_log(user_id_e, action_e, status_e, resource_id_e, date_event, details_e = None):
-
-    try :
-
-        with db.session.begin_nested():
-            
-            log_falha = AuditLog(
-                user_id = user_id_e,
-                action = action_e,
-                resource_id = _coerce_uuid(resource_id_e),
-                ip_address = request.remote_addr or "0.0.0.0",
-                status = status_e,
-                details = details_e,
-                created_at = date_event
-            )
-            db.session.add(log_falha)
-        
-        # Commita a transação global para garantir a persistência imediata
-        db.session.commit()
-
-
-    except Exception as e:
-        db.session.rollback()
-        traceback.print_exc()
-
-
 
 
 def upload_document(current_user):

@@ -3,7 +3,8 @@ from flask import send_file
 import os
 from app.services.document_get import DocumentService
 from app.models.enums.user_role import  LogAction
-from app.controllers.document_upload import register_audit_log, UUID_ZERADO
+from app.controllers.document_upload import UUID_ZERADO
+from app.services.audit import register_audit_log
 from app.services.storage_service import LocalStorageService, GCSStorageService
 from app.services.storage_factory import get_storage_service
 from google.cloud.exceptions import NotFound

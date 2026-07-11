@@ -5,7 +5,8 @@ from zoneinfo import ZoneInfo
 from app.extensions import db
 from app.models.document import Document
 from app.models.enums.user_role import UserRole, LogAction
-from app.controllers.document_upload import register_audit_log, UUID_ZERADO
+from app.controllers.document_upload import UUID_ZERADO
+from app.services.audit import register_audit_log
 from app.services.storage_factory import get_storage_service
 
 
