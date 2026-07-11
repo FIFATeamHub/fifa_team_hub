@@ -8,16 +8,16 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
-    "type-check": "vue-tsc --build",
+    "type-check": "tsc --noEmit",
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
-    "type-check": "tsc --noEmit",
     "test": "vitest run",
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
     "axios": "^1.18.0",
+    "lucide-vue-next": "^1.0.0",
     "pinia": "^3.0.4",
     "vue": "beta",
     "vue-router": "^5.0.4"

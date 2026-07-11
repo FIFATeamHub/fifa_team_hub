@@ -19,8 +19,8 @@
                 <label>Tipo de documento</label>
                 <select v-model="selectedType" :disabled="isLoading">
                     <option value="" disabled>Selecione...</option>
-                    <option value="CONVOCACAO">Convocação</option>
-                    <option value="PASSAPORTE">Passaporte</option>
+                    <option value="CONVOCADO">Convocação</option>
+                    <option value="PASSPORT">Passaporte</option>
                     <option value="LAUDO_MEDICO">Laudo Médico</option>
                     <option value="RELATORIO_TATICO">Relatório Tático</option>
                     <option value="ESQUEMA_JOGADAS">Esquema de Jogadas</option>

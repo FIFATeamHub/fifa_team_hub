@@ -12,6 +12,7 @@ def get_storage_service():
         return GCSStorageService(
             bucket_name=current_app.config.get("GCS_BUCKET_NAME"),
             project_id=current_app.config.get("GCP_PROJECT_ID"),
+            public_url=current_app.config.get("GCS_PUBLIC_URL"),
         )
 
     return LocalStorageService(

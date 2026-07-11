@@ -85,14 +85,20 @@ export const useAuthStore = defineStore('auth', () => {
 
 
 
-  const logout = () => {
- 
-  user.value = null
-
-  token.value = null
- 
-  localStorage.removeItem('token')
-}
+  const logout = async () => {
+    try {
+      await fetch(`${apiUrl}/auth/logout`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token.value}`,
+        },
+      })
+    } finally {
+      user.value = null
+      token.value = null
+      localStorage.removeItem('token')
+    }
+  }
 
 
 

@@ -15,7 +15,7 @@ class AuditLog(db.Model):
     user_id = db.Column(
         db.UUID(as_uuid=True),
         db.ForeignKey("users.id"),
-        nullable=False
+        nullable=True
     )
 
     action = db.Column(
@@ -26,6 +26,12 @@ class AuditLog(db.Model):
     resource_id = db.Column(
         db.UUID(as_uuid=True),
         nullable=False
+    )
+
+    selection_id = db.Column(
+        db.UUID(as_uuid=True),
+        db.ForeignKey("selection.id"),
+        nullable=True
     )
 
     ip_address = db.Column(

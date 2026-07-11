@@ -100,6 +100,10 @@ A estrutura de branches adotadas será:
 
 Exemplo: `S7_04_branch` ➡ Branch da Semana 7 para o Issue 04.
 
+## ADR-004: Exclusão de Documentos (Soft Delete + Hard Storage Delete)
+**Contexto**: Precisamos definir como a exclusão de documentos se comportará para respeitar as exigências de auditoria e otimização de nuvem.
+**Decisão**: O registro no banco de dados sofrerá *Soft Delete* (`status="DELETED"` e preenchimento de `deleted_at`) para compor trilhas de auditoria, garantindo a integridade referencial. Contudo, os arquivos físicos vinculados serão apagados do Storage (GCS/Local) para economizar custos.
+
 
 ### Commits
 
@@ -116,5 +120,20 @@ Exemplo de mensagem no commit:
 "feat: adicionando X função"
 "docs: adicionando informação no decisoes.md"
 
+## ADR-005: Logout (sem Blacklist de Token)
+
+**Contexto**: Precisávamos de um endpoint de logout que ao menos deixasse rastro de auditoria (`LogAction.LOGOUT`) do encerramento de sessão.
+
+**Decisão**: Por ora, `POST /auth/logout` apenas registra o `AuditLog` de sucesso e retorna 200 — o JWT em si **não é invalidado** no backend (ele continua tecnicamente válido até expirar). A invalidação real, via blacklist/revogação de token (ex.: tabela de tokens revogados ou Redis com TTL), fica como **melhoria futura (follow-up)**, fora do escopo desta sprint para economizar tempo/tokens.
 
 
+
+## ADR-004 · Auditoria de Downloads
+
+### Decisão
+
+A auditoria de downloads registra a geração da URL assinada, e não o download efetivo do arquivo.
+
+### Justificativa
+
+Os documentos são disponibilizados por meio de URLs assinadas. Após a geração da URL, o download ocorre diretamente no serviço de armazenamento, sem retornar ao backend. Dessa forma, o backend consegue auditar de forma confiável quem solicitou acesso ao documento, mesmo não sendo possível confirmar se o arquivo foi efetivamente baixado.

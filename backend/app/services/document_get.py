@@ -72,7 +72,7 @@ class DocumentService:
     @staticmethod
     def get_accessible_document(current_user, document_id):
         # 1. Busca inicial no banco
-        document = db.session.query(Document).get(document_id)
+        document = db.session.get(Document, document_id)
         if not document:
             return None, "NOT_FOUND"
 

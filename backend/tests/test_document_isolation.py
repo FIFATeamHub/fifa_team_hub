@@ -1,5 +1,8 @@
-import pytest
 import io
+from uuid import UUID
+
+from app.models.audit_log import AuditLog
+from app.models.enums.user_role import LogAction
 
 def test_upload_assigns_correct_selection_id(client, token_bra_staff):
 
@@ -53,7 +56,6 @@ def test_cross_selection_document_access_denied(
 
     assert response.status_code == 403
 
-@pytest.mark.xfail(reason="DELETE ainda não implementado")
 def test_cross_selection_delete_denied(
     client,
     token_bra_staff,
@@ -84,3 +86,31 @@ def test_organizer_cannot_access_tactical_reports(
     )
 
     assert response.status_code == 403
+    
+    
+def test_download_url_registers_audit_log(
+    app,
+    client,
+    token_arg_staff,
+    arg_document_id,
+):
+    response = client.get(
+        f"/api/document/{arg_document_id}/download",
+        headers={
+            "Authorization": f"Bearer {token_arg_staff}"
+        }
+    )
+
+    assert response.status_code == 200
+
+    with app.app_context():
+
+        audit = AuditLog.query.filter_by(
+            resource_id=UUID(arg_document_id),
+            action=LogAction.DOWNLOAD
+        ).first()
+
+        assert audit is not None
+        assert audit.action == LogAction.DOWNLOAD
+        assert audit.status == "SUCCESS"
+        assert audit.details.startswith("URL de download gerada")

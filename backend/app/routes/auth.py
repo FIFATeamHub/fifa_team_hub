@@ -1,7 +1,8 @@
 from flask import Blueprint
 
-from app.controllers.auth import register, login, me
+from app.controllers.auth import register, login, me, logout
 from app.middlewares.auth import token_required
+from app.extensions import limiter
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -11,11 +12,18 @@ def route_register():
 
 
 @auth_bp.post("/login")
+@limiter.limit("5 per minute")
 def route_login():
     return login()
+
+
+@auth_bp.post("/logout")
+@token_required
+def route_logout(current_user):
+    return logout(current_user)
+
 
 @auth_bp.get("/me")
 @token_required
 def route_me(current_user):
-    # current_user injetado pelo decorator token_required
     return me(current_user)
