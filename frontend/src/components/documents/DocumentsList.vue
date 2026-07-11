@@ -31,7 +31,6 @@ const { can } = usePermissions()
 
 const authStore = useAuthStore()
 
-// Roda fetchDocuments assim que a página/componente é carregado.
 onMounted(async () => {
     await fetchDocuments()
 })
@@ -60,7 +59,6 @@ async function previousPage() {
     }
 }
 
-// confirmação de delete
 async function handleDelete(id: string) {
 
     const confirmed = confirm(
@@ -73,11 +71,19 @@ async function handleDelete(id: string) {
 }
 
 async function handleDownload(doc: Documento) {
-    await downloadDocument(doc.id, doc.original_name)
+    try {
+        await downloadDocument(doc.id, doc.original_name)
+    } catch (err) {
+        alert(err instanceof Error ? err.message : 'Falha ao baixar o documento.')
+    }
 }
 
 async function handleView(doc: Documento) {
-    await previewDocument(doc.id)
+    try {
+        await previewDocument(doc.id)
+    } catch (err) {
+        alert(err instanceof Error ? err.message : 'Falha ao visualizar o documento.')
+    }
 }
 
 </script>
@@ -87,6 +93,38 @@ async function handleView(doc: Documento) {
     <div>
 
         <h2>Documentos</h2>
+
+        <div class="filtros">
+
+            <select v-model="selectedType">
+
+                <option value="">
+                    Todos os tipos
+                </option>
+
+                <option value="PASSPORT">
+                    Passaporte
+                </option>
+
+                <option value="CONVOCADO">
+                    Convocação
+                </option>
+
+                <option value="LAUDO_MEDICO">
+                    Laudo Médico
+                </option>
+
+                <option value="RELATORIO_TATICO">
+                    Relatório Tático
+                </option>
+
+            </select>
+
+            <p>Filtro selecionado: {{ selectedType }}</p>
+
+            <button @click="selectedType = ''">Limpar filtros</button>
+
+        </div>
 
         <div v-if="loading" class="spinner-container">
             <div class="spinner"></div>
@@ -98,38 +136,6 @@ async function handleView(doc: Documento) {
         <p v-else-if="documents.length === 0">Nenhum documento foi encontrado.</p>
 
         <div v-if="!loading && !error && documents.length > 0">
-
-            <div class="filtros">
-
-                <select v-model="selectedType">
-
-                    <option value="">
-                        Todos os tipos
-                    </option>
-
-                    <option value="PASSAPORTE">
-                        Passaporte
-                    </option>
-
-                    <option value="CONVOCADO">
-                        Convocação
-                    </option>
-
-                    <option value="LAUDO_MEDICO">
-                        Laudo Médico
-                    </option>
-
-                    <option value="RELATORIO_TATICO">
-                        Relatório Tático
-                    </option>
-
-                </select>
-
-                <p>Filtro selecionado: {{ selectedType }}</p>
-
-                <button @click="selectedType = ''">Limpar filtros</button>
-
-            </div>
 
         <table>
 

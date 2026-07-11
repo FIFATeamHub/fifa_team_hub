@@ -8,17 +8,14 @@ ALLOWED_MIME_TYPES = {
     "application/pdf", 
     "image/jpeg", 
     "image/png",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document" # .docx
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 }
 
-MAX_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
+MAX_SIZE_BYTES = 10 * 1024 * 1024 
 
-def validate_file(arquivo_fisico):
-
-    #Retorna (True, None) se estiver limpo, ou (False, dicionário_de_erro) se violar regras.
-   
+def validate_file(arquivo_fisico):   
     
-    # 1. Validação de Tamanho (Evita sobrecarga do servidor)
+    # 1. Validação de Tamanho
 
     arquivo_fisico.seek(0, 2)
     tamanho_bytes = arquivo_fisico.tell()
@@ -32,7 +29,7 @@ def validate_file(arquivo_fisico):
     # 2. Validação Real de Natureza (MIME Type) via python-magic
 
     primeiros_bytes = arquivo_fisico.read(2048)
-    arquivo_fisico.seek(0) # Reseta o cursor de leitura de novo
+    arquivo_fisico.seek(0)
 
     mime_tipo_real = magic.from_buffer(primeiros_bytes, mime=True)
 
@@ -50,10 +47,6 @@ def validate_file(arquivo_fisico):
 
 
 def validate_upload_permission(user_role, doc_type_enum):
-    """
-    Valida se a ROLE do usuário possui permissão para realizar o UPLOAD do TypeDocument.
-    Retorna uma tupla: (bool: permitido, string: status_inicial_do_documento)
-    """
 
     if user_role == UserRole.AUDITOR:
         if doc_type_enum == TypeDocument.PASSPORT:
@@ -61,11 +54,10 @@ def validate_upload_permission(user_role, doc_type_enum):
 
 
     elif user_role == UserRole.TECHNICAL_STAFF:
-        if doc_type_enum.name in ["CONVOCADO", "RELATORIO_TATICO"]:
+        if doc_type_enum.name in ["CONVOCADO", "RELATORIO_TATICO", "ESQUEMA_JOGADAS"]:
             return True, DocStatus.APPROVED.value
-        
-        # Passaporte do Technical Staff entra como PENDING
-        if doc_type_enum == TypeDocument.PASSPORT:
+
+        if doc_type_enum.name in ["PASSPORT", "LAUDO_MEDICO"]:
             return True, DocStatus.PENDING.value
 
 
@@ -73,7 +65,6 @@ def validate_upload_permission(user_role, doc_type_enum):
         if doc_type_enum.name in ["LAUDO_MEDICO"]:
             return True, DocStatus.APPROVED.value
         
-        # Passaporte do Medical Staff entra como PENDING
         if doc_type_enum == TypeDocument.PASSPORT:
             return True, DocStatus.PENDING.value
 
