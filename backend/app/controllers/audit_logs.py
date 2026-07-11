@@ -3,7 +3,7 @@ from app.services.audit import AuditService
 from app.models.enums.user_role import UserRole
 
 def list_audit_logs(current_user):
-    # Regra de Ouro (RBAC): Trava de Segurança
+    #Trava de Segurança
     if current_user.role != UserRole.AUDITOR:
         return jsonify({"error": "Acesso negado. Requer papel de AUDITOR."}), 403
 
@@ -15,9 +15,10 @@ def list_audit_logs(current_user):
 
     # Devolve a bucha para o nosso Service
     paginated_result = AuditService.list_logs(
-        page=page, 
-        per_page=per_page, 
-        action_filter=action_filter, 
+        current_user=current_user,
+        page=page,
+        per_page=per_page,
+        action_filter=action_filter,
         user_id_filter=user_id_filter
     )
 

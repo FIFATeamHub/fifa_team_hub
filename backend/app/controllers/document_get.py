@@ -5,7 +5,6 @@ from app.services.document_get import DocumentService
 from app.models.enums.user_role import  LogAction
 from app.controllers.document_upload import UUID_ZERADO
 from app.services.audit import register_audit_log
-from app.services.storage_service import LocalStorageService, GCSStorageService
 from app.services.storage_factory import get_storage_service
 from google.cloud.exceptions import NotFound
 from datetime import datetime, timezone
@@ -17,7 +16,6 @@ from zoneinfo import ZoneInfo
 def list_documents(current_user):
     doc_type_filter = request.args.get("doc_type")
     
-    # Captura a paginação tratando como inteiro e definindo os fallbacks padrão (1 e 10)
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 10, type=int)
 
@@ -33,11 +31,10 @@ def list_documents(current_user):
     if paginated_result is None:
         fuso_sp = ZoneInfo("America/Sao_Paulo") 
         momento_requisicao = datetime.now(fuso_sp)
-        register_audit_log(current_user.id, LogAction.ACCESS_DENIED , "FAILURE", UUID_ZERADO ,momento_requisicao, "Acesso negado. Perfil inválido.")
+        register_audit_log(current_user.id, LogAction.ACCESS_DENIED , "FAILURE", UUID_ZERADO ,momento_requisicao, "Acesso negado. Perfil inválido.", selection_id_e=current_user.selection_id)
         return jsonify({"error": "Acesso negado. Perfil inválido."}), 403
 
     # 3. FORMATAÇÃO DO JSON DE RETORNO (Higienização de dados)
-    # Transforma os objetos do banco em dicionários puros sem vazar o 'storage_path'
     data_list = []
     for doc in paginated_result.items:
         data_list.append({
@@ -80,21 +77,19 @@ def get_document_by_id(current_user, document_id):
 
     if error_reason is not None:
  
-        register_audit_log(current_user.id, LogAction.ACCESS_DENIED , "FAILURE", document_id,momento_requisicao, error_reason)
+        register_audit_log(current_user.id, LogAction.ACCESS_DENIED , "FAILURE", document_id,momento_requisicao, error_reason, selection_id_e=current_user.selection_id)
         
-        print(f"[AUDIT LOG - ACCESS_DENIED]: {error_reason}") # Apenas ilustrativo por enquanto
+        print(f"[AUDIT LOG - ACCESS_DENIED]: {error_reason}")
         
 
         return jsonify({"error": "Acesso negado."}), 403
     
 
     storage = get_storage_service()
-    
-    # Determina qual caminho/URL usar dependendo do backend
-    storage_reference = document.storage_url if isinstance(storage, GCSStorageService) else document.storage_path
-    url_visualizacao = storage.get_signed_url(storage_reference, expiration_minutes=15)
 
-    register_audit_log(current_user.id, LogAction.DOWNLOAD , "SUCCESS" , document_id, momento_requisicao, f"Link de download (URL assinada) gerado com sucesso para: {document.original_name}")
+    url_visualizacao = storage.get_signed_url(document.storage_path, expiration_minutes=15)
+
+    register_audit_log(current_user.id, LogAction.DOWNLOAD , "SUCCESS" , document_id, momento_requisicao, f"Link de download (URL assinada) gerado com sucesso para: {document.original_name}", selection_id_e=current_user.selection_id)
 
     return jsonify({
         "id": str(document.id),
@@ -124,22 +119,21 @@ def download_document_url(current_user, document_id):
 
     if error_reason is not None:
         # Registra a falha de segurança utilizando a função do projeto
-        register_audit_log(current_user.id, LogAction.ACCESS_DENIED, "FAILURE", str(document_id), momento_requisicao, error_reason)
+        register_audit_log(current_user.id, LogAction.ACCESS_DENIED, "FAILURE", str(document_id), momento_requisicao, error_reason, selection_id_e=current_user.selection_id)
         return jsonify({"error": "Acesso negado."}), 403
 
     try:
         # 2. Consumo agnóstico do Storage Provider
         storage = get_storage_service()    # Chama a f  actory para decidir se é local ou cloud
         url_final = storage.get_signed_url(
-            storage_path=document.storage_url,
+            storage_path=document.storage_path,
             document_id=str(document.id),
             expiration_minutes=15
         )
 
         # 3. Registrar o sucesso do download na auditoria da FIFA
-        # Caso o enum LogAction não possua DOWNLOAD, use a string ou o mapeamento correto do seu enum
         
-        register_audit_log(current_user.id, LogAction.DOWNLOAD, "SUCCESS", str(document.id), momento_requisicao, f"URL de download gerada para: {document.original_name}")
+        register_audit_log(current_user.id, LogAction.DOWNLOAD, "SUCCESS", str(document.id), momento_requisicao, f"URL de download gerada para: {document.original_name}", selection_id_e=current_user.selection_id)
         return jsonify({
             "url": url_final,
             "expires_in_minutes": 15,
@@ -148,22 +142,18 @@ def download_document_url(current_user, document_id):
 
     except NotFound as e:
         print(f"[ERRO STORAGE - BLOB NÃO ENCONTRADO]: {str(e)}")
-        register_audit_log(current_user.id, LogAction.ACCESS_DENIED, "FAILURE", str(document_id), momento_requisicao, "Arquivo não encontrado no storage (removido ou corrompido).")
+        register_audit_log(current_user.id, LogAction.ACCESS_DENIED, "FAILURE", str(document_id), momento_requisicao, "Arquivo não encontrado no storage (removido ou corrompido).", selection_id_e=current_user.selection_id)
         return jsonify({"error": "Arquivo não encontrado no storage."}), 410
 
     except Exception as e:
         print(f"[ERRO STORAGE]: {str(e)}")
-        register_audit_log(current_user.id, LogAction.ACCESS_DENIED, "FAILURE", str(document_id), momento_requisicao, "Serviço de armazenamento temporariamente indisponível.")
+        register_audit_log(current_user.id, LogAction.ACCESS_DENIED, "FAILURE", str(document_id), momento_requisicao, "Serviço de armazenamento temporariamente indisponível.", selection_id_e=current_user.selection_id)
         return jsonify({"error": "Serviço de armazenamento temporariamente indisponível."}), 503
     
 
 
 
 def stream_local_file(current_user, document_id):
-    """
-    Efetua o streaming real de bytes para o ambiente local (LocalStorageService).
-    """
-    
     document, error_reason = DocumentService.get_accessible_document(current_user, document_id)
 
     if error_reason == "NOT_FOUND":

@@ -28,6 +28,12 @@ class AuditLog(db.Model):
         nullable=False
     )
 
+    selection_id = db.Column(
+        db.UUID(as_uuid=True),
+        db.ForeignKey("selection.id"),
+        nullable=True
+    )
+
     ip_address = db.Column(
         db.String(45),
         nullable=False

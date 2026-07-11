@@ -57,7 +57,7 @@ class TestLoginAuditLog:
         assert response.json["error"] == "Credenciais inválidas"
 
         audit_log = get_latest_audit_log(
-            db, action=LogAction.LOGIN, user_id=bra_staff.id, status="FAILED"
+            db, action=LogAction.LOGIN, user_id=bra_staff.id, status="FAILURE"
         )
         assert audit_log is not None
         assert audit_log.ip_address is not None
@@ -73,7 +73,7 @@ class TestLoginAuditLog:
         assert response.json["error"] == "Credenciais inválidas"
 
         audit_log = get_latest_audit_log(
-            db, action=LogAction.LOGIN, status="FAILED"
+            db, action=LogAction.LOGIN, status="FAILURE"
         )
         assert audit_log is not None
         assert audit_log.user_id is None

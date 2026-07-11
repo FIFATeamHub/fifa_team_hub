@@ -15,7 +15,7 @@ from zoneinfo import ZoneInfo
 import traceback
 
 
-UUID_ZERADO = uuid.uuid4()  # Sentinel para logs de falha sem recurso associado
+UUID_ZERADO = uuid.uuid4()
 
 
 def upload_document(current_user):
@@ -26,7 +26,7 @@ def upload_document(current_user):
 
     if 'file' not in request.files:
         erro_msg = "Nenhum arquivo enviado no campo 'file' "
-        register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, erro_msg)
+        register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, erro_msg, selection_id_e=current_user.selection_id)
         return jsonify({"error" : erro_msg}) , 400
     
     arquivo_fisico = request.files['file']
@@ -35,7 +35,7 @@ def upload_document(current_user):
 
     if not tipo_texto:
         erro_msg = "O campo 'doc_type' é obrigatório"
-        register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, erro_msg)
+        register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, erro_msg, selection_id_e=current_user.selection_id)
         return jsonify({"error" : erro_msg}) , 400
     
 
@@ -44,7 +44,7 @@ def upload_document(current_user):
 
     except ValueError:
         erro_msg = f"O valor '{tipo_texto}' não é um tipo de documento válido do Enum"
-        register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, erro_msg)
+        register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, erro_msg, selection_id_e=current_user.selection_id)
         return jsonify({"error": erro_msg, "details": erro_msg}), 422
     
 
@@ -52,11 +52,11 @@ def upload_document(current_user):
 
     if not permitido:
         erro_msg = f"Acesso negado. O perfil '{current_user.role}' não tem permissão para fazer upload de '{tipo_documento_enum.name}'."
-        register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, erro_msg)
+        register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, erro_msg, selection_id_e=current_user.selection_id)
         return jsonify({"error": "Acesso negado.", "details": erro_msg}), 403
     
 
-    sucesso, metadados_seguranca = validate_file(arquivo_fisico) # Chama a função no service que valida o MIME, extensão e tamanho
+    sucesso, metadados_seguranca = validate_file(arquivo_fisico)
 
 
     if not sucesso :
@@ -64,7 +64,7 @@ def upload_document(current_user):
         erro_msg = metadados_seguranca["error"]
         status_http = metadados_seguranca["status_code"]
 
-        register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, f"Falha de validação de segurança ({status_http}): {erro_msg}")
+        register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, f"Falha de validação de segurança ({status_http}): {erro_msg}", selection_id_e=current_user.selection_id)
 
         return jsonify({"error": erro_msg, "details": erro_msg}), status_http
     
@@ -116,7 +116,8 @@ def upload_document(current_user):
             ip_address=request.remote_addr or "0.0.0.0",
             status="SUCCESS",
             details="Upload realizado e metadados persistidos com sucesso",
-            created_at=momento_requisicao 
+            created_at=momento_requisicao,
+            selection_id=current_user.selection_id
         )
 
 
@@ -136,7 +137,7 @@ def upload_document(current_user):
     
     except ResourceExhausted as e:
         db.session.rollback()
-        register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, f"Cota do storage excedida: {str(e)}")
+        register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, f"Cota do storage excedida: {str(e)}", selection_id_e=current_user.selection_id)
 
         return jsonify({
             "error": "Serviço de armazenamento temporariamente indisponível (cota excedida).",
@@ -147,8 +148,7 @@ def upload_document(current_user):
         traceback.print_exc()
         print(f"Erro no banco de dados durante upload: {e}")
         
-        # Loga a quebra crítica de banco de dados com o datetime original
-        register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, f"Erro interno de banco de dados ao salvar documento: {str(e)}")
+        register_audit_log(current_user.id, LogAction.UPLOAD, "FAILURE", UUID_ZERADO, momento_requisicao, f"Erro interno de banco de dados ao salvar documento: {str(e)}", selection_id_e=current_user.selection_id)
 
         return jsonify({
             "error": "Erro interno ao salvar documento",

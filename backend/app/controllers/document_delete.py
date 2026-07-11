@@ -18,15 +18,15 @@ def delete_document(current_user, document_id):
         return jsonify({"error": "Documento não encontrado"}), 404
 
     if current_user.role != UserRole.TECHNICAL_STAFF:
-        register_audit_log(current_user.id, LogAction.DELETE, "ACCESS_DENIED", document.id, datetime.now(ZoneInfo("America/Sao_Paulo")), "Usuário não tem papel de TECHNICAL_STAFF.")
+        register_audit_log(current_user.id, LogAction.DELETE, "ACCESS_DENIED", document.id, datetime.now(ZoneInfo("America/Sao_Paulo")), "Usuário não tem papel de TECHNICAL_STAFF.", selection_id_e=current_user.selection_id)
         return jsonify({"error": "Acesso negado"}), 403
 
     if document.uploaded_by != current_user.id:
-        register_audit_log(current_user.id, LogAction.DELETE, "ACCESS_DENIED", document.id, datetime.now(ZoneInfo("America/Sao_Paulo")), "Tentativa de deletar documento de outro usuário.")
+        register_audit_log(current_user.id, LogAction.DELETE, "ACCESS_DENIED", document.id, datetime.now(ZoneInfo("America/Sao_Paulo")), "Tentativa de deletar documento de outro usuário.", selection_id_e=current_user.selection_id)
         return jsonify({"error": "Você só pode excluir documentos enviados por você."}), 403
 
     if document.selection_id != current_user.selection_id:
-        register_audit_log(current_user.id, LogAction.DELETE, "ACCESS_DENIED", document.id, datetime.now(ZoneInfo("America/Sao_Paulo")), "Documento pertence a outra seleção.")
+        register_audit_log(current_user.id, LogAction.DELETE, "ACCESS_DENIED", document.id, datetime.now(ZoneInfo("America/Sao_Paulo")), "Documento pertence a outra seleção.", selection_id_e=current_user.selection_id)
         return jsonify({"error": "Documento pertence a outra seleção."}), 403
 
 
@@ -49,7 +49,8 @@ def delete_document(current_user, document_id):
         "SUCCESS",
         document.id,
         datetime.now(ZoneInfo("America/Sao_Paulo")),
-        "Documento removido (Soft Delete e Storage Limpo)."
+        "Documento removido (Soft Delete e Storage Limpo).",
+        selection_id_e=current_user.selection_id
     )
 
     return "", 204
