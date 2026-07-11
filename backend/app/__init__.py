@@ -52,7 +52,12 @@ def create_app(test_config=None):
         app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
         app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "local_fallback_secret")
         app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
-    
+
+    # Reaplica o test_config por cima dos valores derivados de env/GCP acima,
+    # garantindo que overrides de teste (ex.: SQLite em memória) não sejam sobrescritos.
+    if test_config:
+        app.config.update(test_config)
+
     #CORS permite que o navegador do cliente faça requisições ao backend mesmo que frontend e backend estejam em origens diferentes.
     
     cors.init_app(

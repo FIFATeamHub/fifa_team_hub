@@ -1,19 +1,20 @@
 import os
 from dotenv import load_dotenv
-from app.services.gcp_secrets import get_secret
 
 load_dotenv()
 
 
 class Config():
-    
+
     def __init__(self):
         pass
-    
+
     is_production = bool(os.getenv("GOOGLE_CLOUD_PROJECT"))
+
     if is_production:
+        from app.services.gcp_secrets import get_secret
+
         SECRET_KEY = get_secret("JWT_SECRET_KEY")
-        
         db_user = os.getenv("DB_USER", "postgres")
         db_pass = get_secret("DB_PASSWORD")
         db_name = os.getenv("DB_NAME", "postgres")
