@@ -104,31 +104,20 @@ async function handleSubmit() {
 
 .login-card {
     width: 100%;
-    max-width: 26rem;
-    background-color: var(--color-surface-primary);
-    border: 1px solid var(--color-border-gold);
-    border-radius: var(--radius-2xl);
-    box-shadow: var(--shadow-card);
-    overflow: hidden;
-    transition: transform var(--transition-default), border-color var(--transition-default);
-}
-
-.login-card:hover {
-    transform: translateY(-4px);
-    border-color: var(--color-border-gold-full);
+    max-width: 22rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
 }
 
 .login-card__header {
-    padding: var(--space-5) var(--space-8);
-    background-color: var(--color-surface-elevated);
-    border-bottom: 1px solid var(--color-border-default);
     text-align: center;
 }
 
 .login-card__eyebrow {
-    font-family: var(--font-mono);
-    font-size: var(--font-size-h3);
-    font-weight: var(--font-weight-bold);
+    font-family: var(--font-heading);
+    font-size: calc(var(--font-size-h3) * 1.4);
+    font-weight: var(--font-weight-black);
     letter-spacing: var(--letter-spacing-label);
     text-transform: uppercase;
     color: var(--color-gold);
@@ -138,7 +127,6 @@ async function handleSubmit() {
     display: flex;
     flex-direction: column;
     gap: var(--space-6);
-    padding: var(--space-8);
 }
 
 .login-card__title {
@@ -264,13 +252,12 @@ async function handleSubmit() {
 }
 
 @media (max-width: 480px) {
-    .login-card__header {
-        padding: var(--space-4) var(--space-5);
+    .login-card {
+        gap: var(--space-4);
     }
 
     .login-card__body {
         gap: var(--space-4);
-        padding: var(--space-5);
     }
 }
 

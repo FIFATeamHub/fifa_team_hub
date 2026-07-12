@@ -70,8 +70,18 @@ const router = createRouter({
 
 
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const authStore = useAuthStore()
+
+  if (authStore.token && !authStore.user) {
+    try {
+      await authStore.fetchMe()
+    } catch (err) {
+      if (err?.status === 401) {
+        authStore.logout()
+      }
+    }
+  }
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return { name: 'login' }

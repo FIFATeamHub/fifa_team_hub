@@ -37,13 +37,16 @@ onMounted(() => {
 
 <template>
   <div class="audit-container">
+
     <!-- Header da Tela -->
-    <header class="audit-header">
-      <div class="title-block">
-        <span class="system-badge">[ AMBIENTE VERIFICADO ]</span>
-        <h1>Terminal de Integridade e Auditoria</h1>
-      </div>
-    </header>
+    <section class="audit-hero">
+      <div class="audit-hero__bg"></div>
+      <div class="audit-hero__overlay"></div>
+      <div class="audit-hero__edge"></div>
+      <h1 class="audit-hero__title">Terminal de Auditoria</h1>
+    </section>
+
+    <div class="audit-body">
 
     <!-- Barra de Filtros Avançados -->
     <section class="filter-bar">
@@ -135,6 +138,8 @@ onMounted(() => {
       </div>
     </section>
 
+    </div>
+
     <!-- Modal de Inspeção Crítica de Detalhes -->
     <div v-if="isModalOpen" class="modal-overlay" @click.self="isModalOpen = false">
       <div class="modal-card">
@@ -150,23 +155,62 @@ onMounted(() => {
 
 <style scoped>
 .audit-container {
-  padding: 40px;
-  background-color: #08111F; /* Midnight Navy */
+  background-color: var(--color-bg-base);
   min-height: 100vh;
 }
 
-.system-badge {
-  font-family: 'JetBrains Mono', monospace;
-  color: #0F766E; /* Tactical Teal */
-  font-size: 12px;
-  letter-spacing: 0.05em;
+.audit-body {
+  padding: var(--space-10) var(--padding-page-x);
 }
 
-.audit-header h1 {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 32px;
-  color: #F4F7FB;
-  margin-top: 8px;
+.audit-hero {
+  position: relative;
+  overflow: hidden;
+  padding: calc(var(--space-16) * 1.4) var(--padding-page-x);
+  background-color: var(--color-bg-base);
+}
+
+.audit-hero__bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/img/audit-hero-2.png');
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+}
+
+.audit-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--color-bg-base) 85%, transparent) 0%,
+    color-mix(in srgb, var(--color-bg-base) 60%, transparent) 55%,
+    color-mix(in srgb, var(--color-bg-mid) 35%, transparent) 100%);
+  z-index: 1;
+}
+
+.audit-hero__edge {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--color-gold) 50%, transparent),
+    color-mix(in srgb, var(--color-gold) 20%, transparent),
+    transparent);
+  z-index: 2;
+}
+
+.audit-hero__title {
+  position: relative;
+  z-index: 3;
+  font-family: var(--font-heading);
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-display);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: var(--line-height-display);
+  color: var(--color-text-primary);
 }
 
 .filter-bar {

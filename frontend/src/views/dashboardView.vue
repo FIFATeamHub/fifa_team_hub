@@ -106,7 +106,7 @@
 
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth.js'
 import { useRouter } from 'vue-router'
 import protectedContent from '@/components/protectedContent.vue'
@@ -136,15 +136,4 @@ const efetuarLogout = () => {
 function aoReceberDocumento(novoDoc: unknown) {
   documentos.value.unshift(novoDoc as Documento)
 }
-
-onMounted(async () => {
-  if (authStore.token && !authStore.user) {
-    try {
-      await authStore.fetchMe()
-    } catch {
-      authStore.logout()
-      router.push('/login')
-    }
-  }
-})
 </script>

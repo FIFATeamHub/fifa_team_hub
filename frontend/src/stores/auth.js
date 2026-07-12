@@ -112,7 +112,9 @@ export const useAuthStore = defineStore('auth', () => {
     })
 
     if (!res.ok) {
-      throw new Error(`Falha ao buscar usuario: ${res.status}`)
+      const erro = new Error(`Falha ao buscar usuario: ${res.status}`)
+      erro.status = res.status
+      throw erro
     }
 
     const data = await res.json()

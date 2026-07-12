@@ -4,16 +4,19 @@
 
             <RouterLink to="/dashboard" class="navbar__brand">
                 <img class="navbar__logo" src="/img/logo-copa-branca-removebg.png" alt="Logo da FIFA Team Hub">
-                <span class="navbar__brand-text">
-                    <span class="navbar__brand-title">FIFA <span class="navbar__brand-highlight">TEAM HUB</span></span>
-                    <span class="navbar__brand-eyebrow">Command Access</span>
-                </span>
+                <span class="navbar__brand-title">FIFA <span class="navbar__brand-highlight">TEAM HUB</span></span>
             </RouterLink>
 
             <nav class="navbar__links">
                 <RouterLink to="/documentos" class="navbar__link">Documentos</RouterLink>
                 <RouterLink to="/upload" class="navbar__link">Upload</RouterLink>
-                <RouterLink to="/audit" class="navbar__link">Auditoria</RouterLink>
+                <RouterLink
+                    v-if="authStore.user?.role === 'AUDITOR'"
+                    to="/audit"
+                    class="navbar__link"
+                >
+                    Auditoria
+                </RouterLink>
             </nav>
 
             <div class="navbar__user" ref="userMenuRef">
@@ -127,12 +130,6 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
     height: 32px;
 }
 
-.navbar__brand-text {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.2;
-}
-
 .navbar__brand-title {
     font-family: var(--font-heading);
     font-weight: var(--font-weight-black);
@@ -144,14 +141,6 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 
 .navbar__brand-highlight {
     color: var(--color-gold);
-}
-
-.navbar__brand-eyebrow {
-    font-family: var(--font-mono);
-    font-size: var(--font-size-label);
-    letter-spacing: var(--letter-spacing-label);
-    text-transform: uppercase;
-    color: var(--color-text-muted);
 }
 
 .navbar__links {
@@ -284,10 +273,6 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 }
 
 @media (max-width: 720px) {
-    .navbar__brand-eyebrow {
-        display: none;
-    }
-
     .navbar__links {
         gap: var(--space-4);
     }
