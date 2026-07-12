@@ -18,8 +18,8 @@ env:
   BACKEND_SERVICE: fifa-team-hub
   FRONTEND_SERVICE: fifa-team-hub-frontend
 
-  BACKEND_IMAGE: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/fifa-team-hub/backend
-  FRONTEND_IMAGE: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/fifa-team-hub/frontend
+  BACKEND_IMAGE: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/gcr.io/fifa-team-hub
+  FRONTEND_IMAGE: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/gcr.io/fifa-team-hub-frontend
 
   CLOUD_SQL_INSTANCE: ${{ secrets.GCP_PROJECT_ID }}:us-central1:fifa-db-prod
 
