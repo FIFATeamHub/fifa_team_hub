@@ -28,11 +28,13 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
+      meta: {guestOnly: true},
       component: loginView
     },
     {
       path: '/cadastro',
       name: 'cadastro',
+      meta: {guestOnly: true},
       component: registerView
     },
     {
@@ -85,6 +87,10 @@ router.beforeEach(async (to) => {
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return { name: 'login' }
+  }
+
+  if (to.meta.guestOnly && authStore.isAuthenticated) {
+    return { name: 'dashboard' }
   }
 
   if (to.name == 'audit'){
