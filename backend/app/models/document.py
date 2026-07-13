@@ -65,6 +65,17 @@ class Document(db.Model):
         nullable = True
     )
 
+    reviewed_by = db.Column(
+        db.UUID(as_uuid=True),
+        db.ForeignKey("users.id"),
+        nullable=True
+    )
+
+    reviewed_at = db.Column(
+        db.DateTime,
+        nullable=True
+    )
+
     storage_url = db.Column(
         db.String(500),
         nullable=True
