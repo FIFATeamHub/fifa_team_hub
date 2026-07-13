@@ -17,7 +17,7 @@
             <!-- Campo: Tipo de documento-->
             <div class="campo">
                 <label>Tipo de documento</label>
-                <select v-model="selectedType" :disabled="isLoading">
+                <select v-model="selectedType" :disabled="isLoading || lockType">
                     <option value="" disabled>Selecione...</option>
                     <option value="CONVOCADO">Convocação</option>
                     <option value="PASSPORT">Passaporte</option>
@@ -50,7 +50,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { uploadDocument } from '@/services/documentService.js'
 
 // Props com tipagem correta para TypeScript
@@ -58,13 +58,38 @@ const props = defineProps<{
   isOpen: boolean
   onClose?: () => void
   onSuccess?: (doc: unknown) => void
+  preselectedType?: string
 }>()
 
+// Se o modal for aberto a partir de um item do Painel de Pendências, o tipo
+// já vem definido e o select fica travado para evitar que o Jogador envie
+// um tipo de documento fora do que está pendente para ele.
+const lockType = computed(() => Boolean(props.preselectedType))
+
 const selectedFile     = ref<File | null>(null)
-const selectedType     = ref('')
+const selectedType     = ref(props.preselectedType ?? '')
 const uploadProgress   = ref(0)
 const isLoading        = ref(false)
 const errorMessage     = ref('')
+
+watch(
+  () => props.preselectedType,
+  (novoTipo) => {
+    selectedType.value = novoTipo ?? ''
+  }
+)
+
+watch(
+  () => props.isOpen,
+  (aberto) => {
+    if (aberto) {
+      selectedFile.value = null
+      errorMessage.value = ''
+      uploadProgress.value = 0
+      selectedType.value = props.preselectedType ?? ''
+    }
+  }
+)
 
 const isFormValid = computed(() =>
   selectedFile.value !== null && selectedType.value !== ''
@@ -136,42 +161,54 @@ async function handleSubmit() {
   justify-content: center;
   z-index: 1000;
 }
-/* A caixa branca do modal */
+/* A caixa do modal */
 .modal-box {
-  background-color: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 12px;
-  padding: 2rem;
+  background-color: var(--color-surface-elevated);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
   width: 100%;
   max-width: 480px;
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  gap: var(--space-5);
 }
 .modal-titulo {
-  color: #f1f5f9;
+  font-family: var(--font-heading);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
   margin: 0;
-  font-size: 1.25rem;
+  font-size: var(--font-size-h3);
+  letter-spacing: var(--letter-spacing-heading);
 }
 /* Cada campo do formulário */
 .campo {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 .campo label {
-  color: #94a3b8;
-  font-size: 0.875rem;
+  font-family: var(--font-mono);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-label);
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
 }
 .campo input,
 .campo select {
-  background-color: #0f172a;
-  color: #f1f5f9;
-  border: 1px solid #334155;
-  border-radius: 8px;
-  padding: 0.6rem 0.8rem;
-  font-size: 0.95rem;
+  background-color: var(--color-bg-deep);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
   outline: none;
+  transition: border-color var(--transition-default);
+}
+.campo select:focus,
+.campo input:focus {
+  border-color: var(--color-border-gold-full);
 }
 .campo input:disabled,
 .campo select:disabled {
@@ -182,10 +219,10 @@ async function handleSubmit() {
 .progresso-container {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  background-color: #0f172a;
-  border-radius: 8px;
-  padding: 0.5rem 0.8rem;
+  gap: var(--space-3);
+  background-color: var(--color-bg-deep);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
   overflow: hidden;
   position: relative;
 }
@@ -194,50 +231,65 @@ async function handleSubmit() {
   left: 0;
   top: 0;
   height: 100%;
-  background-color: #3b82f6;
-  border-radius: 8px;
+  background-color: var(--color-gold);
+  border-radius: var(--radius-sm);
   transition: width 0.3s ease;
   opacity: 0.3;
 }
 .progresso-container span {
   position: relative; /* fica na frente da barra */
-  color: #f1f5f9;
-  font-size: 0.875rem;
-  font-weight: 600;
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
 }
 /* Mensagem de erro */
 .mensagem-erro {
-  color: #f87171;
-  font-size: 0.875rem;
+  color: var(--color-danger);
+  font-family: var(--font-body);
+  font-size: var(--font-size-small);
   margin: 0;
-  background-color: rgba(248, 113, 113, 0.1);
-  border-radius: 6px;
-  padding: 0.5rem 0.8rem;
+  background-color: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
 }
 /* Linha dos botões */
 .botoes {
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
 }
 .btn-cancelar,
 .btn-enviar {
-  padding: 0.55rem 1.25rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  border: none;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: opacity var(--transition-default), border-color var(--transition-default);
 }
 .btn-cancelar {
-  background-color: #334155;
-  color: #cbd5e1;
+  background: none;
+  border-color: var(--color-border-default);
+  color: var(--color-text-secondary);
+}
+.btn-cancelar:hover:not(:disabled) {
+  border-color: var(--color-border-teal);
+  color: var(--color-teal-light);
 }
 .btn-enviar {
-  background-color: #3b82f6;
-  color: white;
+  background-color: var(--color-gold);
+  border-color: var(--color-gold);
+  color: var(--color-bg-deep);
+  font-weight: var(--font-weight-black);
+}
+.btn-enviar:hover:not(:disabled) {
+  background-color: var(--color-gold-hover);
+  border-color: var(--color-gold-hover);
 }
 .btn-cancelar:disabled,
 .btn-enviar:disabled {
