@@ -1,9 +1,62 @@
 <!-- frontend/src/views/auditView.vue -->
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { useAuditLogs, type AuditLog } from '@/composables/useAuditLogs'
+import { usePendingRegistrations } from '@/composables/usePendingRegistrations'
+import { ShieldCheck, ShieldAlert, Search, Calendar, Eye, Check, X } from 'lucide-vue-next'
 
 const { logs, loading, error, filters, pagination, fetchAuditLogs } = useAuditLogs()
+
+const {
+  registrations,
+  loading: loadingRegistrations,
+  error: registrationsError,
+  fetchPendingRegistrations,
+  approveRegistration,
+  rejectRegistration
+} = usePendingRegistrations()
+
+const activeTab = ref<'logs' | 'pendentes'>('logs')
+
+const roleOptions = [
+  { value: 'ATHELETE', label: 'Jogador' },
+  { value: 'TECHNICAL_STAFF', label: 'Comissão Técnica' },
+  { value: 'MEDICAL_STAFF', label: 'Comissão Médica' },
+  { value: 'AUDITOR', label: 'Auditor' },
+  { value: 'ORGANIZER', label: 'Organizador' }
+]
+
+const selectedRoles = reactive<Record<string, string>>({})
+const actionError = ref('')
+
+const roleFor = (userId: string) => selectedRoles[userId] ?? roleOptions[0]?.value ?? 'ATHELETE'
+
+const handleApprove = async (userId: string) => {
+  actionError.value = ''
+  try {
+    await approveRegistration(userId, roleFor(userId))
+  } catch (err) {
+    console.error('Approve Registration Error:', err)
+    actionError.value = 'Erro ao aprovar solicitação.'
+  }
+}
+
+const handleReject = async (userId: string) => {
+  actionError.value = ''
+  try {
+    await rejectRegistration(userId)
+  } catch (err) {
+    console.error('Reject Registration Error:', err)
+    actionError.value = 'Erro ao rejeitar solicitação.'
+  }
+}
+
+const switchTab = (tab: 'logs' | 'pendentes') => {
+  activeTab.value = tab
+  if (tab === 'pendentes' && registrations.value.length === 0) {
+    fetchPendingRegistrations()
+  }
+}
 
 // Estado para o modal de detalhes de segurança
 const selectedDetails = ref<string | null>(null)
@@ -25,7 +78,7 @@ const openDetailsModal = (details: AuditLog['details']) => {
   isModalOpen.value = true
 }
 
-const formatDate = (date: string) => {
+const formatDate = (date: string | null) => {
   return date ? new Date(date).toLocaleString('pt-BR') : '—'
 }
 
@@ -46,6 +99,26 @@ onMounted(() => {
     </section>
 
     <div class="audit-body">
+
+    <!-- Abas: Logs de Auditoria / Solicitações Pendentes -->
+    <div class="tab-bar">
+      <button
+        type="button"
+        :class="['tab-button', { 'tab-button--active': activeTab === 'logs' }]"
+        @click="switchTab('logs')"
+      >
+        Logs de Auditoria
+      </button>
+      <button
+        type="button"
+        :class="['tab-button', { 'tab-button--active': activeTab === 'pendentes' }]"
+        @click="switchTab('pendentes')"
+      >
+        Solicitações Pendentes
+      </button>
+    </div>
+
+    <template v-if="activeTab === 'logs'">
 
     <!-- Barra de Filtros Avançados -->
     <section class="filter-bar">
@@ -167,6 +240,64 @@ onMounted(() => {
       </div>
     </section>
 
+    </template>
+
+    <template v-else>
+
+    <p v-if="actionError" class="registrations-error">{{ actionError }}</p>
+
+    <!-- Tabela de Solicitações Pendentes -->
+    <section class="table-container">
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>E-mail</th>
+            <th>Solicitado em</th>
+            <th>Papel</th>
+            <th class="text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="loadingRegistrations" class="state-row">
+            <td colspan="5" class="text-center text-muted">Carregando solicitações pendentes...</td>
+          </tr>
+          <tr v-else-if="registrationsError" class="state-row">
+            <td colspan="5" class="text-center text-muted">{{ registrationsError }}</td>
+          </tr>
+          <tr v-else-if="registrations.length === 0" class="state-row">
+            <td colspan="5" class="text-center text-muted">Nenhuma solicitação pendente para a sua seleção.</td>
+          </tr>
+          <tr v-for="registration in registrations" :key="registration.id" v-else>
+            <td class="font-ui font-medium text-white">{{ registration.full_name }}</td>
+            <td class="font-mono text-muted">{{ registration.email }}</td>
+            <td class="font-mono text-muted">{{ formatDate(registration.created_at) }}</td>
+            <td>
+              <select v-model="selectedRoles[registration.id]" class="custom-select">
+                <option
+                  v-for="option in roleOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
+            </td>
+            <td class="text-center registrations-actions">
+              <button @click="handleApprove(registration.id)" class="btn-approve" title="Aprovar solicitação">
+                <Check :size="16" /> Aprovar
+              </button>
+              <button @click="handleReject(registration.id)" class="btn-reject" title="Rejeitar solicitação">
+                <X :size="16" /> Rejeitar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    </template>
+
     </div>
 
     <!-- Modal de Inspeção Crítica de Detalhes -->
@@ -240,6 +371,79 @@ onMounted(() => {
   letter-spacing: var(--letter-spacing-tight);
   line-height: var(--line-height-display);
   color: var(--color-text-primary);
+}
+
+.tab-bar {
+  display: flex;
+  gap: 8px;
+  margin-top: 32px;
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 12px 16px;
+  color: #9AA8BA;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.tab-button:hover {
+  color: #F4F7FB;
+}
+
+.tab-button--active {
+  color: #D4AF37;
+  border-bottom-color: #D4AF37;
+}
+
+.registrations-error {
+  margin: 0 0 16px 0;
+  padding: 12px 16px;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  color: #EF4444;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+}
+
+.registrations-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn-approve, .btn-reject {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-approve {
+  background-color: rgba(15, 118, 110, 0.15);
+  color: #0F766E;
+}
+
+.btn-reject {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+}
+
+.btn-approve:hover, .btn-reject:hover {
+  opacity: 0.8;
 }
 
 .filter-bar {
