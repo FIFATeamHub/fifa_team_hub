@@ -1,9 +1,13 @@
 <!-- frontend/src/views/auditView.vue -->
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useAuditLogs, type AuditLog } from '@/composables/useAuditLogs'
 import { usePendingRegistrations } from '@/composables/usePendingRegistrations'
+import { useAuthStore } from '@/stores/auth.js'
 import { Check, X } from 'lucide-vue-next'
+
+const authStore = useAuthStore()
+const isOrganizer = computed(() => authStore.user?.role === 'ORGANIZER')
 
 const { logs, loading, error, filters, pagination, fetchAuditLogs } = useAuditLogs()
 
@@ -16,7 +20,7 @@ const {
   rejectRegistration
 } = usePendingRegistrations()
 
-const activeTab = ref<'logs' | 'pendentes'>('logs')
+const activeTab = ref<'logs' | 'pendentes' | 'auditores'>('logs')
 
 const roleOptions = [
   { value: 'ATHELETE', label: 'Jogador' },
@@ -28,13 +32,20 @@ const roleOptions = [
 
 const selectedRoles = reactive<Record<string, string>>({})
 const actionError = ref('')
+const actionMessage = ref('')
 
 const roleFor = (userId: string) => selectedRoles[userId] ?? roleOptions[0]?.value ?? 'ATHELETE'
 
 const handleApprove = async (userId: string) => {
   actionError.value = ''
+  actionMessage.value = ''
   try {
-    await approveRegistration(userId, roleFor(userId))
+    const roleToGrant = activeTab.value === 'auditores' ? 'AUDITOR' : roleFor(userId)
+    const data = await approveRegistration(userId, roleToGrant)
+    if (data?.message) {
+      actionMessage.value = data.message
+      setTimeout(() => { actionMessage.value = '' }, 4000)
+    }
   } catch (err) {
     console.error('Approve Registration Error:', err)
     actionError.value = 'Erro ao aprovar solicitação.'
@@ -43,17 +54,22 @@ const handleApprove = async (userId: string) => {
 
 const handleReject = async (userId: string) => {
   actionError.value = ''
+  actionMessage.value = ''
   try {
     await rejectRegistration(userId)
+    if (activeTab.value === 'auditores') {
+      actionMessage.value = 'Nomeação de Auditor recusada. O cadastro permanece pendente para reavaliação.'
+      setTimeout(() => { actionMessage.value = '' }, 4000)
+    }
   } catch (err) {
     console.error('Reject Registration Error:', err)
     actionError.value = 'Erro ao rejeitar solicitação.'
   }
 }
 
-const switchTab = (tab: 'logs' | 'pendentes') => {
+const switchTab = (tab: 'logs' | 'pendentes' | 'auditores') => {
   activeTab.value = tab
-  if (tab === 'pendentes' && registrations.value.length === 0) {
+  if ((tab === 'pendentes' || tab === 'auditores') && registrations.value.length === 0) {
     fetchPendingRegistrations()
   }
 }
@@ -115,6 +131,14 @@ onMounted(() => {
         @click="switchTab('pendentes')"
       >
         Solicitações Pendentes
+      </button>
+      <button
+        v-if="isOrganizer"
+        type="button"
+        :class="['tab-button', { 'tab-button--active': activeTab === 'auditores' }]"
+        @click="switchTab('auditores')"
+      >
+        Nomeações de Auditor
       </button>
     </div>
 
@@ -242,11 +266,12 @@ onMounted(() => {
 
     </template>
 
-    <template v-else>
+    <template v-else-if="activeTab === 'pendentes' || activeTab === 'auditores'">
 
     <p v-if="actionError" class="registrations-error">{{ actionError }}</p>
+    <p v-if="actionMessage" class="registrations-success">{{ actionMessage }}</p>
 
-    <!-- Tabela de Solicitações Pendentes -->
+    <!-- Tabela de Solicitações Pendentes / Nomeações de Auditor -->
     <section class="table-container">
       <table class="audit-table">
         <thead>
@@ -266,13 +291,18 @@ onMounted(() => {
             <td colspan="5" class="text-center text-muted">{{ registrationsError }}</td>
           </tr>
           <tr v-else-if="registrations.length === 0" class="state-row">
-            <td colspan="5" class="text-center text-muted">Nenhuma solicitação pendente para a sua seleção.</td>
+            <td colspan="5" class="text-center text-muted">
+              {{ activeTab === 'auditores' ? 'Nenhuma nomeação de Auditor pendente.' : 'Nenhuma solicitação pendente para a sua seleção.' }}
+            </td>
           </tr>
           <tr v-for="registration in registrations" :key="registration.id" v-else>
             <td class="font-ui font-medium text-white">{{ registration.full_name }}</td>
             <td class="font-mono text-muted">{{ registration.email }}</td>
             <td class="font-mono text-muted">{{ formatDate(registration.created_at) }}</td>
-            <td>
+            <td v-if="activeTab === 'auditores'">
+              <span class="font-ui text-white">Auditor</span>
+            </td>
+            <td v-else>
               <select v-model="selectedRoles[registration.id]" class="custom-select">
                 <option
                   v-for="option in roleOptions"
@@ -408,6 +438,17 @@ onMounted(() => {
   border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 6px;
   color: #EF4444;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+}
+
+.registrations-success {
+  margin: 0 0 16px 0;
+  padding: 12px 16px;
+  background-color: rgba(15, 118, 110, 0.15);
+  border: 1px solid rgba(15, 118, 110, 0.3);
+  border-radius: 6px;
+  color: #0F766E;
   font-family: 'Inter', sans-serif;
   font-size: 13px;
 }
