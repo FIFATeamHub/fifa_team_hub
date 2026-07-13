@@ -4,7 +4,7 @@ class UserRole(str,Enum):
     ATHELETE = "ATHELETE"
     AUDITOR = "AUDITOR"
     TECHNICAL_STAFF = "TECHNICAL_STAFF"
-    MEDICAL_STAFF = "MEDICAL_STAFF"
+    gitr = "MEDICAL_STAFF"
     ORGANIZER = "ORGANIZER"
 
 class TypeDocument(str,Enum):

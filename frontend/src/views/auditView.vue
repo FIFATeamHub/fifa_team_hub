@@ -3,7 +3,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { useAuditLogs, type AuditLog } from '@/composables/useAuditLogs'
 import { usePendingRegistrations } from '@/composables/usePendingRegistrations'
-import { ShieldCheck, ShieldAlert, Search, Calendar, Eye, Check, X } from 'lucide-vue-next'
+import { Check, X } from 'lucide-vue-next'
 
 const { logs, loading, error, filters, pagination, fetchAuditLogs } = useAuditLogs()
 
