@@ -1,7 +1,16 @@
 from app.extensions import db
 from app.models.document import Document
 from app.models.enums.user_role import UserRole, TypeDocument
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, distinct
+
+
+REQUIRED_DOCUMENTS_BY_ROLE = {
+    UserRole.ATHELETE: [
+        TypeDocument.PASSPORT,
+        TypeDocument.CONVOCADO,
+        TypeDocument.LAUDO_MEDICO,
+    ]
+}
 
 class DocumentService:
 
@@ -15,6 +24,9 @@ class DocumentService:
 
         # 1. Inicializa a query básica
         query = db.session.query(Document)
+        
+        # Ignora documentos removidos por soft delete
+        query = query.filter(Document.status != "DELETED")
 
         # 2. Aplica a árvore estrita de permissões (RBAC)
         if user_role == UserRole.ORGANIZER:
@@ -117,3 +129,47 @@ class DocumentService:
                 return None, "MEDICAL_STAFF tentou acessar passaporte de terceiro ou documento tático"
 
         return None, "PERMISSAO_INVALIDA"
+    
+    
+    @staticmethod
+    def list_pending_documents(current_user):
+        """
+        Retorna os tipos de documentos obrigatórios que o usuário
+        autenticado ainda precisa enviar.
+
+        Regras:
+        - Apenas atletas possuem documentos obrigatórios nesta primeira versão.
+        - Documentos APPROVED e PENDING contam como enviados.
+        - Documentos REJECTED e DELETED continuam sendo considerados pendentes.
+        """
+
+        required_documents = REQUIRED_DOCUMENTS_BY_ROLE.get(
+            current_user.role,
+            []
+        )
+
+        # Caso o papel não possua documentos obrigatórios
+        if not required_documents:
+            return []
+
+        uploaded_document_types = (
+            db.session.query(distinct(Document.type))
+            .filter(
+                Document.uploaded_by == current_user.id,
+                Document.selection_id == current_user.selection_id,
+                Document.status.in_(["APPROVED", "PENDING"])
+            )
+            .all()
+        )
+
+        uploaded_document_types = {
+            row[0] for row in uploaded_document_types
+        }
+
+        pending_documents = [
+            document_type
+            for document_type in required_documents
+            if document_type not in uploaded_document_types
+        ]
+
+        return pending_documents

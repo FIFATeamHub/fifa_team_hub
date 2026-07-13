@@ -2,7 +2,11 @@ from flask import request
 from app.extensions import db
 from app.models.audit_log import AuditLog
 from uuid import UUID
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 import traceback
+
+FUSO_SP = ZoneInfo("America/Sao_Paulo")
 
 
 def _coerce_uuid(value):
@@ -50,6 +54,19 @@ class AuditService:
         # Filtrar pelo autor da ação
         if user_id_filter:
             query = query.filter(AuditLog.user_id == user_id_filter)
+
+        # Filtrar pelo período (start_date/end_date no formato YYYY-MM-DD, no fuso de Brasília)
+        # created_at é gravado em UTC, então os limites do dia local precisam ser convertidos.
+        if start_date:
+            inicio_local = datetime.strptime(start_date, "%Y-%m-%d").replace(tzinfo=FUSO_SP)
+            inicio_utc = inicio_local.astimezone(timezone.utc).replace(tzinfo=None)
+            query = query.filter(AuditLog.created_at >= inicio_utc)
+
+        if end_date:
+            # inclui o dia final inteiro (até 23:59:59 no horário de Brasília)
+            fim_local = (datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)).replace(tzinfo=FUSO_SP)
+            fim_utc = fim_local.astimezone(timezone.utc).replace(tzinfo=None)
+            query = query.filter(AuditLog.created_at < fim_utc)
 
         query = query.order_by(AuditLog.created_at.desc())
 

@@ -14,6 +14,10 @@ export interface Documento {
   created_at: string
 }
 
+export interface PendingDocument {
+  doc_type: string
+}
+
 interface Pagination {
   page: number
   pages: number
@@ -21,10 +25,12 @@ interface Pagination {
   total: number
 }
 
+const DEFAULT_PER_PAGE = 12
+
 const pagination = ref<Pagination>({
   page: 1,
   pages: 0,
-  per_page: 10,
+  per_page: DEFAULT_PER_PAGE,
   total: 0
 })
 
@@ -32,6 +38,9 @@ export function useDocuments() {
 
   // Lista de documentos exibidos na tela
   const documents = ref<Documento[]>([])
+
+  // Lista de documentos pendentes exibidos na tela
+  const pendingDocuments = ref<PendingDocument[]>([])
 
   // Indica quando uma operação está em andamento (Carregando...)
   const loading = ref(false)
@@ -57,7 +66,8 @@ export function useDocuments() {
       const response = await api.get('/api/document/', {
           params: {
               doc_type: params?.doc_type,
-              page: params?.page
+              page: params?.page,
+              per_page: DEFAULT_PER_PAGE
           }
       })
 
@@ -72,6 +82,29 @@ export function useDocuments() {
       loading.value = false
     }
   }
+
+  async function fetchPendingDocuments() {
+
+  loading.value = true
+  error.value = ''
+
+  try {
+
+    const response = await api.get('/api/document/pending')
+
+    pendingDocuments.value = response.data
+
+  } catch {
+
+    error.value = 'Erro ao carregar documentos pendentes.'
+
+  } finally {
+
+    loading.value = false
+
+  }
+
+}
 
   async function deleteDocument(id: string) {
       try {
@@ -125,15 +158,17 @@ export function useDocuments() {
   }
 
   return {
-    documents,
-    loading,
-    error,
-    pagination,
-    addDocument,
-    deleteDocument,
-    fetchDocuments,
-    getDownloadUrl,
-    downloadDocument,
-    previewDocument,
+      documents,
+      pendingDocuments,
+      loading,
+      error,
+      pagination,
+      addDocument,
+      deleteDocument,
+      fetchDocuments,
+      fetchPendingDocuments,
+      getDownloadUrl,
+      downloadDocument,
+      previewDocument,
   }
 }

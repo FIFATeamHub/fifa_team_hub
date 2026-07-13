@@ -58,6 +58,24 @@ def list_documents(current_user):
             "pages": paginated_result.pages
         }
     }), 200
+    
+    
+def list_pending_documents(current_user):
+    """
+    Retorna os tipos de documentos obrigatórios
+    que o usuário autenticado ainda precisa enviar.
+    """
+
+    pending_documents = DocumentService.list_pending_documents(current_user)
+
+    data = [
+        {
+            "doc_type": document_type.value
+        }
+        for document_type in pending_documents
+    ]
+
+    return jsonify(data), 200    
 
 
 def get_document_by_id(current_user, document_id):

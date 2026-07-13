@@ -4,7 +4,7 @@ class UserRole(str,Enum):
     ATHELETE = "ATHELETE"
     AUDITOR = "AUDITOR"
     TECHNICAL_STAFF = "TECHNICAL_STAFF"
-    MEDICAL_STAFF = "MEDICAL_STAFF"
+    gitr = "MEDICAL_STAFF"
     ORGANIZER = "ORGANIZER"
 
 class TypeDocument(str,Enum):
@@ -21,10 +21,18 @@ class LogAction(str,Enum):
     UPLOAD = "UPLOAD"
     DOWNLOAD = "DOWNLOAD"
     ACCESS_DENIED = "ACCESS_DENIED"
+    REGISTER_APPROVED = "REGISTER_APPROVED"
+    REGISTER_REJECTED = "REGISTER_REJECTED"
 
 
 class DocStatus(str,Enum):
 
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+
+class RegistrationStatus(str, Enum):
     PENDING = "PENDING"
     APPROVED = "APPROVED"
     REJECTED = "REJECTED"
