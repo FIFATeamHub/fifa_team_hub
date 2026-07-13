@@ -50,7 +50,7 @@ def validate_upload_permission(user_role, doc_type_enum):
 
     if user_role == UserRole.AUDITOR:
         if doc_type_enum == TypeDocument.PASSPORT:
-            return True, DocStatus.APPROVED.value
+            return True, DocStatus.PENDING.value
 
 
     elif user_role == UserRole.TECHNICAL_STAFF:
@@ -63,7 +63,7 @@ def validate_upload_permission(user_role, doc_type_enum):
 
     elif user_role == UserRole.MEDICAL_STAFF:
         if doc_type_enum.name in ["LAUDO_MEDICO"]:
-            return True, DocStatus.APPROVED.value
+            return True, DocStatus.PENDING.value
         
         if doc_type_enum == TypeDocument.PASSPORT:
             return True, DocStatus.PENDING.value

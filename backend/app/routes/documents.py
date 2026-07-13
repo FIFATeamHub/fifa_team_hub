@@ -3,6 +3,7 @@ from app.controllers.document_get import list_documents, list_pending_documents,
 from app.controllers.document_upload import upload_document
 from app.middlewares.auth import token_required
 from app.controllers.document_delete import delete_document
+from app.controllers.document_review import review_document
 
 document_bp = Blueprint("document", __name__, url_prefix="/api/document")
 
@@ -58,3 +59,10 @@ def upload_documento(current_user):
 @token_required
 def route_delete_document(current_user, document_id):
     return delete_document(current_user, document_id)
+
+
+# 6. Rota: PATCH /api/document/{document_id}/review (Aprovar/Rejeitar documento)
+@document_bp.patch("/<uuid:document_id>/review")
+@token_required
+def route_review_document(current_user, document_id):
+    return review_document(current_user, document_id)

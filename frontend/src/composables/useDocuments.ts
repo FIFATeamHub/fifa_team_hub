@@ -157,6 +157,22 @@ export function useDocuments() {
     window.open(url, '_blank')
   }
 
+  async function reviewDocument(documentId: string, status: string) {
+    try {
+      await api.patch(`/api/document/${documentId}/review`, { status })
+      const docIndex = documents.value.findIndex(d => d.id === documentId)
+      if (docIndex !== -1) {
+        documents.value[docIndex].status = status
+      }
+    } catch (error) {
+      const apiError = error as { response?: { status: number, data?: { error?: string } } }
+      if (apiError.response?.status === 403) {
+        throw new Error(apiError.response.data?.error || 'Acesso negado.')
+      }
+      throw new Error('Erro ao revisar documento.')
+    }
+  }
+
   return {
       documents,
       pendingDocuments,
@@ -170,5 +186,6 @@ export function useDocuments() {
       getDownloadUrl,
       downloadDocument,
       previewDocument,
+      reviewDocument
   }
 }
