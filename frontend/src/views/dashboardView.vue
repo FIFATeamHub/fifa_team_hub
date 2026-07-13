@@ -127,8 +127,8 @@ interface Documento {
 const isModalOpen = ref(false)
 const documentos  = ref<Documento[]>([])
 
-const efetuarLogout = () => {
-  authStore.logout()
+const efetuarLogout = async () => {
+  await authStore.logout()
   router.push('/login')
 }
 

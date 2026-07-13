@@ -86,8 +86,8 @@ function handleClickOutside(event: MouseEvent) {
     }
 }
 
-function handleLogout() {
-    authStore.logout()
+async function handleLogout() {
+    await authStore.logout()
     router.push('/login')
     isMenuOpen.value = false
 }
