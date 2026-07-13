@@ -31,8 +31,7 @@ export function useAuditLogs() {
     page: 1,
     action: '',
     startDate: '',
-    endDate: '',
-    userId: ''
+    endDate: ''
   })
 
   const pagination = ref<Pagination>({
@@ -51,8 +50,7 @@ export function useAuditLogs() {
           page: filters.page,
           action: filters.action || undefined,
           start_date: filters.startDate || undefined,
-          end_date: filters.endDate || undefined,
-          user_id: filters.userId || undefined
+          end_date: filters.endDate || undefined
         }
       })
 
@@ -66,23 +64,16 @@ export function useAuditLogs() {
     }
   }
 
-  watch(
-    () => [filters.action, filters.startDate, filters.endDate, filters.userId, filters.page],
-    ([action, startDate, endDate, userId, page], [prevAction, prevStartDate, prevEndDate, prevUserId]) => {
-      const filtersChanged =
-        action !== prevAction ||
-        startDate !== prevStartDate ||
-        endDate !== prevEndDate ||
-        userId !== prevUserId
+  // Escuta alterações nos filtros para resetar a página e buscar novamente
+  watch(() => [filters.action, filters.startDate, filters.endDate], () => {
+    filters.page = 1
+    fetchAuditLogs()
+  })
 
-      if (filtersChanged && page !== 1) {
-        filters.page = 1
-        return
-      }
-
-      fetchAuditLogs()
-    }
-  )
+  // Escuta alteração de página
+  watch(() => filters.page, () => {
+    fetchAuditLogs()
+  })
 
   return {
     logs,

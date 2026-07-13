@@ -144,11 +144,6 @@ onMounted(() => {
         <label><Calendar :size="14" /> Período Final</label>
         <input type="date" v-model="filters.endDate" class="custom-input" />
       </div>
-
-      <div class="input-group">
-        <label><UserSearch :size="14" /> ID do Usuário</label>
-        <input type="text" v-model="filters.userId" placeholder="UUID do usuário" class="custom-input" />
-      </div>
     </section>
 
     <!-- Tabela de Dados (Estilo Terminal Corporativo) -->
