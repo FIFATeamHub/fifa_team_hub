@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 from app.routes.schema import RegisterSchema, LoginSchema
 from app.extensions import db
 from app.models.user import User
+from app.models.audit_log import AuditLog
 from app.models.enums.user_role import UserRole, LogAction, RegistrationStatus
 from app.services.audit import register_audit_log
 
@@ -130,13 +131,19 @@ def logout(current_user):
 
 
 def list_pending_registrations(current_user):
-    if current_user.role != UserRole.AUDITOR:
-        return jsonify({"error": "Acesso negado. Requer papel de AUDITOR."}), 403
+    query = User.query.filter(User.registration_status == RegistrationStatus.PENDING)
 
-    usuarios = User.query.filter(
-        User.registration_status == RegistrationStatus.PENDING,
-        User.selection_id == current_user.selection_id,
-    ).order_by(User.created_at.asc()).all()
+    if current_user.role == UserRole.ORGANIZER:
+        nomeados_auditor = db.session.query(AuditLog.resource_id).filter(
+            AuditLog.action == LogAction.AUDITOR_NOMINATION_REQUESTED,
+        )
+        query = query.filter(User.id.in_(nomeados_auditor))
+    elif current_user.role == UserRole.AUDITOR:
+        query = query.filter(User.selection_id == current_user.selection_id)
+    else:
+        return jsonify({"error": "Acesso negado. Requer papel de AUDITOR ou ORGANIZER."}), 403
+
+    usuarios = query.order_by(User.created_at.asc()).all()
 
     data = [{
         "id": str(usuario.id),
@@ -150,9 +157,6 @@ def list_pending_registrations(current_user):
 
 
 def approve_registration(current_user, user_id):
-    if current_user.role != UserRole.AUDITOR:
-        return jsonify({"error": "Acesso negado. Requer papel de AUDITOR."}), 403
-
     fuso_sp = ZoneInfo("America/Sao_Paulo")
     momento_requisicao = datetime.now(fuso_sp)
 
@@ -168,7 +172,26 @@ def approve_registration(current_user, user_id):
     if usuario is None:
         return jsonify({"error": "Usuário não encontrado"}), 404
 
-    if usuario.selection_id != current_user.selection_id:
+    if role == UserRole.AUDITOR:
+        if current_user.role == UserRole.AUDITOR:
+            if usuario.registration_status != RegistrationStatus.PENDING:
+                return jsonify({"error": "Cadastro já foi processado"}), 409
+
+            register_audit_log(
+                current_user.id, LogAction.AUDITOR_NOMINATION_REQUESTED, "SUCCESS", usuario.id,
+                momento_requisicao,
+                f"Auditor {current_user.id} indicou o cadastro para o papel de AUDITOR, aguardando confirmação de um Organizador",
+                selection_id_e=usuario.selection_id,
+            )
+            return jsonify({
+                "message": "Solicitação de cadastro de auditor enviada para aprovação do Organizador"
+            }), 202
+        elif current_user.role != UserRole.ORGANIZER:
+            return jsonify({"error": "Apenas Organizadores podem aprovar Auditores"}), 403
+    elif current_user.role != UserRole.AUDITOR:
+        return jsonify({"error": "Acesso negado. Requer papel de AUDITOR."}), 403
+
+    if role != UserRole.AUDITOR and usuario.selection_id != current_user.selection_id:
         return jsonify({"error": "Acesso negado. Cadastro pertence a outra seleção."}), 403
 
     if usuario.registration_status != RegistrationStatus.PENDING:
@@ -180,7 +203,8 @@ def approve_registration(current_user, user_id):
 
     register_audit_log(
         current_user.id, LogAction.REGISTER_APPROVED, "SUCCESS", usuario.id,
-        momento_requisicao, f"Cadastro aprovado pelo auditor com papel {role.value}",
+        momento_requisicao,
+        f"Cadastro aprovado por {current_user.id} (role concedida: {role.value})",
         selection_id_e=usuario.selection_id,
     )
 
