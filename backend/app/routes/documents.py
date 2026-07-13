@@ -1,5 +1,5 @@
 from flask import Blueprint
-from app.controllers.document_get import list_documents, get_document_by_id, download_document_url, stream_local_file
+from app.controllers.document_get import list_documents, list_pending_documents, get_document_by_id, download_document_url, stream_local_file
 from app.controllers.document_upload import upload_document
 from app.middlewares.auth import token_required
 from app.controllers.document_delete import delete_document
@@ -14,6 +14,11 @@ def route_list_documents(current_user):
     return list_documents(current_user)
 
 
+# GET /api/document/pending
+@document_bp.get("/pending")
+@token_required
+def route_list_pending_documents(current_user):
+    return list_pending_documents(current_user)
 
 
 # 3. Rota: GET /documents/{document_id} (Metadados de um documento individual)

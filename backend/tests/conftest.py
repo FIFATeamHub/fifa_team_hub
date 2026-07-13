@@ -100,6 +100,27 @@ def selection_arg(app):
 # ----------------------------------------------------------------------
 
 @pytest.fixture
+def bra_athlete(app, selection_bra):
+
+    with app.app_context():
+
+        user = User(
+            full_name="Brazil Athlete",
+            email="bra.athlete@test.com",
+            password_hash=hash_password("123456"),
+            role=UserRole.ATHELETE,
+            selection_id=selection_bra
+        )
+
+        db.session.add(user)
+        db.session.commit()
+
+        db.session.refresh(user)
+        db.session.expunge(user)
+
+        return user
+
+@pytest.fixture
 def bra_staff(app, selection_bra):
 
     with app.app_context():
@@ -206,6 +227,10 @@ def arg_staff(app, selection_arg):
 # ----------------------------------------------------------------------
 # TOKENS
 # ----------------------------------------------------------------------
+
+@pytest.fixture
+def token_bra_athlete(bra_athlete):
+    return create_access_token(user_to_token_payload(bra_athlete))
 
 @pytest.fixture
 def token_bra_staff(bra_staff):

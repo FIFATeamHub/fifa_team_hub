@@ -18,10 +18,12 @@ watch(selectedType, async () => {
 
 const {
     documents,
+    pendingDocuments,
     loading,
     error,
     pagination,
     fetchDocuments,
+    fetchPendingDocuments,
     deleteDocument,
     downloadDocument,
     previewDocument
@@ -33,6 +35,7 @@ const authStore = useAuthStore()
 
 onMounted(async () => {
     await fetchDocuments()
+    await fetchPendingDocuments()
 })
 
 function formatDate(date: string) {
@@ -142,6 +145,25 @@ async function handleView(doc: Documento) {
 
         <div class="documents__toolbar">
 
+            <div
+                v-if="
+                    authStore.user?.role === 'ATHELETE' &&
+                    pendingDocuments.length > 0
+                "
+                class="documents__pending"
+            >
+                <h3>Documentos Pendentes</h3>
+
+                <ul>
+                    <li
+                        v-for="doc in pendingDocuments"
+                        :key="doc.doc_type"
+                    >
+                        {{ doc.doc_type }}
+                    </li>
+                </ul>
+            </div>
+
             <div class="documents__filter">
                 <label for="doc-type-filter" class="documents__filter-label">Filtro</label>
                 <div class="documents__select-wrap">
@@ -154,6 +176,7 @@ async function handleView(doc: Documento) {
                         <option value="CONVOCADO">Convocação</option>
                         <option value="LAUDO_MEDICO">Laudo Médico</option>
                         <option value="RELATORIO_TATICO">Relatório Tático</option>
+                        <option value="ESQUEMA_JOGADAS">Esquema de Jogadas</option>
                     </select>
                     <svg class="documents__select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M6 9l6 6 6-6" />

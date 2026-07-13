@@ -123,7 +123,13 @@ onMounted(() => {
     <!-- Barra de Filtros Avançados -->
     <section class="filter-bar">
       <div class="input-group">
-        <label><Search :size="14" /> Filtrar por Ação</label>
+        <label>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <circle cx="11" cy="11" r="6" />
+            <path d="m20 20-4.2-4.2" />
+          </svg>
+          Filtrar por Ação
+        </label>
         <select v-model="filters.action" class="custom-select">
           <option value="">Todas as ações operacionais</option>
           <option value="LOGIN">LOGIN</option>
@@ -136,12 +142,28 @@ onMounted(() => {
       </div>
 
       <div class="input-group">
-        <label><Calendar :size="14" /> Período Inicial</label>
+        <label>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            <path d="M16 2v4" />
+            <path d="M8 2v4" />
+            <path d="M3 10h18" />
+          </svg>
+          Período Inicial
+        </label>
         <input type="date" v-model="filters.startDate" class="custom-input" />
       </div>
 
       <div class="input-group">
-        <label><Calendar :size="14" /> Período Final</label>
+        <label>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            <path d="M16 2v4" />
+            <path d="M8 2v4" />
+            <path d="M3 10h18" />
+          </svg>
+          Período Final
+        </label>
         <input type="date" v-model="filters.endDate" class="custom-input" />
       </div>
     </section>
@@ -174,8 +196,13 @@ onMounted(() => {
             <td><span class="action-badge">{{ log.action }}</span></td>
             <td>
               <span :class="['status-indicator', log.status.toLowerCase()]">
-                <ShieldCheck v-if="log.status === 'SUCCESS'" :size="14" />
-                <ShieldAlert v-else :size="14" />
+                <svg v-if="log.status === 'SUCCESS'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                  <path d="M12 3v10" />
+                  <path d="M12 17v.01" />
+                </svg>
                 {{ log.status }}
               </span>
             </td>
@@ -183,7 +210,10 @@ onMounted(() => {
             <td class="font-mono text-muted">{{ formatDate(log.created_at) }}</td>
             <td class="text-center">
               <button @click="openDetailsModal(log.details)" class="btn-inspect" title="Inspecionar Metadados">
-                <Eye :size="16" />
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
               </button>
             </td>
           </tr>
