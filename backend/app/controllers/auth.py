@@ -4,6 +4,7 @@ import re
 import uuid
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from sqlalchemy import func
 from app.routes.schema import RegisterSchema, LoginSchema
 from app.extensions import db
 from app.models.user import User
@@ -130,14 +131,43 @@ def logout(current_user):
     return jsonify({"message": "Logout realizado com sucesso"}), 200
 
 
+def _ultimo_evento_de_nomeacao_por_usuario():
+    """Subquery com a data do evento de nomeação de Auditor mais recente por usuário."""
+    return db.session.query(
+        AuditLog.resource_id.label("resource_id"),
+        func.max(AuditLog.created_at).label("ultima_data")
+    ).filter(
+        AuditLog.action.in_([
+            LogAction.AUDITOR_NOMINATION_REQUESTED,
+            LogAction.AUDITOR_NOMINATION_REJECTED,
+        ])
+    ).group_by(AuditLog.resource_id).subquery()
+
+
+def _nomeacao_auditor_ativa(user_id):
+    """True se a nomeação de Auditor mais recente do usuário ainda não foi rejeitada."""
+    ultimo_evento = AuditLog.query.filter(
+        AuditLog.resource_id == user_id,
+        AuditLog.action.in_([
+            LogAction.AUDITOR_NOMINATION_REQUESTED,
+            LogAction.AUDITOR_NOMINATION_REJECTED,
+        ]),
+    ).order_by(AuditLog.created_at.desc()).first()
+
+    return ultimo_evento is not None and ultimo_evento.action == LogAction.AUDITOR_NOMINATION_REQUESTED
+
+
 def list_pending_registrations(current_user):
     query = User.query.filter(User.registration_status == RegistrationStatus.PENDING)
 
     if current_user.role == UserRole.ORGANIZER:
-        nomeados_auditor = db.session.query(AuditLog.resource_id).filter(
-            AuditLog.action == LogAction.AUDITOR_NOMINATION_REQUESTED,
-        )
-        query = query.filter(User.id.in_(nomeados_auditor))
+        ultimo_evento = _ultimo_evento_de_nomeacao_por_usuario()
+        nomeacoes_ativas = db.session.query(AuditLog.resource_id).join(
+            ultimo_evento,
+            (AuditLog.resource_id == ultimo_evento.c.resource_id) &
+            (AuditLog.created_at == ultimo_evento.c.ultima_data)
+        ).filter(AuditLog.action == LogAction.AUDITOR_NOMINATION_REQUESTED)
+        query = query.filter(User.id.in_(nomeacoes_ativas))
     elif current_user.role == UserRole.AUDITOR:
         query = query.filter(User.selection_id == current_user.selection_id)
     else:
@@ -218,15 +248,38 @@ def approve_registration(current_user, user_id):
 
 
 def reject_registration(current_user, user_id):
-    if current_user.role != UserRole.AUDITOR:
-        return jsonify({"error": "Acesso negado. Requer papel de AUDITOR."}), 403
-
     fuso_sp = ZoneInfo("America/Sao_Paulo")
     momento_requisicao = datetime.now(fuso_sp)
 
     usuario = db.session.get(User, user_id)
     if usuario is None:
         return jsonify({"error": "Usuário não encontrado"}), 404
+
+    if current_user.role == UserRole.ORGANIZER:
+        if not _nomeacao_auditor_ativa(usuario.id):
+            return jsonify({"error": "Acesso negado. Não há nomeação de Auditor pendente para este usuário."}), 403
+
+        if usuario.registration_status != RegistrationStatus.PENDING:
+            return jsonify({"error": "Cadastro já foi processado"}), 409
+
+        # Só descarta a indicação: o cadastro permanece PENDING para que um
+        # Auditor possa reavaliá-lo (ex: aprovar para um cargo diferente).
+        register_audit_log(
+            current_user.id, LogAction.AUDITOR_NOMINATION_REJECTED, "SUCCESS", usuario.id,
+            momento_requisicao,
+            f"Nomeação de Auditor rejeitada pelo Organizador {current_user.id}; cadastro permanece pendente",
+            selection_id_e=usuario.selection_id,
+        )
+
+        return jsonify({
+            "id": str(usuario.id),
+            "email": usuario.email,
+            "full_name": usuario.full_name,
+            "registration_status": usuario.registration_status.value,
+        }), 200
+
+    if current_user.role != UserRole.AUDITOR:
+        return jsonify({"error": "Acesso negado. Requer papel de AUDITOR."}), 403
 
     if usuario.selection_id != current_user.selection_id:
         return jsonify({"error": "Acesso negado. Cadastro pertence a outra seleção."}), 403

@@ -145,3 +145,99 @@ class TestListagemNomeacoesAuditor:
 
         assert response.status_code == 403
         assert "Acesso negado" in response.json["error"]
+
+
+class TestRejeicaoDeNomeacaoDeAuditor:
+
+    def test_organizer_rejeita_nomeacao_e_cadastro_continua_pendente(
+        self, app, client, db, selection_bra, organizer, token_bra_auditor, token_organizer
+    ):
+        nomeado = _criar_pendente(app, selection_bra, "nomeado.recusado@test.com")
+
+        escalonado = client.post(
+            f"/api/auth/registrations/{nomeado.id}/approve",
+            json={"role": "AUDITOR"},
+            headers={"Authorization": f"Bearer {token_bra_auditor}"},
+        )
+        assert escalonado.status_code == 202
+
+        response = client.post(
+            f"/api/auth/registrations/{nomeado.id}/reject",
+            headers={"Authorization": f"Bearer {token_organizer}"},
+        )
+
+        assert response.status_code == 200
+        assert response.json["registration_status"] == RegistrationStatus.PENDING.value
+
+        usuario_atualizado = db.get(User, nomeado.id)
+        assert usuario_atualizado.registration_status == RegistrationStatus.PENDING
+        assert usuario_atualizado.role == UserRole.ATHELETE
+
+        audit_log = get_latest_audit_log(
+            db, action=LogAction.AUDITOR_NOMINATION_REJECTED, status="SUCCESS"
+        )
+        assert audit_log is not None
+        assert audit_log.resource_id == nomeado.id
+        assert audit_log.user_id == organizer.id
+
+    def test_organizer_nao_rejeita_sem_nomeacao_ativa(
+        self, app, client, selection_bra, token_organizer
+    ):
+        pendente_comum = _criar_pendente(app, selection_bra, "sem.nomeacao@test.com")
+
+        response = client.post(
+            f"/api/auth/registrations/{pendente_comum.id}/reject",
+            headers={"Authorization": f"Bearer {token_organizer}"},
+        )
+
+        assert response.status_code == 403
+        assert "Acesso negado" in response.json["error"]
+
+    def test_candidato_desaparece_da_listagem_apos_rejeicao_e_nao_reaparece(
+        self, app, client, selection_bra, token_bra_auditor, token_organizer
+    ):
+        nomeado = _criar_pendente(app, selection_bra, "some.da.lista@test.com")
+
+        client.post(
+            f"/api/auth/registrations/{nomeado.id}/approve",
+            json={"role": "AUDITOR"},
+            headers={"Authorization": f"Bearer {token_bra_auditor}"},
+        )
+        client.post(
+            f"/api/auth/registrations/{nomeado.id}/reject",
+            headers={"Authorization": f"Bearer {token_organizer}"},
+        )
+
+        response = client.get(
+            "/api/auth/registrations/pending",
+            headers={"Authorization": f"Bearer {token_organizer}"},
+        )
+
+        assert response.status_code == 200
+        emails = [row["email"] for row in response.json["data"]]
+        assert nomeado.email not in emails
+
+    def test_auditor_ainda_ve_candidato_rejeitado_e_pode_aprovar_outro_cargo(
+        self, app, client, db, selection_bra, token_bra_auditor, token_organizer
+    ):
+        nomeado = _criar_pendente(app, selection_bra, "reavaliado@test.com")
+
+        client.post(
+            f"/api/auth/registrations/{nomeado.id}/approve",
+            json={"role": "AUDITOR"},
+            headers={"Authorization": f"Bearer {token_bra_auditor}"},
+        )
+        client.post(
+            f"/api/auth/registrations/{nomeado.id}/reject",
+            headers={"Authorization": f"Bearer {token_organizer}"},
+        )
+
+        response = client.post(
+            f"/api/auth/registrations/{nomeado.id}/approve",
+            json={"role": "ATHELETE"},
+            headers={"Authorization": f"Bearer {token_bra_auditor}"},
+        )
+
+        assert response.status_code == 200
+        assert response.json["role"] == UserRole.ATHELETE.value
+        assert db.get(User, nomeado.id).registration_status == RegistrationStatus.APPROVED

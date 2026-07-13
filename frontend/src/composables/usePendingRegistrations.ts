@@ -36,8 +36,9 @@ export function usePendingRegistrations() {
   }
 
   const rejectRegistration = async (userId: string) => {
-    await api.post(`/api/auth/registrations/${userId}/reject`)
+    const response = await api.post(`/api/auth/registrations/${userId}/reject`)
     registrations.value = registrations.value.filter((item) => item.id !== userId)
+    return response.data
   }
 
   return {

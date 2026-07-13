@@ -3,7 +3,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useAuditLogs, type AuditLog } from '@/composables/useAuditLogs'
 import { usePendingRegistrations } from '@/composables/usePendingRegistrations'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/stores/auth.js'
 import { Check, X } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
@@ -54,8 +54,13 @@ const handleApprove = async (userId: string) => {
 
 const handleReject = async (userId: string) => {
   actionError.value = ''
+  actionMessage.value = ''
   try {
     await rejectRegistration(userId)
+    if (activeTab.value === 'auditores') {
+      actionMessage.value = 'Nomeação de Auditor recusada. O cadastro permanece pendente para reavaliação.'
+      setTimeout(() => { actionMessage.value = '' }, 4000)
+    }
   } catch (err) {
     console.error('Reject Registration Error:', err)
     actionError.value = 'Erro ao rejeitar solicitação.'
