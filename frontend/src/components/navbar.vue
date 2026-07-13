@@ -11,7 +11,7 @@
                 <RouterLink to="/documentos" class="navbar__link">Documentos</RouterLink>
                 <RouterLink to="/upload" class="navbar__link">Upload</RouterLink>
                 <RouterLink
-                    v-if="authStore.user?.role === 'AUDITOR'"
+                    v-if="authStore.user?.role === 'AUDITOR' || authStore.user?.role === 'ORGANIZER'"
                     to="/audit"
                     class="navbar__link"
                 >
