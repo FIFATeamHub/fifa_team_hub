@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 from app.routes.schema import RegisterSchema, LoginSchema
 from app.extensions import db
 from app.models.user import User
-from app.models.enums.user_role import UserRole, LogAction
+from app.models.enums.user_role import UserRole, LogAction, RegistrationStatus
 from app.services.audit import register_audit_log
 
 from app.services.auth import hash_password, verify_password, create_access_token
@@ -42,6 +42,7 @@ def register():
         password_hash=hash_password(dados["password"]),
         full_name=dados["full_name"],
         role=UserRole.ATHELETE,
+        registration_status=RegistrationStatus.PENDING,
         selection_id=uuid.UUID(dados["selection_id"])
     )
 
@@ -87,6 +88,18 @@ def login():
                     momento_requisicao, "Tentativa de login com e-mail não cadastrado"
                 )
             return jsonify({"error": "Credenciais inválidas"}), 401
+
+        if user.registration_status != RegistrationStatus.APPROVED:
+            mensagem = (
+                "Cadastro pendente de aprovação do Auditor"
+                if user.registration_status == RegistrationStatus.PENDING
+                else "Cadastro rejeitado pelo Auditor"
+            )
+            register_audit_log(
+                user.id, LogAction.ACCESS_DENIED, "FAILURE", user.id,
+                momento_requisicao, mensagem, selection_id_e=user.selection_id
+            )
+            return jsonify({"error": mensagem}), 403
 
         token = create_access_token(user)
 
