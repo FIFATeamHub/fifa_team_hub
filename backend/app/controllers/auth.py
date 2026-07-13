@@ -129,6 +129,104 @@ def logout(current_user):
     return jsonify({"message": "Logout realizado com sucesso"}), 200
 
 
+def list_pending_registrations(current_user):
+    if current_user.role != UserRole.AUDITOR:
+        return jsonify({"error": "Acesso negado. Requer papel de AUDITOR."}), 403
+
+    usuarios = User.query.filter(
+        User.registration_status == RegistrationStatus.PENDING,
+        User.selection_id == current_user.selection_id,
+    ).order_by(User.created_at.asc()).all()
+
+    data = [{
+        "id": str(usuario.id),
+        "full_name": usuario.full_name,
+        "email": usuario.email,
+        "selection_id": str(usuario.selection_id) if usuario.selection_id else None,
+        "created_at": usuario.created_at.isoformat() if usuario.created_at else None,
+    } for usuario in usuarios]
+
+    return jsonify({"data": data}), 200
+
+
+def approve_registration(current_user, user_id):
+    if current_user.role != UserRole.AUDITOR:
+        return jsonify({"error": "Acesso negado. Requer papel de AUDITOR."}), 403
+
+    fuso_sp = ZoneInfo("America/Sao_Paulo")
+    momento_requisicao = datetime.now(fuso_sp)
+
+    dados = request.get_json() or {}
+    role_bruta = dados.get("role")
+
+    try:
+        role = UserRole(role_bruta)
+    except ValueError:
+        return jsonify({"error": "Role inválida"}), 400
+
+    usuario = db.session.get(User, user_id)
+    if usuario is None:
+        return jsonify({"error": "Usuário não encontrado"}), 404
+
+    if usuario.selection_id != current_user.selection_id:
+        return jsonify({"error": "Acesso negado. Cadastro pertence a outra seleção."}), 403
+
+    if usuario.registration_status != RegistrationStatus.PENDING:
+        return jsonify({"error": "Cadastro já foi processado"}), 409
+
+    usuario.role = role
+    usuario.registration_status = RegistrationStatus.APPROVED
+    db.session.commit()
+
+    register_audit_log(
+        current_user.id, LogAction.REGISTER_APPROVED, "SUCCESS", usuario.id,
+        momento_requisicao, f"Cadastro aprovado pelo auditor com papel {role.value}",
+        selection_id_e=usuario.selection_id,
+    )
+
+    return jsonify({
+        "id": str(usuario.id),
+        "email": usuario.email,
+        "full_name": usuario.full_name,
+        "role": usuario.role.value,
+        "registration_status": usuario.registration_status.value,
+    }), 200
+
+
+def reject_registration(current_user, user_id):
+    if current_user.role != UserRole.AUDITOR:
+        return jsonify({"error": "Acesso negado. Requer papel de AUDITOR."}), 403
+
+    fuso_sp = ZoneInfo("America/Sao_Paulo")
+    momento_requisicao = datetime.now(fuso_sp)
+
+    usuario = db.session.get(User, user_id)
+    if usuario is None:
+        return jsonify({"error": "Usuário não encontrado"}), 404
+
+    if usuario.selection_id != current_user.selection_id:
+        return jsonify({"error": "Acesso negado. Cadastro pertence a outra seleção."}), 403
+
+    if usuario.registration_status != RegistrationStatus.PENDING:
+        return jsonify({"error": "Cadastro já foi processado"}), 409
+
+    usuario.registration_status = RegistrationStatus.REJECTED
+    db.session.commit()
+
+    register_audit_log(
+        current_user.id, LogAction.REGISTER_REJECTED, "SUCCESS", usuario.id,
+        momento_requisicao, "Cadastro rejeitado pelo auditor",
+        selection_id_e=usuario.selection_id,
+    )
+
+    return jsonify({
+        "id": str(usuario.id),
+        "email": usuario.email,
+        "full_name": usuario.full_name,
+        "registration_status": usuario.registration_status.value,
+    }), 200
+
+
 def me(current_user):
     if current_user is None:
         return jsonify({"error": "Usuário não encontrado"}), 404
