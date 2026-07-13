@@ -17,8 +17,10 @@ def delete_document(current_user, document_id):
     if document is None:
         return jsonify({"error": "Documento não encontrado"}), 404
 
-    if current_user.role != UserRole.TECHNICAL_STAFF:
-        register_audit_log(current_user.id, LogAction.DELETE, "ACCESS_DENIED", document.id, datetime.now(ZoneInfo("America/Sao_Paulo")), "Usuário não tem papel de TECHNICAL_STAFF.", selection_id_e=current_user.selection_id)
+    papeis_que_podem_excluir = [UserRole.TECHNICAL_STAFF, UserRole.AUDITOR, UserRole.MEDICAL_STAFF, UserRole.ATHELETE]
+
+    if current_user.role not in papeis_que_podem_excluir:
+        register_audit_log(current_user.id, LogAction.DELETE, "ACCESS_DENIED", document.id, datetime.now(ZoneInfo("America/Sao_Paulo")), "Perfil sem permissão para excluir documentos.", selection_id_e=current_user.selection_id)
         return jsonify({"error": "Acesso negado"}), 403
 
     if document.uploaded_by != current_user.id:
