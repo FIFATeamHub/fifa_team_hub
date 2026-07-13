@@ -12,6 +12,8 @@ def list_audit_logs(current_user):
     per_page = request.args.get('per_page', 20, type=int)
     action_filter = request.args.get('action')
     user_id_filter = request.args.get('user_id')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
 
     # Devolve a bucha para o nosso Service
     paginated_result = AuditService.list_logs(
@@ -19,7 +21,9 @@ def list_audit_logs(current_user):
         page=page,
         per_page=per_page,
         action_filter=action_filter,
-        user_id_filter=user_id_filter
+        user_id_filter=user_id_filter,
+        start_date=start_date,
+        end_date=end_date
     )
 
     data_list = []

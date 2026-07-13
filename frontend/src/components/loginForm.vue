@@ -115,11 +115,12 @@ async function handleSubmit() {
 }
 
 .login-card__eyebrow {
+    display: inline-block;
     font-family: var(--font-heading);
-    font-size: calc(var(--font-size-h3) * 1.4);
+    font-size: var(--font-size-h1);
     font-weight: var(--font-weight-black);
-    letter-spacing: var(--letter-spacing-label);
-    text-transform: uppercase;
+    letter-spacing: normal;
+    line-height: var(--line-height-heading);
     color: var(--color-gold);
 }
 

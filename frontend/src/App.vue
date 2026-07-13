@@ -18,7 +18,7 @@
 
 
 <template>
-  <Navbar v-if="route.name !== 'login'" />
+  <Navbar v-if="!['login', 'cadastro'].includes(String(route.name))" />
 
   <main>
     <RouterView />
