@@ -113,7 +113,7 @@ const lidarComCadastro = async() => {
             selection: selection.value
         })
 
-        successMessage.value = 'Cadastro realizado com sucesso'
+        successMessage.value = 'Solicitação enviada ao auditor'
 
         nome.value = ''
         email.value = ''

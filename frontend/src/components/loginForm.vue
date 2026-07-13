@@ -78,9 +78,13 @@ async function handleSubmit() {
     await authStore.login({ email: email.value, password: password.value })
 
   } catch (err) {
-    const error = err as { status?: number }
+    const error = err as { status?: number; message?: string }
     if (error.status === 401) {
       errorMessage.value = 'E-mail ou senha incorretos'
+    } else if (error.status === 403) {
+      errorMessage.value = error.message || 'Acesso negado.'
+    } else {
+      errorMessage.value = 'Não foi possível fazer login. Tente novamente.'
     }
     } finally {
         loading.value = false
