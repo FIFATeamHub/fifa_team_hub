@@ -97,12 +97,14 @@ def create_app(test_config=None):
     from app.routes.health import health_bp
     from app.routes.selection import selection_bp
     from app.routes.audit import audit_bp
+    from app.routes.registration import registration_bp
 
     app.register_blueprint(document_bp)
     app.register_blueprint(health_bp)
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(selection_bp)
     app.register_blueprint(audit_bp, url_prefix="/api/audit")
+    app.register_blueprint(registration_bp)
 
     @app.errorhandler(Exception)
     def handle_unhandled_exception(e):
