@@ -15,20 +15,8 @@
             </div>
 
             <div class="campo">
-                <label>Cargo:</label>
-                <select v-model="cargo" required>
-                <option value="" disabled>Selecione uma opção</option>
-                <option value="ATHELETE">Jogador</option>
-                <option value="TECHNICAL_STAFF">Comissão Técnica</option>
-                <option value="MEDICAL_STAFF">Comissão Médica</option>
-                <option value="AUDITOR">Auditor</option>
-                <option value="ORGANIZER">Organizador</option>
-                </select>
-            </div>
-
-            <div class="campo">
-                <label>Seleção :</label>
-                <select v-model="selection">
+                <label>País de residência:</label>
+                <select v-model="selection" required>
                     <option value="">Selecione sua seleção</option>
 
                     <option
@@ -72,7 +60,7 @@
 
 <script setup lang="ts">
 
-import {ref, watch, onMounted} from 'vue'
+import {ref, onMounted} from 'vue'
 import {useAuthStore} from '@/stores/auth.js'
 import { useRouter , RouterLink } from 'vue-router'
 import api from '@/services/api';
@@ -94,16 +82,9 @@ const router = useRouter()
 
 const nome = ref('')
 const email = ref('')
-const cargo = ref('')
 const password = ref('')
 const passwordConfirm = ref('')
 const selection = ref(null)
-
-watch(cargo, (novoCargo) => {
-    if (novoCargo === "AUDITOR" || novoCargo === "ORGANIZER") {
-        selection.value = null
-    }
-})
 
 const errorMessage = ref('')
 const successMessage = ref('')
@@ -129,7 +110,6 @@ const lidarComCadastro = async() => {
             nome: nome.value,
             email: email.value,
             password: password.value,
-            cargo: cargo.value,
             selection: selection.value
         })
 
@@ -137,7 +117,6 @@ const lidarComCadastro = async() => {
 
         nome.value = ''
         email.value = ''
-        cargo.value = ''
         password.value = ''
         passwordConfirm.value = ''
         selection.value = null

@@ -19,44 +19,30 @@ UUID_LOGIN_SEM_USUARIO = uuid.uuid4()
 
 def register():
     dados = request.get_json()
-    
+
     register_schema = RegisterSchema()
     erros = register_schema.validate(dados)
+    if erros:
+        return jsonify({"error": erros}), 400
 
-    # Valida campos obrigatórios
-    campos = ["email", "password", "full_name", "role"]
-    for campo in campos:   
+    campos = ["email", "password", "full_name", "selection_id"]
+    for campo in campos:
         if not dados.get(campo):
             return jsonify({"error": f"Campo '{campo}' é obrigatório"}), 400
-        
-    # Cole isto no seu register() logo após validar os campos obrigatórios:
+
     email = dados.get("email")
     if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
         return jsonify({"error": "Formato de e-mail inválido. Verifique se digitou o '.com'."}), 400
 
-    # Valida se role é um valor válido do enum
-    try:
-        role = UserRole(dados["role"])
-    except ValueError:
-        roles_validos = [r.value for r in UserRole]
-        return jsonify({"error": f"Role inválido. Use: {roles_validos}"}), 400
-
-    # Verifica se email já existe
     if User.query.filter_by(email=dados["email"]).first():
         return jsonify({"error": "Email já cadastrado"}), 409
 
-    raw_selection_id = dados.get("selection_id")
-    selection_id = None
-    if raw_selection_id and str(raw_selection_id).strip() not in ("", "null", "undefined", "None"):
-        selection_id = raw_selection_id
-
-    # Cria o usuário com senha hasheada
     novo_user = User(
         email=dados["email"],
         password_hash=hash_password(dados["password"]),
         full_name=dados["full_name"],
-        role=role,
-        selection_id=selection_id
+        role=UserRole.ATHELETE,
+        selection_id=uuid.UUID(dados["selection_id"])
     )
 
     db.session.add(novo_user)
@@ -88,9 +74,7 @@ def login():
         return jsonify({"error": "Email e password são obrigatórios"}), 400
 
     try:
-        # Busca user por email
         user = User.query.filter_by(email=email.lower()).first()
-        # Credenciais inválidas
         if not user or not verify_password(password, user.password_hash):
             if user:
                 register_audit_log(
