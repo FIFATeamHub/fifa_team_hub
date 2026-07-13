@@ -1,4 +1,7 @@
-from app.models.enums.user_role import LogAction
+import uuid
+
+from app.models.enums.user_role import LogAction, UserRole
+from app.models.user import User
 from tests.conftest import get_latest_audit_log
 
 
@@ -27,8 +30,6 @@ class TestLogout:
 
 
 class TestLoginAuditLog:
-    """Cobre o registro de log de auditoria (AuditLog) no endpoint de login."""
-
     def test_login_sucesso_registra_audit_log(self, client, db, bra_staff):
         response = client.post(
             "/auth/login",
@@ -79,3 +80,62 @@ class TestLoginAuditLog:
         assert audit_log.user_id is None
         assert "não cadastrado" in audit_log.details.lower() or "não encontrado" in audit_log.details.lower()
         assert "qualquer-coisa" not in audit_log.details
+
+
+class TestRegisterRoleInjection:
+
+    def test_payload_malicioso_com_role_auditor_e_rejeitado(self, client, db, selection_bra):
+        response = client.post(
+            "/auth/register",
+            json={
+                "email": "usuario.malicioso@test.com",
+                "password": "senha1234",
+                "full_name": "Usuario Malicioso",
+                "selection_id": str(selection_bra),
+                "role": "AUDITOR",
+            },
+        )
+
+        assert response.status_code == 400
+
+        usuario_criado = User.query.filter_by(email="usuario.malicioso@test.com").first()
+        assert usuario_criado is None
+
+    def test_cadastro_sem_role_continua_funcionando(self, client, selection_bra):
+        response = client.post(
+            "/auth/register",
+            json={
+                "email": "usuario.legitimo@test.com",
+                "password": "senha1234",
+                "full_name": "Usuario Legitimo",
+                "selection_id": str(selection_bra),
+            },
+        )
+
+        assert response.status_code == 201
+        assert response.json["role"] == UserRole.ATHELETE.value
+
+    def test_selection_id_e_obrigatorio(self, client):
+        response = client.post(
+            "/auth/register",
+            json={
+                "email": "sem.selecao@test.com",
+                "password": "senha1234",
+                "full_name": "Sem Selecao",
+            },
+        )
+
+        assert response.status_code == 400
+
+    def test_selection_id_inexistente_retorna_400(self, client):
+        response = client.post(
+            "/auth/register",
+            json={
+                "email": "selecao.invalida@test.com",
+                "password": "senha1234",
+                "full_name": "Selecao Invalida",
+                "selection_id": str(uuid.uuid4()),
+            },
+        )
+
+        assert response.status_code == 400
