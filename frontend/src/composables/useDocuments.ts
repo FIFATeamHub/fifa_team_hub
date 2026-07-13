@@ -25,10 +25,12 @@ interface Pagination {
   total: number
 }
 
+const DEFAULT_PER_PAGE = 12
+
 const pagination = ref<Pagination>({
   page: 1,
   pages: 0,
-  per_page: 10,
+  per_page: DEFAULT_PER_PAGE,
   total: 0
 })
 
@@ -64,7 +66,8 @@ export function useDocuments() {
       const response = await api.get('/api/document/', {
           params: {
               doc_type: params?.doc_type,
-              page: params?.page
+              page: params?.page,
+              per_page: DEFAULT_PER_PAGE
           }
       })
 

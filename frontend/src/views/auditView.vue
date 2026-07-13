@@ -2,7 +2,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useAuditLogs, type AuditLog } from '@/composables/useAuditLogs'
-import { ShieldCheck, ShieldAlert, Search, Calendar, Eye } from 'lucide-vue-next'
 
 const { logs, loading, error, filters, pagination, fetchAuditLogs } = useAuditLogs()
 
@@ -37,18 +36,27 @@ onMounted(() => {
 
 <template>
   <div class="audit-container">
+
     <!-- Header da Tela -->
-    <header class="audit-header">
-      <div class="title-block">
-        <span class="system-badge">[ AMBIENTE VERIFICADO ]</span>
-        <h1>Terminal de Integridade e Auditoria</h1>
-      </div>
-    </header>
+    <section class="audit-hero">
+      <div class="audit-hero__bg"></div>
+      <div class="audit-hero__overlay"></div>
+      <div class="audit-hero__edge"></div>
+      <h1 class="audit-hero__title">Terminal de Auditoria</h1>
+    </section>
+
+    <div class="audit-body">
 
     <!-- Barra de Filtros Avançados -->
     <section class="filter-bar">
       <div class="input-group">
-        <label><Search :size="14" /> Filtrar por Ação</label>
+        <label>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <circle cx="11" cy="11" r="6" />
+            <path d="m20 20-4.2-4.2" />
+          </svg>
+          Filtrar por Ação
+        </label>
         <select v-model="filters.action" class="custom-select">
           <option value="">Todas as ações operacionais</option>
           <option value="LOGIN">LOGIN</option>
@@ -61,12 +69,28 @@ onMounted(() => {
       </div>
 
       <div class="input-group">
-        <label><Calendar :size="14" /> Período Inicial</label>
+        <label>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            <path d="M16 2v4" />
+            <path d="M8 2v4" />
+            <path d="M3 10h18" />
+          </svg>
+          Período Inicial
+        </label>
         <input type="date" v-model="filters.startDate" class="custom-input" />
       </div>
 
       <div class="input-group">
-        <label><Calendar :size="14" /> Período Final</label>
+        <label>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            <path d="M16 2v4" />
+            <path d="M8 2v4" />
+            <path d="M3 10h18" />
+          </svg>
+          Período Final
+        </label>
         <input type="date" v-model="filters.endDate" class="custom-input" />
       </div>
     </section>
@@ -99,8 +123,13 @@ onMounted(() => {
             <td><span class="action-badge">{{ log.action }}</span></td>
             <td>
               <span :class="['status-indicator', log.status.toLowerCase()]">
-                <ShieldCheck v-if="log.status === 'SUCCESS'" :size="14" />
-                <ShieldAlert v-else :size="14" />
+                <svg v-if="log.status === 'SUCCESS'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                  <path d="M12 3v10" />
+                  <path d="M12 17v.01" />
+                </svg>
                 {{ log.status }}
               </span>
             </td>
@@ -108,7 +137,10 @@ onMounted(() => {
             <td class="font-mono text-muted">{{ formatDate(log.created_at) }}</td>
             <td class="text-center">
               <button @click="openDetailsModal(log.details)" class="btn-inspect" title="Inspecionar Metadados">
-                <Eye :size="16" />
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
               </button>
             </td>
           </tr>
@@ -135,6 +167,8 @@ onMounted(() => {
       </div>
     </section>
 
+    </div>
+
     <!-- Modal de Inspeção Crítica de Detalhes -->
     <div v-if="isModalOpen" class="modal-overlay" @click.self="isModalOpen = false">
       <div class="modal-card">
@@ -150,23 +184,62 @@ onMounted(() => {
 
 <style scoped>
 .audit-container {
-  padding: 40px;
-  background-color: #08111F; /* Midnight Navy */
+  background-color: var(--color-bg-base);
   min-height: 100vh;
 }
 
-.system-badge {
-  font-family: 'JetBrains Mono', monospace;
-  color: #0F766E; /* Tactical Teal */
-  font-size: 12px;
-  letter-spacing: 0.05em;
+.audit-body {
+  padding: var(--space-10) var(--padding-page-x);
 }
 
-.audit-header h1 {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 32px;
-  color: #F4F7FB;
-  margin-top: 8px;
+.audit-hero {
+  position: relative;
+  overflow: hidden;
+  padding: calc(var(--space-16) * 1.4) var(--padding-page-x);
+  background-color: var(--color-bg-base);
+}
+
+.audit-hero__bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/img/audit-hero-2.png');
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+}
+
+.audit-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--color-bg-base) 85%, transparent) 0%,
+    color-mix(in srgb, var(--color-bg-base) 60%, transparent) 55%,
+    color-mix(in srgb, var(--color-bg-mid) 35%, transparent) 100%);
+  z-index: 1;
+}
+
+.audit-hero__edge {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--color-gold) 50%, transparent),
+    color-mix(in srgb, var(--color-gold) 20%, transparent),
+    transparent);
+  z-index: 2;
+}
+
+.audit-hero__title {
+  position: relative;
+  z-index: 3;
+  font-family: var(--font-heading);
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-display);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: var(--line-height-display);
+  color: var(--color-text-primary);
 }
 
 .filter-bar {

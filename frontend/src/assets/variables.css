@@ -1,0 +1,135 @@
+:root {
+
+  /* ─── CORES BASE ──────────────────────────────────────────── */
+  --color-bg-base:          #08111F;
+  --color-bg-deep:          #040C18;
+  --color-bg-mid:           #0F2747;
+
+  /* ─── SUPERFÍCIES (cards, painéis) ───────────────────────── */
+  --color-surface-primary:  #0D1A2D;
+  --color-surface-elevated: #112033;
+  --color-surface-navbar:   #050914;
+  --color-surface-login:    #1D2333;
+  --color-surface-login-header: #151222;
+  --color-surface-input:    #07001D;
+
+  /* ─── ACENTOS PRINCIPAIS ─────────────────────────────────── */
+  --color-gold:             #FAC400;
+  --color-gold-hover:       #FFD32F;
+  --color-gold-muted:       #D4AF37;
+  --color-gold-dim:         rgba(250, 196, 0, 0.10);
+
+  /* ─── ACENTOS SECUNDÁRIOS (Tactical Teal) ────────────────── */
+  --color-teal:             #0F766E;
+  --color-teal-light:       #8CE6DD;
+  --color-teal-dim:         rgba(15, 118, 110, 0.15);
+  --color-teal-glow:        rgba(15, 118, 110, 0.24);
+
+  /* ─── ESTADO DE ALERTA ───────────────────────────────────── */
+  --color-danger:           #F87171;
+  --color-danger-bg:        rgba(239, 68, 68, 0.10);
+  --color-danger-border:    rgba(248, 113, 113, 0.20);
+
+  /* ─── ESTADO APROVADO / SEGURO ───────────────────────────── */
+  --color-success:          var(--color-teal-light);
+  --color-success-bg:       var(--color-teal-dim);
+  --color-success-border:   rgba(15, 118, 110, 0.25);
+
+  /* ─── ESTADO PENDENTE / REVISÃO ──────────────────────────── */
+  --color-warning:          var(--color-gold);
+  --color-warning-bg:       rgba(250, 196, 0, 0.12);
+  --color-warning-border:   rgba(250, 196, 0, 0.30);
+
+  /* ─── TEXTO ──────────────────────────────────────────────── */
+  --color-text-primary:     #FFFFFF;
+  --color-text-secondary:   rgba(255, 255, 255, 0.68);
+  --color-text-tertiary:    rgba(255, 255, 255, 0.50);
+  --color-text-muted:       rgba(255, 255, 255, 0.35);
+  --color-text-disabled:    rgba(255, 255, 255, 0.20);
+  --color-text-gold:        var(--color-gold);
+  --color-text-teal:        var(--color-teal-light);
+
+  /* ─── BORDAS ─────────────────────────────────────────────── */
+  --color-border-default:   rgba(255, 255, 255, 0.10);
+  --color-border-subtle:    rgba(255, 255, 255, 0.07);
+  --color-border-strong:    rgba(255, 255, 255, 0.18);
+  --color-border-gold:      rgba(250, 196, 0, 0.40);
+  --color-border-gold-full: rgba(250, 196, 0, 0.75);
+  --color-border-teal:      rgba(15, 118, 110, 0.40);
+
+  /* ─── TIPOGRAFIA ─────────────────────────────────────────── */
+  --font-heading:           'Space Grotesk', sans-serif;
+  --font-body:              'Inter', sans-serif;
+  --font-mono:              'JetBrains Mono', monospace;
+
+  --font-size-display:      clamp(3rem, 6vw, 5.5rem);
+  --font-size-h1:           clamp(2rem, 3.8vw, 3.6rem);
+  --font-size-h2:           1.75rem;
+  --font-size-h3:           1.25rem;
+  --font-size-body:         0.875rem;
+  --font-size-small:        0.75rem;
+  --font-size-label:        0.625rem;
+
+  --font-weight-black:      900;
+  --font-weight-bold:       700;
+  --font-weight-semibold:   600;
+
+  --letter-spacing-tight:   -0.055em;
+  --letter-spacing-heading: -0.035em;
+  --letter-spacing-mono:    0.22em;
+  --letter-spacing-label:   0.28em;
+
+  --line-height-display:    0.95;
+  --line-height-heading:    1.1;
+  --line-height-body:       1.75;
+
+  /* ─── ESPAÇAMENTO ────────────────────────────────────────── */
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-7:   28px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-14:  56px;
+  --space-16:  64px;
+
+  /* ─── BORDER RADIUS ──────────────────────────────────────── */
+  --radius-sm:   11px;
+  --radius-md:   17px;
+  --radius-lg:   22px;
+  --radius-xl:   28px;
+  --radius-2xl:  30px;
+  --radius-full: 9999px;
+
+  /* ─── SOMBRAS ────────────────────────────────────────────── */
+  --shadow-card:    0 20px 40px rgba(0, 0, 0, 0.40);
+  --shadow-deep:    0 28px 60px rgba(0, 0, 0, 0.50);
+  --shadow-login:   0 28px 60px rgba(0, 0, 0, 0.35);
+  --shadow-glow-gold: 0 0 18px rgba(250, 196, 0, 0.65);
+  --shadow-glow-teal: 0 0 18px rgba(15, 118, 110, 0.45);
+
+  /* ─── TRANSIÇÕES ─────────────────────────────────────────── */
+  --transition-fast:    150ms ease;
+  --transition-default: 200ms ease;
+  --transition-slow:    350ms ease;
+
+  /* ─── Z-INDEX ────────────────────────────────────────────── */
+  --z-bg:       0;
+  --z-base:     1;
+  --z-card:     10;
+  --z-navbar:   40;
+  --z-dropdown: 50;
+  --z-overlay:  60;
+  --z-modal:    70;
+
+  /* ─── LAYOUT ─────────────────────────────────────────────── */
+  --max-width:       1440px;
+  --navbar-height:   72px;
+  --padding-page-x:  clamp(16px, 5vw, 40px);
+  --padding-card:    24px;
+  --padding-section: 48px;
+}

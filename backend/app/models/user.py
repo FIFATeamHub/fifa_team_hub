@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from werkzeug.security import generate_password_hash #Gera a senha em hash para user.password_hash
+from werkzeug.security import generate_password_hash
 
 from sqlalchemy import Enum # type: ignore[import]
 from sqlalchemy.orm import Mapped,registry
@@ -8,6 +8,7 @@ from app.extensions import db
 from app.models.enums.user_role import UserRole
 from app.models.enums.user_role import TypeDocument
 from app.models.enums.user_role import LogAction
+from app.models.enums.user_role import RegistrationStatus
 
 
 
@@ -51,6 +52,13 @@ class User(db.Model):
     is_active = db.Column(
         db.Boolean,
         default=True,
+        nullable=False
+    )
+
+    registration_status = db.Column(
+        Enum(RegistrationStatus),
+        default=RegistrationStatus.PENDING,
+        server_default=RegistrationStatus.PENDING.value,
         nullable=False
     )
 
