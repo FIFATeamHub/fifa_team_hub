@@ -11,8 +11,6 @@ Retorna de forma paginada e ordenada os logs de ações da plataforma.
 - `per_page` *(int)*: Quantidade de registros listados por página. (Padrão: 20)
 - `action` *(string)*: Filtra por tipo de ação executada (ex: `LOGIN`, `UPLOAD`, `DELETE`, `ACCESS_DENIED`).
 - `user_id` *(uuid)*: Filtra apenas os logs gerados por um autor específico.
-- `start_date` *(string, formato `YYYY-MM-DD`)*: Filtra logs a partir do início do dia informado (horário de Brasília, `America/Sao_Paulo`).
-- `end_date` *(string, formato `YYYY-MM-DD`)*: Filtra logs até o fim do dia informado (horário de Brasília, `America/Sao_Paulo`).
 
 **Regras de Segurança (RBAC):**
 - Autenticação via token JWT é estritamente obrigatória (`401 Unauthorized`).
