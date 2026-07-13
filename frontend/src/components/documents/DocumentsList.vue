@@ -137,6 +137,10 @@ async function handleView(doc: Documento) {
     }
 }
 
+defineExpose({
+    refresh: () => fetchDocuments({ doc_type: selectedType.value || undefined, page: pagination.value.page })
+})
+
 </script>
 
 <template>

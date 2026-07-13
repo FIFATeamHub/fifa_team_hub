@@ -12,15 +12,41 @@
         </section>
 
         <div class="documents-view__content">
-            <DocumentsList />
+
+            <div v-if="can('upload:documents')" class="documents-view__toolbar">
+                <button class="documents-view__upload-btn" @click="isModalOpen = true">
+                    Enviar Documento
+                </button>
+            </div>
+
+            <DocumentsList ref="documentsListRef" />
         </div>
+
+        <UploadDocumentModal
+            :isOpen="isModalOpen"
+            :onClose="() => isModalOpen = false"
+            :onSuccess="handleUploadSuccess"
+        />
 
     </div>
 </template>
 
 <script setup lang="ts">
 
+import { ref } from 'vue'
 import DocumentsList from '@/components/documents/DocumentsList.vue'
+import UploadDocumentModal from '@/components/documents/UploadDocumentModal.vue'
+import { usePermissions } from '@/composables/usePermissions'
+
+const { can } = usePermissions()
+
+const isModalOpen = ref(false)
+const documentsListRef = ref<InstanceType<typeof DocumentsList> | null>(null)
+
+function handleUploadSuccess() {
+    isModalOpen.value = false
+    documentsListRef.value?.refresh()
+}
 
 </script>
 
@@ -92,6 +118,29 @@ import DocumentsList from '@/components/documents/DocumentsList.vue'
     max-width: var(--max-width);
     margin: 0 auto;
     padding: var(--padding-section) var(--padding-page-x);
+}
+
+.documents-view__toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--space-6);
+}
+
+.documents-view__upload-btn {
+    padding: var(--space-3) var(--space-6);
+    background-color: var(--color-gold);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--color-bg-deep);
+    font-family: var(--font-body);
+    font-weight: var(--font-weight-black);
+    font-size: var(--font-size-body);
+    cursor: pointer;
+    transition: background-color var(--transition-default);
+}
+
+.documents-view__upload-btn:hover {
+    background-color: var(--color-gold-hover);
 }
 
 </style>
