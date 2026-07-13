@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useAuditLogs, type AuditLog } from '@/composables/useAuditLogs'
-import { ShieldCheck, ShieldAlert, Search, Calendar, Eye } from 'lucide-vue-next'
+import { ShieldCheck, ShieldAlert, Search, Calendar, Eye, UserSearch } from 'lucide-vue-next'
 
 const { logs, loading, error, filters, pagination, fetchAuditLogs } = useAuditLogs()
 
@@ -71,6 +71,11 @@ onMounted(() => {
       <div class="input-group">
         <label><Calendar :size="14" /> Período Final</label>
         <input type="date" v-model="filters.endDate" class="custom-input" />
+      </div>
+
+      <div class="input-group">
+        <label><UserSearch :size="14" /> ID do Usuário</label>
+        <input type="text" v-model="filters.userId" placeholder="UUID do usuário" class="custom-input" />
       </div>
     </section>
 
