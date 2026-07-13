@@ -14,6 +14,10 @@ export interface Documento {
   created_at: string
 }
 
+export interface PendingDocument {
+  doc_type: string
+}
+
 interface Pagination {
   page: number
   pages: number
@@ -32,6 +36,9 @@ export function useDocuments() {
 
   // Lista de documentos exibidos na tela
   const documents = ref<Documento[]>([])
+
+  // Lista de documentos pendentes exibidos na tela
+  const pendingDocuments = ref<PendingDocument[]>([])
 
   // Indica quando uma operação está em andamento (Carregando...)
   const loading = ref(false)
@@ -72,6 +79,29 @@ export function useDocuments() {
       loading.value = false
     }
   }
+
+  async function fetchPendingDocuments() {
+
+  loading.value = true
+  error.value = ''
+
+  try {
+
+    const response = await api.get('/api/document/pending')
+
+    pendingDocuments.value = response.data
+
+  } catch {
+
+    error.value = 'Erro ao carregar documentos pendentes.'
+
+  } finally {
+
+    loading.value = false
+
+  }
+
+}
 
   async function deleteDocument(id: string) {
       try {
@@ -125,15 +155,17 @@ export function useDocuments() {
   }
 
   return {
-    documents,
-    loading,
-    error,
-    pagination,
-    addDocument,
-    deleteDocument,
-    fetchDocuments,
-    getDownloadUrl,
-    downloadDocument,
-    previewDocument,
+      documents,
+      pendingDocuments,
+      loading,
+      error,
+      pagination,
+      addDocument,
+      deleteDocument,
+      fetchDocuments,
+      fetchPendingDocuments,
+      getDownloadUrl,
+      downloadDocument,
+      previewDocument,
   }
 }

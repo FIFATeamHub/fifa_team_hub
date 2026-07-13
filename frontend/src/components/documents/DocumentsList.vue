@@ -18,10 +18,12 @@ watch(selectedType, async () => {
 
 const {
     documents,
+    pendingDocuments,
     loading,
     error,
     pagination,
     fetchDocuments,
+    fetchPendingDocuments,
     deleteDocument,
     downloadDocument,
     previewDocument
@@ -33,6 +35,7 @@ const authStore = useAuthStore()
 
 onMounted(async () => {
     await fetchDocuments()
+    await fetchPendingDocuments()
 })
 
 function formatDate(date: string) {
@@ -93,6 +96,29 @@ async function handleView(doc: Documento) {
     <div>
 
         <h2>Documentos</h2>
+
+        <div
+            v-if="
+                authStore.user?.role === 'ATHELETE' &&
+                pendingDocuments.length > 0
+            "
+        >
+
+            <h3>Documentos Pendentes</h3>
+
+            <ul>
+
+                <li
+                    v-for="doc in pendingDocuments"
+                    :key="doc.doc_type"
+                >
+                    {{ doc.doc_type }}
+                </li>
+
+            </ul>
+
+        </div>
+        
 
         <div class="filtros">
 
