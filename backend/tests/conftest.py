@@ -142,6 +142,27 @@ def bra_staff(app, selection_bra):
 
         return user
 
+@pytest.fixture
+def bra_medical_staff(app, selection_bra):
+
+    with app.app_context():
+
+        user = User(
+            full_name="Brazil Medical Staff",
+            email="medical.bra@test.com",
+            password_hash=hash_password("123456"),
+            role=UserRole.MEDICAL_STAFF,
+            registration_status=RegistrationStatus.APPROVED,
+            selection_id=selection_bra
+        )
+
+        db.session.add(user)
+        db.session.commit()
+
+        db.session.refresh(user)
+        db.session.expunge(user)
+
+        return user
 
 @pytest.fixture
 def organizer(app):
@@ -255,6 +276,13 @@ def token_organizer(organizer):
 
     return create_access_token(user_to_token_payload(organizer))
 
+@pytest.fixture
+def token_bra_medical_staff(bra_medical_staff):
+
+    return create_access_token(
+        user_to_token_payload(bra_medical_staff)
+    )
+
 
 # ----------------------------------------------------------------------
 # DOCUMENTOS
@@ -287,6 +315,36 @@ def arg_document(app, arg_staff, selection_arg):
 def arg_document_id(arg_document):
 
     return str(arg_document.id)
+
+@pytest.fixture
+def bra_document(app, bra_staff, selection_bra):
+
+    with app.app_context():
+
+        document = Document(
+            selection_id=selection_bra,
+            uploaded_by=bra_staff.id,
+            type=TypeDocument.RELATORIO_TATICO,
+            original_name="relatorio_bra.pdf",
+            storage_path="/tmp/relatorio_bra.pdf",
+            status=DocStatus.APPROVED.value
+        )
+
+        db.session.add(document)
+        db.session.commit()
+
+        db.session.refresh(document)
+        db.session.expunge(document)
+
+        return document
+    
+@pytest.fixture
+def bra_document_id(bra_document):
+    return str(bra_document.id)
+
+# ----------------------------------------------------------------------
+# GCS
+# ----------------------------------------------------------------------
 
 @pytest.fixture
 def gcs_app(app):
