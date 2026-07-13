@@ -15,7 +15,7 @@ export function usePermissions(){
             'view:tactics':        ["ATHELETE", "TECHNICAL_STAFF"],
             'edit:tactics':        ["TECHNICAL_STAFF"],
             'upload:med_docs':     ["MEDICAL_STAFF"],
-            'upload:documents':    ["TECHNICAL_STAFF"],
+            'upload:documents':    ["TECHNICAL_STAFF", "ATHELETE"],
             'view:med_docs':       ["TECHNICAL_STAFF", "MEDICAL_STAFF", "ORGANIZER"],
             'view:bureaucratic':   ['AUDITOR', "ATHELETE", "ORGANIZER"]
         }

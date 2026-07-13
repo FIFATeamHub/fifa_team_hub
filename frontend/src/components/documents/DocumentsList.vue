@@ -3,8 +3,29 @@ import { ref, watch, onMounted } from 'vue'
 import { useDocuments, type Documento } from '@/composables/useDocuments'
 import { usePermissions } from '@/composables/usePermissions';
 import { useAuthStore } from '@/stores/auth.js'
+import UploadDocumentModal from '@/components/documents/UploadDocumentModal.vue'
 
 const selectedType = ref('')
+
+// Controla o modal de upload disparado a partir de um item pendente específico
+const uploadModalOpen = ref(false)
+const uploadDocType = ref('')
+
+function openUploadFor(docType: string) {
+    uploadDocType.value = docType
+    uploadModalOpen.value = true
+}
+
+function closeUploadModal() {
+    uploadModalOpen.value = false
+}
+
+async function handleUploadSuccess() {
+    uploadModalOpen.value = false
+    // Atualiza as duas listas: o documento some das pendências e aparece na listagem geral
+    await fetchDocuments({ doc_type: selectedType.value || undefined, page: 1 })
+    await fetchPendingDocuments()
+}
 
 watch(selectedType, async () => {
 
@@ -158,8 +179,17 @@ async function handleView(doc: Documento) {
                     <li
                         v-for="doc in pendingDocuments"
                         :key="doc.doc_type"
+                        class="documents__pending-item"
                     >
-                        {{ doc.doc_type }}
+                        <span>{{ formatDocType(doc.doc_type) }}</span>
+
+                        <button
+                            v-if="can('upload:documents')"
+                            class="documents__pending-upload-btn"
+                            @click="openUploadFor(doc.doc_type)"
+                        >
+                            Enviar
+                        </button>
                     </li>
                 </ul>
             </div>
@@ -327,6 +357,13 @@ async function handleView(doc: Documento) {
 
     </div>
 
+    <UploadDocumentModal
+        :isOpen="uploadModalOpen"
+        :preselectedType="uploadDocType"
+        :onClose="closeUploadModal"
+        :onSuccess="handleUploadSuccess"
+    />
+
 </template>
 
 
@@ -336,6 +373,35 @@ async function handleView(doc: Documento) {
     display: flex;
     flex-direction: column;
     gap: var(--space-8);
+}
+
+.documents__pending-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-2) 0;
+    color: var(--color-text-secondary);
+    font-family: var(--font-body);
+    font-size: var(--font-size-small);
+}
+
+.documents__pending-upload-btn {
+    padding: var(--space-1) var(--space-4);
+    background: none;
+    border: 1px solid var(--color-border-gold);
+    border-radius: var(--radius-full);
+    color: var(--color-gold);
+    font-family: var(--font-body);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-small);
+    cursor: pointer;
+    transition: background-color var(--transition-default), color var(--transition-default);
+}
+
+.documents__pending-upload-btn:hover {
+    background-color: var(--color-gold);
+    color: var(--color-bg-deep);
 }
 
 .documents__toolbar {

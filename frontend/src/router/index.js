@@ -5,7 +5,6 @@ import loginView from '../views/loginView.vue'
 import registerView from '../views/registerView.vue'
 import dashboardView from '../views/dashboardView.vue'
 import documentsView from '../views/documentsView.vue'
-import uploadView from '../views/uploadView.vue'
 import auditView from '../views/auditView.vue'
 import noAcessView from '../views/403View.vue'
 import { useAuthStore } from '../stores/auth'
@@ -48,12 +47,6 @@ const router = createRouter({
       name: 'documentos',
       meta: {requiresAuth: true},
       component: documentsView
-    },
-    {
-      path: '/upload',
-      name: 'upload',
-      meta: {requiresAuth: true},
-      component: uploadView
     },
     {
       path: '/audit',
