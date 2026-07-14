@@ -105,7 +105,7 @@ def get_document_by_id(current_user, document_id):
 
     storage = get_storage_service()
 
-    url_visualizacao = storage.get_signed_url(document.storage_path, expiration_minutes=15)
+    url_visualizacao = storage.get_signed_url(document.storage_path, document_id=str(document.id), expiration_minutes=15)
 
     register_audit_log(current_user.id, LogAction.DOWNLOAD , "SUCCESS" , document_id, momento_requisicao, f"Link de download (URL assinada) gerado com sucesso para: {document.original_name}", selection_id_e=current_user.selection_id)
 

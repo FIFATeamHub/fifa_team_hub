@@ -90,7 +90,8 @@ def upload_document(current_user):
         caminho_armazenamento = storage.save_file(
             file_stream=arquivo_fisico,
             stored_name=nome_unico_arquivo,
-            selection_id=str(current_user.selection_id)
+            selection_id=str(current_user.selection_id),
+            content_type=metadados_seguranca["mime_type"]
         )
 
         novo_documento = Document(
