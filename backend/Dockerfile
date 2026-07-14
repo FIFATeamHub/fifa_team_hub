@@ -20,10 +20,11 @@ RUN mkdir -p /app/storage/uploads
 # Cloud Run usa PORT=8080 por padrão
 ENV PORT=8080
 ENV FLASK_DEBUG=0
+ENV FLASK_APP=wsgi:app
 
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD curl -f "http://localhost:${PORT}/health" || exit 1
 
-CMD ["sh", "-c", "mkdir -p /app/storage/uploads && chmod -R 777 /app/storage/uploads && exec gunicorn --bind=0.0.0.0:${PORT} --workers=4 --timeout=60 wsgi:app"]
+CMD ["sh", "-c", "mkdir -p /app/storage/uploads && chmod -R 777 /app/storage/uploads && flask db upgrade && exec gunicorn --bind=0.0.0.0:${PORT} --workers=4 --timeout=60 wsgi:app"]

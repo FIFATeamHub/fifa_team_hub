@@ -106,6 +106,10 @@ def create_app(test_config=None):
     app.register_blueprint(audit_bp, url_prefix="/api/audit")
     app.register_blueprint(registration_bp)
 
+    from app.commands import register_commands
+
+    register_commands(app)
+
     @app.errorhandler(Exception)
     def handle_unhandled_exception(e):
         if isinstance(e, HTTPException):
@@ -114,17 +118,5 @@ def create_app(test_config=None):
             "Unhandled exception on %s %s", request.method, request.path
         )
         return jsonify({"error": "Internal server error"}), 500
-
-    _tables_created = False
-
-    @app.before_request
-    def setup_db_tables():
-        nonlocal _tables_created
-        if not _tables_created:
-            try:
-                db.create_all()
-                _tables_created = True
-            except Exception as e:
-                app.logger.error(f"Erro ao criar tabelas no banco de dados: {e}")
 
     return app

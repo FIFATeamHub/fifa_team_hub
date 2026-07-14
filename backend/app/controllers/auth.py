@@ -169,7 +169,8 @@ def list_pending_registrations(current_user):
         ).filter(AuditLog.action == LogAction.AUDITOR_NOMINATION_REQUESTED)
         query = query.filter(User.id.in_(nomeacoes_ativas))
     elif current_user.role == UserRole.AUDITOR:
-        query = query.filter(User.selection_id == current_user.selection_id)
+        if current_user.selection_id is not None:
+            query = query.filter(User.selection_id == current_user.selection_id)
     else:
         return jsonify({"error": "Acesso negado. Requer papel de AUDITOR ou ORGANIZER."}), 403
 
@@ -221,7 +222,11 @@ def approve_registration(current_user, user_id):
     elif current_user.role != UserRole.AUDITOR:
         return jsonify({"error": "Acesso negado. Requer papel de AUDITOR."}), 403
 
-    if role != UserRole.AUDITOR and usuario.selection_id != current_user.selection_id:
+    if (
+        role != UserRole.AUDITOR
+        and current_user.selection_id is not None
+        and usuario.selection_id != current_user.selection_id
+    ):
         return jsonify({"error": "Acesso negado. Cadastro pertence a outra seleção."}), 403
 
     if usuario.registration_status != RegistrationStatus.PENDING:
@@ -279,7 +284,7 @@ def reject_registration(current_user, user_id):
     if current_user.role != UserRole.AUDITOR:
         return jsonify({"error": "Acesso negado. Requer papel de AUDITOR."}), 403
 
-    if usuario.selection_id != current_user.selection_id:
+    if current_user.selection_id is not None and usuario.selection_id != current_user.selection_id:
         return jsonify({"error": "Acesso negado. Cadastro pertence a outra seleção."}), 403
 
     if usuario.registration_status != RegistrationStatus.PENDING:
