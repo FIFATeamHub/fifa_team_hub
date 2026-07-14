@@ -96,7 +96,7 @@ router.beforeEach(async (to) => {
   if (to.name == 'audit'){
     const userRole = authStore.user?.role
 
-    if(userRole !== "AUDITOR"){
+    if(userRole !== "AUDITOR" && userRole !== "ORGANIZER"){
       return {name : "403"}
     }
   }

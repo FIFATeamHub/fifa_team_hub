@@ -3,8 +3,29 @@ import { ref, watch, onMounted } from 'vue'
 import { useDocuments, type Documento } from '@/composables/useDocuments'
 import { usePermissions } from '@/composables/usePermissions';
 import { useAuthStore } from '@/stores/auth.js'
+import UploadDocumentModal from '@/components/documents/UploadDocumentModal.vue'
 
 const selectedType = ref('')
+
+// Controla o modal de upload disparado a partir de um item pendente específico
+const uploadModalOpen = ref(false)
+const uploadDocType = ref('')
+
+function openUploadFor(docType: string) {
+    uploadDocType.value = docType
+    uploadModalOpen.value = true
+}
+
+function closeUploadModal() {
+    uploadModalOpen.value = false
+}
+
+async function handleUploadSuccess() {
+    uploadModalOpen.value = false
+    // Atualiza as duas listas: o documento some das pendências e aparece na listagem geral
+    await fetchDocuments({ doc_type: selectedType.value || undefined, page: 1 })
+    await fetchPendingDocuments()
+}
 
 watch(selectedType, async () => {
 
@@ -26,7 +47,8 @@ const {
     fetchPendingDocuments,
     deleteDocument,
     downloadDocument,
-    previewDocument
+    previewDocument,
+    reviewDocument
 } = useDocuments()
 
 const { can } = usePermissions()
@@ -137,6 +159,15 @@ async function handleView(doc: Documento) {
     }
 }
 
+async function handleReview(doc: Documento) {
+    try {
+        await reviewDocument(doc.id, 'APPROVED')
+        alert('Documento aprovado com sucesso!')
+    } catch (err) {
+        alert(err instanceof Error ? err.message : 'Falha ao aprovar o documento.')
+    }
+}
+
 defineExpose({
     refresh: () => fetchDocuments({ doc_type: selectedType.value || undefined, page: pagination.value.page })
 })
@@ -162,8 +193,17 @@ defineExpose({
                     <li
                         v-for="doc in pendingDocuments"
                         :key="doc.doc_type"
+                        class="documents__pending-item"
                     >
-                        {{ doc.doc_type }}
+                        <span>{{ formatDocType(doc.doc_type) }}</span>
+
+                        <button
+                            v-if="can('upload:documents')"
+                            class="documents__pending-upload-btn"
+                            @click="openUploadFor(doc.doc_type)"
+                        >
+                            Enviar
+                        </button>
                     </li>
                 </ul>
             </div>
@@ -294,6 +334,20 @@ defineExpose({
 
                     <button
                         v-if="
+                            authStore.user?.role === 'AUDITOR' &&
+                            doc.status === 'PENDING'
+                        "
+                        class="doc-card__action doc-card__action--primary"
+                        @click="handleReview(doc)"
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 6 9 17l-5-5" />
+                        </svg>
+                        Aprovar
+                    </button>
+
+                    <button
+                        v-if="
                             can('upload:documents') &&
                             authStore.user?.id === doc.uploaded_by_id
                         "
@@ -331,6 +385,13 @@ defineExpose({
 
     </div>
 
+    <UploadDocumentModal
+        :isOpen="uploadModalOpen"
+        :preselectedType="uploadDocType"
+        :onClose="closeUploadModal"
+        :onSuccess="handleUploadSuccess"
+    />
+
 </template>
 
 
@@ -340,6 +401,35 @@ defineExpose({
     display: flex;
     flex-direction: column;
     gap: var(--space-8);
+}
+
+.documents__pending-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-2) 0;
+    color: var(--color-text-secondary);
+    font-family: var(--font-body);
+    font-size: var(--font-size-small);
+}
+
+.documents__pending-upload-btn {
+    padding: var(--space-1) var(--space-4);
+    background: none;
+    border: 1px solid var(--color-border-gold);
+    border-radius: var(--radius-full);
+    color: var(--color-gold);
+    font-family: var(--font-body);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-small);
+    cursor: pointer;
+    transition: background-color var(--transition-default), color var(--transition-default);
+}
+
+.documents__pending-upload-btn:hover {
+    background-color: var(--color-gold);
+    color: var(--color-bg-deep);
 }
 
 .documents__toolbar {
@@ -630,6 +720,16 @@ defineExpose({
 .doc-card__action--danger:hover {
     border-color: var(--color-danger);
     color: var(--color-danger);
+}
+
+.doc-card__action--primary {
+    color: var(--color-teal-light);
+    border-color: var(--color-border-teal);
+}
+
+.doc-card__action--primary:hover {
+    border-color: var(--color-teal);
+    color: var(--color-teal);
 }
 
 .documents__pagination {
