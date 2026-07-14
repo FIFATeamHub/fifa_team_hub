@@ -124,17 +124,32 @@ export function useDocuments() {
     return response.data.url
   }
 
+  
+  async function resolveFileUrl(url: string): Promise<string> {
+    if (/^https?:\/\//i.test(url)) {
+      return url
+    }
+
+    const response = await api.get(url, { responseType: 'blob' })
+    return URL.createObjectURL(response.data)
+  }
+
   async function downloadDocument(documentId: string, filename: string) {
     try {
       const url = await getDownloadUrl(documentId)
+      const resolvedUrl = await resolveFileUrl(url)
 
       const link = document.createElement('a')
-      link.href = url
+      link.href = resolvedUrl
       link.download = filename
 
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+
+      if (resolvedUrl !== url) {
+        URL.revokeObjectURL(resolvedUrl)
+      }
 
     } catch (error) {
       const apiError = error as { response?: { status: number } }
@@ -153,16 +168,30 @@ export function useDocuments() {
   }
 
   async function previewDocument(documentId: string) {
-    const url = await getDownloadUrl(documentId)
-    window.open(url, '_blank')
+    // Abre a aba de forma síncrona, antes de qualquer await, para o navegador
+    // não bloquear como pop-up (só permite window.open sem bloqueio quando
+    // chamado diretamente a partir de um evento do usuário).
+    const previewWindow = window.open('', '_blank')
+
+    try {
+      const url = await getDownloadUrl(documentId)
+      const resolvedUrl = await resolveFileUrl(url)
+
+      if (previewWindow) {
+        previewWindow.location.href = resolvedUrl
+      }
+    } catch (error) {
+      previewWindow?.close()
+      throw error
+    }
   }
 
   async function reviewDocument(documentId: string, status: string) {
     try {
       await api.patch(`/api/document/${documentId}/review`, { status })
-      const docIndex = documents.value.findIndex(d => d.id === documentId)
-      if (docIndex !== -1) {
-        documents.value[docIndex].status = status
+      const doc = documents.value.find(d => d.id === documentId)
+      if (doc) {
+        doc.status = status
       }
     } catch (error) {
       const apiError = error as { response?: { status: number, data?: { error?: string } } }
