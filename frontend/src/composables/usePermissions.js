@@ -17,7 +17,8 @@ export function usePermissions(){
             'upload:med_docs':     ["MEDICAL_STAFF"],
             'upload:documents':    ["TECHNICAL_STAFF", "AUDITOR", "MEDICAL_STAFF", "ATHELETE"],
             'view:med_docs':       ["TECHNICAL_STAFF", "MEDICAL_STAFF", "ORGANIZER"],
-            'view:bureaucratic':   ['AUDITOR', "ATHELETE", "ORGANIZER"]
+            'view:bureaucratic':   ['AUDITOR', "ATHELETE", "ORGANIZER"],
+            'manage:selections':   ["ORGANIZER"]
         }
 
         const allowedRoles = permissions[action]
