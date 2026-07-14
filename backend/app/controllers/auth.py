@@ -262,8 +262,6 @@ def reject_registration(current_user, user_id):
         if usuario.registration_status != RegistrationStatus.PENDING:
             return jsonify({"error": "Cadastro já foi processado"}), 409
 
-        # Só descarta a indicação: o cadastro permanece PENDING para que um
-        # Auditor possa reavaliá-lo (ex: aprovar para um cargo diferente).
         register_audit_log(
             current_user.id, LogAction.AUDITOR_NOMINATION_REJECTED, "SUCCESS", usuario.id,
             momento_requisicao,
