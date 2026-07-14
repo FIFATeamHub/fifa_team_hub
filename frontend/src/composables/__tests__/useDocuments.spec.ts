@@ -1,29 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useDocuments } from '@/composables/useDocuments'
+import api from '@/services/api'
 
-// Simula o módulo api.js inteiro — nenhuma chamada real ao backend
 vi.mock('@/services/api', () => ({
   default: {
     get: vi.fn(),
-    head: vi.fn(),
     patch: vi.fn(),
   }
 }))
 
-// Importa o mock para configurar os retornos nos testes
-import api from '@/services/api'
-
 describe('useDocuments', () => {
 
   beforeEach(() => {
-    // Limpa os mocks antes de cada teste para não vazar dados entre eles
     vi.clearAllMocks()
   })
 
   it('getDownloadUrl deve retornar a URL assinada do backend', async () => {
     const mockUrl = 'https://storage.googleapis.com/bucket/doc.pdf?sign=abc'
 
-    // Configura o que o axios.get vai "fingir" retornar
     vi.mocked(api.get).mockResolvedValue({ data: { url: mockUrl } })
 
     const { getDownloadUrl } = useDocuments()
@@ -38,7 +32,6 @@ describe('useDocuments', () => {
 
     vi.mocked(api.get).mockResolvedValue({ data: { url: mockUrl } })
 
-    // Espiona o clique no elemento <a>
     const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click')
       .mockImplementation(() => {})
 
@@ -58,6 +51,16 @@ describe('useDocuments', () => {
       .toThrow('Este documento foi removido permanentemente.')
   })
 
+  it('downloadDocument deve lançar erro se o serviço de armazenamento estiver indisponível (503)', async () => {
+    vi.mocked(api.get).mockRejectedValue({ response: { status: 503 } })
+
+    const { downloadDocument } = useDocuments()
+
+    await expect(downloadDocument('doc-999', 'arquivo.pdf'))
+      .rejects
+      .toThrow('Serviço de armazenamento temporariamente indisponível. Tente novamente em instantes.')
+  })
+
   it('reviewDocument deve chamar api.patch com status e reason', async () => {
     vi.mocked(api.patch).mockResolvedValue({ status: 200 })
 
@@ -68,16 +71,6 @@ describe('useDocuments', () => {
       status: 'REJECTED',
       reason: 'Motivo de teste'
     })
-  })
-
-  it('downloadDocument deve lançar erro se o serviço de armazenamento estiver indisponível (503)', async () => {
-    vi.mocked(api.get).mockRejectedValue({ response: { status: 503 } })
-
-    const { downloadDocument } = useDocuments()
-
-    await expect(downloadDocument('doc-999', 'arquivo.pdf'))
-      .rejects
-      .toThrow('Serviço de armazenamento temporariamente indisponível. Tente novamente em instantes.')
   })
 
 })
