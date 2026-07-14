@@ -168,6 +168,18 @@ async function handleReview(doc: Documento) {
     }
 }
 
+async function handleReject(doc: Documento) {
+    const reason = prompt('Por favor, informe o motivo da rejeição:')
+    if (reason === null) return // usuário cancelou
+    
+    try {
+        await reviewDocument(doc.id, 'REJECTED', reason)
+        alert('Documento rejeitado com sucesso!')
+    } catch (err) {
+        alert(err instanceof Error ? err.message : 'Falha ao rejeitar o documento.')
+    }
+}
+
 defineExpose({
     refresh: () => fetchDocuments({ doc_type: selectedType.value || undefined, page: pagination.value.page })
 })
@@ -343,8 +355,9 @@ defineExpose({
 
                     <button
                         v-if="
-                            authStore.user?.role === 'AUDITOR' &&
-                            doc.status === 'PENDING'
+                            ['AUDITOR', 'MEDICAL_STAFF'].includes(authStore.user?.role || '') &&
+                            doc.status === 'PENDING' &&
+                            doc.uploaded_by_id !== authStore.user?.id
                         "
                         class="doc-card__action doc-card__action--primary"
                         @click="handleReview(doc)"
@@ -353,6 +366,21 @@ defineExpose({
                             <path d="M20 6 9 17l-5-5" />
                         </svg>
                         Aprovar
+                    </button>
+
+                    <button
+                        v-if="
+                            ['AUDITOR', 'MEDICAL_STAFF'].includes(authStore.user?.role || '') &&
+                            doc.status === 'PENDING' &&
+                            doc.uploaded_by_id !== authStore.user?.id
+                        "
+                        class="doc-card__action doc-card__action--danger"
+                        @click="handleReject(doc)"
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                        Rejeitar
                     </button>
 
                     <button

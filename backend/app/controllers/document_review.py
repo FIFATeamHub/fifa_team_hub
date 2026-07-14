@@ -48,8 +48,11 @@ def review_document(current_user, document_id):
         if documento.type == TypeDocument.PASSPORT and current_user.role != UserRole.AUDITOR:
             return jsonify({"error": "Apenas AUDITOR pode revisar Passaportes."}), 403
         
-        if documento.type == TypeDocument.LAUDO_MEDICO and current_user.role != UserRole.MEDICAL_STAFF:
-            return jsonify({"error": "Apenas MEDICAL_STAFF pode revisar Laudos Médicos."}), 403
+        if documento.type == TypeDocument.LAUDO_MEDICO:
+            if current_user.role != UserRole.MEDICAL_STAFF:
+                return jsonify({"error": "Apenas MEDICAL_STAFF pode revisar Laudos Médicos."}), 403
+            if documento.selection_id != current_user.selection_id:
+                return jsonify({"error": "Acesso negado. Você só pode revisar laudos da sua própria seleção."}), 403
 
         # Atualiza os dados de revisão do documento
         documento.status = novo_status_texto

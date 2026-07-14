@@ -165,6 +165,40 @@ def bra_medical_staff(app, selection_bra):
         return user
 
 @pytest.fixture
+def bra_medical(app, selection_bra):
+    with app.app_context():
+        user = User(
+            full_name="Brazil Medical",
+            email="bra.medical@test.com",
+            password_hash=hash_password("123456"),
+            role=UserRole.MEDICAL_STAFF,
+            registration_status=RegistrationStatus.APPROVED,
+            selection_id=selection_bra
+        )
+        db.session.add(user)
+        db.session.commit()
+        db.session.refresh(user)
+        db.session.expunge(user)
+        return user
+
+@pytest.fixture
+def arg_medical(app, selection_arg):
+    with app.app_context():
+        user = User(
+            full_name="Argentina Medical",
+            email="arg.medical@test.com",
+            password_hash=hash_password("123456"),
+            role=UserRole.MEDICAL_STAFF,
+            registration_status=RegistrationStatus.APPROVED,
+            selection_id=selection_arg
+        )
+        db.session.add(user)
+        db.session.commit()
+        db.session.refresh(user)
+        db.session.expunge(user)
+        return user
+
+@pytest.fixture
 def organizer(app):
 
     with app.app_context():
@@ -262,6 +296,14 @@ def token_bra_staff(bra_staff):
 def token_arg_staff(arg_staff):
 
     return create_access_token(user_to_token_payload(arg_staff))
+
+@pytest.fixture
+def token_bra_medical(bra_medical):
+    return create_access_token(user_to_token_payload(bra_medical))
+
+@pytest.fixture
+def token_arg_medical(arg_medical):
+    return create_access_token(user_to_token_payload(arg_medical))
 
 @pytest.fixture
 def token_auditor(auditor):
