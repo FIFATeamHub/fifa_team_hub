@@ -1,16 +1,20 @@
 # API de Auditoria
 
-Endpoint exclusivo para leitura dos registros de auditoria e segurança do sistema. Acesso restrito e global para usuários com o perfil `AUDITOR`. Nenhum endpoint de edição ou exclusão é disponibilizado por regra de negócio (imutabilidade).
+> **Nota:** a versão navegável deste documento está em [fifa-hub/api/auditoria](https://fifateamhub.github.io/fifa_team_hub/api/auditoria/), o site oficial de documentação.
 
-### GET `/api/audit`
+Endpoint exclusivo para leitura dos registros de auditoria e segurança do sistema. O acesso é restrito ao perfil `AUDITOR` e escopado pela sua própria seleção (visão global apenas se o auditor não estiver vinculado a nenhuma seleção). Nenhum endpoint de edição ou exclusão é disponibilizado por regra de negócio (imutabilidade).
+
+### GET `/api/audit/`
 
 Retorna de forma paginada e ordenada os logs de ações da plataforma.
 
 **Parâmetros de Query String (Opcionais):**
 - `page` *(int)*: Número da página atual. (Padrão: 1)
 - `per_page` *(int)*: Quantidade de registros listados por página. (Padrão: 20)
-- `action` *(string)*: Filtra por tipo de ação executada (ex: `LOGIN`, `UPLOAD`, `DELETE`, `ACCESS_DENIED`).
+- `action` *(string)*: Filtra por tipo de ação executada (ex: `LOGIN`, `UPLOAD`, `DELETE`, `REVIEW`, `ACCESS_DENIED`, `REGISTER_APPROVED`, `REGISTER_REJECTED`, `AUDITOR_NOMINATION_REQUESTED`, `AUDITOR_NOMINATION_REJECTED`).
 - `user_id` *(uuid)*: Filtra apenas os logs gerados por um autor específico.
+- `start_date` *(date, `YYYY-MM-DD`)*: Início do intervalo, interpretado em `America/Sao_Paulo` e convertido para UTC.
+- `end_date` *(date, `YYYY-MM-DD`)*: Fim do intervalo, interpretado em `America/Sao_Paulo` e convertido para UTC.
 
 **Regras de Segurança (RBAC):**
 - Autenticação via token JWT é estritamente obrigatória (`401 Unauthorized`).

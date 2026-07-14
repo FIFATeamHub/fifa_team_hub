@@ -22,14 +22,15 @@ A aplicação suporta dois backends de armazenamento de documentos, controlados 
 docker-compose up -d --build
 ```
 
-Isso sobe 4 serviços:
+Isso sobe 5 serviços:
 
 | Serviço | Porta | Descrição |
 |---|---|---|
 | `backend` | 5000 | API Flask |
 | `frontend` | 5173 | Interface web (Vite) |
-| `postgres` | 5432 | Banco de dados |
+| `postgres` | 15432 → 5432 | Banco de dados |
 | `fake-gcs` | 4443 | Simulador do Google Cloud Storage |
+| `gcs-init` | — | Serviço one-shot que cria o bucket no `fake-gcs` antes do backend subir |
 
 ### Aplicando as migrations
 
@@ -129,7 +130,7 @@ Problemas comuns encontrados durante o desenvolvimento deste ambiente, e suas ca
 | Sintoma | Causa provável |
 |---|---|
 | `password authentication failed` ao conectar no Postgres | O volume do Postgres já existia de uma subida anterior com credenciais diferentes. O Postgres só aplica `POSTGRES_USER`/`POSTGRES_PASSWORD` na primeira inicialização de um volume vazio. Resolva com `docker-compose down -v` e suba de novo. |
-| `curl: command not found` dentro do container backend | A imagem `python:3.11-slim` não inclui `curl` por padrão; precisa ser instalado explicitamente no Dockerfile via `apt-get install curl`. |
+| `curl: command not found` dentro do container backend | A imagem `python:3.13-slim` não inclui `curl` por padrão; precisa ser instalado explicitamente no Dockerfile via `apt-get install curl`. |
 | `Client sent an HTTP request to an HTTPS server` ao chamar o fake-gcs | O `fake-gcs-server` serve HTTPS por padrão. É necessário passar `command: ["-scheme", "http"]` no serviço `fake-gcs` do `docker-compose.yml` para aceitar conexões HTTP puras. |
 | `scripts/setup-fake-gcs.sh: line 1: #!/bin/bash: No such file or directory` | O arquivo `.sh` foi salvo com um BOM (Byte Order Mark) UTF-8, comum em editores no Windows. Salve o arquivo como UTF-8 **sem BOM**. |
 | `$'\r': command not found` ao rodar um script `.sh` | O arquivo tem quebras de linha estilo Windows (CRLF) em vez de Unix (LF). Um `.gitattributes` com `*.sh text eol=lf` na raiz do repositório previne esse problema para todo o time. |

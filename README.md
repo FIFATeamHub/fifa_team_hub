@@ -66,7 +66,7 @@ Isso significa que:
 
 # Atribuições Semanais
 
-![Rotatividade dos Membros durante as semanas]("C:\Users\force\OneDrive\Imagens\rotatividade_dos_membros_fifa_team_hub.jpeg")
+A rotação de pares e as atribuições de cada sprint estão registradas nas [Atas de Reunião](https://fifateamhub.github.io/fifa_team_hub/) do portal de documentação.
 
 ---
 
@@ -198,12 +198,22 @@ npm run dev
 
 ---
 
-# Estrutura Inicial do Repositório
+# Estrutura do Repositório
 
 ```txt
-fifa-team-hub/
-├── backend/             # API e regras de negócio
-├── frontend/            # Interface da aplicação
-├── docs/                # Documentação técnica e ADRs
-├── .github/             # Templates e CI/CD
+fifa_team_hub/
+├── backend/             # API Flask, migrations, testes
+├── frontend/            # SPA Vue 3
+├── fifa-hub/             # Site de documentação (Astro + Starlight), publicado no GitHub Pages
+├── docs/                 # Documentação técnica legada e ADRs (não publicada)
+├── k8s/                  # Manifesto Kubernetes alternativo (GKE)
+├── config/                # Config/credenciais locais (arquivos sensíveis são gitignored)
+├── database/              # Scripts e seeds de banco
+├── postman/               # Coleções Postman
+├── .github/                # Workflows de CI e deploy
+├── docker-compose.yml       # Orquestração do ambiente local
+├── cloudbuild.yaml           # Pipeline de deploy em produção (Cloud Build)
 └── README.md
+```
+
+> **Nota:** há um `package.json`/`package-lock.json` na raiz que não corresponde a nenhuma aplicação real (provavelmente resultado de um `npm install` acidental fora de `frontend/`) — ver débito técnico documentado no [Changelog](https://fifateamhub.github.io/fifa_team_hub/changelog/).

@@ -126,9 +126,15 @@ Exemplo de mensagem no commit:
 
 **Decisão**: Por ora, `POST /auth/logout` apenas registra o `AuditLog` de sucesso e retorna 200 — o JWT em si **não é invalidado** no backend (ele continua tecnicamente válido até expirar). A invalidação real, via blacklist/revogação de token (ex.: tabela de tokens revogados ou Redis com TTL), fica como **melhoria futura (follow-up)**, fora do escopo desta sprint para economizar tempo/tokens.
 
+---
+
+## Débito técnico conhecido
+
+Uma varredura completa da documentação (14/07/2026) identificou um conjunto de arquivos órfãos e desvios de versão entre ambientes. A lista completa, com justificativa de cada item, está em [Changelog — Débito técnico conhecido](https://fifateamhub.github.io/fifa_team_hub/changelog/) no site oficial. Nenhum desses itens foi removido nesta rodada — ficam registrados para um PR de limpeza dedicado.
 
 
-## ADR-004 · Auditoria de Downloads
+
+## ADR-006 · Auditoria de Downloads
 
 ### Decisão
 

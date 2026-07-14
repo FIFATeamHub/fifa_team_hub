@@ -1,4 +1,6 @@
-# Documentação da API — Módulo de Documentos (Sprint 10)
+# Documentação da API — Módulo de Documentos
+
+> **Nota:** a versão navegável e mais completa deste documento (com todos os endpoints e diagrama de ciclo de vida) está em [fifa-hub/api/documents](https://fifateamhub.github.io/fifa_team_hub/api/documents/), o site oficial de documentação. Todas as rotas abaixo vivem sob o prefixo **`/api/document`** (singular).
 
 Esta especificação serve como referência oficial para o desenvolvimento do Frontend e auditoria do sistema. Todos os endpoints abaixo exigem autenticação via JWT Bearer Token.
 
@@ -31,11 +33,14 @@ O modelo representa os metadados dos arquivos persistidos no sistema.
 * `PASSPORT`
 * `LAUDO_MEDICO`
 * `RELATORIO_TATICO`
+* `ESQUEMA_JOGADAS`
 
 
 #### 2. `DocStatus` (Estados do Documento)
 * `PENDING`: Documento aguardando revisão.
-* `APPROVED`: Documento aprovado e ativo.
+* `APPROVED`: Documento aprovado.
+* `REJECTED`: Documento rejeitado na revisão.
+* `DELETED`: Documento removido (soft delete).
 
 ---
 
@@ -58,7 +63,7 @@ Antes de qualquer persistência ou validação de permissão por perfil, o arqui
 <br>
 
 ### 1. Criar/Upload de Documento
-* **Endpoint:** `POST /document/upload`
+* **Endpoint:** `POST /api/document/upload`
 * **Content-Type:** `multipart/form-data`
 * **Autenticação:** Obrigatória (Bearer Token)
 
@@ -158,7 +163,7 @@ Documento e log de auditoria salvos com sucesso.
 
 <br>
 
-* **Endpoint:** `GET /document`
+* **Endpoint:** `GET /api/document/`
 * **Método HTTP:** `GET`
 * **Autenticação:** Obrigatória (Bearer Token)
 
@@ -167,7 +172,7 @@ Documento e log de auditoria salvos com sucesso.
 #### Parâmetros de Query (URL)
 | Parâmetro | Tipo | Obrigatório | Padrão | Descrição |
 | :--- | :--- | :--- | :--- | :--- |
-| `type` | String | Sim | N/A | Filtra a listagem por um tipo específico do enum `TypeDocument` (ex: `RELATORIO_TATICO`). |
+| `doc_type` | String | Não | N/A | Filtra a listagem por um tipo específico do enum `TypeDocument` (ex: `RELATORIO_TATICO`). |
 | `page` | Inteiro | Não | `1` | Define o número da página atual para fins de paginação do banco. |
 | `per_page` | Inteiro | Não | `10` | Define o limite máximo de registros exibidos por página. |
 
@@ -235,7 +240,7 @@ Retorna uma estrutura padronizada contendo a lista higienizada de metadados (`da
 <br>
 
 ### 3. Obter Detalhes de um Documento por ID
-* **Endpoint:** `GET /document/{document_id}`
+* **Endpoint:** `GET /api/document/{document_id}`
 * **Método HTTP:** `GET`
 * **Autenticação:** Obrigatória (Bearer Token)
 
@@ -307,28 +312,30 @@ Retorna os metadados do documento com sucesso. O campo `storage_url` é omitido 
 
 
 
+### 4. Demais Endpoints (referência rápida)
+
+Documentados em detalhe no site oficial ([fifa-hub/api/documents](https://fifateamhub.github.io/fifa_team_hub/api/documents/)):
+
+| Endpoint | Método | Descrição |
+| :--- | :--- | :--- |
+| `/api/document/pending` | GET | Tipos de documento que o usuário autenticado ainda precisa enviar |
+| `/api/document/{document_id}/download` | GET | Gera URL assinada de download (válida por 15 min) |
+| `/api/document/{document_id}/stream` | GET | Streaming interno do arquivo — apenas quando `STORAGE_BACKEND=local` |
+| `/api/document/{document_id}/review` | PATCH | Aprova/rejeita um documento `PENDING` (body `{status, reason}`); bloqueia autorrevisão; `PASSPORT` só por `AUDITOR`, `LAUDO_MEDICO` só por `MEDICAL_STAFF` da mesma seleção |
+| `/api/document/{document_id}` | DELETE | Soft delete + remoção do arquivo no storage — qualquer perfil exceto `ORGANIZER`, restrito ao próprio autor do upload |
+
+---
+
 ## 📝 Decisões de Arquitetura e Auditoria
 
 ### Rastreamento de Logs de Download (`LogAction.DOWNLOAD`)
 
 * **Contexto**: O enum `LogAction.DOWNLOAD` foi mapeado no ecossistema da aplicação para auditar o fluxo de consumo de arquivos pelas delegações técnicas e organizadores da FIFA.
-* **Decisão de Escopo**: O evento de auditoria será registrado de forma síncrona no exato momento em que a URL assinada (*Signed URL*) do Google Cloud Storage for gerada com sucesso pelo backend através do endpoint `/document/<id>/download`.
+* **Decisão de Escopo**: O evento de auditoria será registrado de forma síncrona no exato momento em que a URL assinada (*Signed URL*) do Google Cloud Storage for gerada com sucesso pelo backend através do endpoint `/api/document/<id>/download`.
 * **Justificativa Técnica**: Rastrear o download definitivo (o momento exato em que o cliente baixa os bytes do bucket do GCS) exigiria a implementação de webhooks, microsserviços de mensageria ou *callbacks* adicionais de infraestrutura em nuvem, o que foi classificado como fora de escopo para os objetivos e prazos da sprint atual.
 * **Mitigação de Ambiguidades**: Para garantir total transparência e clareza para o **AUDITOR** do sistema, o campo `details` salvo no banco de dados especificará explicitamente a natureza do evento, evitando que a geração do link temporário seja interpretada erroneamente como a conclusão da transferência do arquivo pelo cliente.
 
 #### Critérios de Conformidade Validada
 * [x] **Geração de Registro**: Chamada integrada à função centralizada `register_audit_log` sob o status `SUCCESS` e ação `DOWNLOAD`.
 * [x] **Transparência de Detalhes**: Injeção da string explicativa no parâmetro de metadados do log.
-* [x] **Isolamento de Segurança**: Garantia de que logs com o status `ACCESS_DENIED` continuem disparados imediatamente caso haja quebra de isolamento de *multi-tenant* (ex: Staff do Brasil tentando ler documentos da Argentina) antes da geração do link.## 📝 Decisões de Arquitetura e Auditoria
-
-### Rastreamento de Logs de Download (`LogAction.DOWNLOAD`)
-
-* **Contexto**: O enum `LogAction.DOWNLOAD` foi mapeado no ecossistema da aplicação para auditar o fluxo de consumo de arquivos pelas delegações técnicas e organizadores da FIFA.
-* **Decisão de Escopo**: O evento de auditoria será registrado de forma síncrona no exato momento em que a URL assinada (*Signed URL*) do Google Cloud Storage for gerada com sucesso pelo backend através do endpoint `/document/<id>/download`.
-* **Justificativa Técnica**: Rastrear o download definitivo (o momento exato em que o cliente baixa os bytes do bucket do GCS) exigiria a implementação de webhooks, microsserviços de mensageria ou *callbacks* adicionais de infraestrutura em nuvem, o que foi classificado como fora de escopo para os objetivos e prazos da sprint atual.
-* **Mitigação de Ambiguidades**: Para garantir total transparência e clareza para o **AUDITOR** do sistema, o campo `details` salvo no banco de dados especificará explicitamente a natureza do evento, evitando que a geração do link temporário seja interpretada erroneamente como a conclusão da transferência do arquivo pelo cliente.
-
-#### Critérios de Conformidade Validada
-* [x] **Geração de Registro**: Chamada integrada à função centralizada `register_audit_log` sob o status `SUCCESS` e ação `DOWNLOAD`.
-* [x] **Transparência de Detalhes**: Injeção da string explicativa no parâmetro de metadados do log.
-* [x] **Isolamento de Segurança**: Garantia de que logs com o status `ACCESS_DENIED` continuem disparados imediatamente caso haja quebra de isolamento de *multi-tenant* antes da geração do link.
+* [x] **Isolamento de Segurança**: Garantia de que logs com o status `ACCESS_DENIED` continuem disparados imediatamente caso haja quebra de isolamento de *multi-tenant* (ex: Staff do Brasil tentando ler documentos da Argentina) antes da geração do link.

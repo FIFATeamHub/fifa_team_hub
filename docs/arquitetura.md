@@ -58,7 +58,7 @@ Credenciais de acesso e definição de perfis globais ou vinculados a uma seleç
 * `id`: Identificador único (Primary Key).
 * `email`: Email corporativo (Unique).
 * `senha_hash`: Hash seguro da senha de acesso.
-* `funcao`: Perfil de acesso (`TECHNICAL_STAFF`, `ORGANIZER`, `AUDITOR`).
+* `funcao`: Perfil de acesso (`ATHELETE`, `TECHNICAL_STAFF`, `MEDICAL_STAFF`, `ORGANIZER`, `AUDITOR`).
 * `selection_id`: Chave estrangeira (`Foreign Key -> Selection.id`). Permite valor nulo (`NULL`) apenas para Organizadores e Auditores.
 * `created_at`: Data e hora de criação da conta.
 
@@ -82,7 +82,7 @@ Trilha imutável de eventos de segurança.
 * `user_id`: Usuário que realizou a ação (`Foreign Key -> User.id`).
 * `action`: Tipo da ação (`LOGIN`, `LOGOUT`, `UPLOAD`, `DOWNLOAD`, `DELETE`, `ACCESS_DENIED`).
 * `resource_id`: Identificador do recurso afetado (ex: UUID do documento).
-* `status`: Resultado da operação (`SUCCESS` ou `FAILED`).
+* `status`: Resultado da operação (`SUCCESS`, `FAILURE` ou `ACCESS_DENIED`).
 * `ip_address`: Endereço IP de origem da requisição.
 * `created_at`: Registro exato do instante do evento (Timestamp).
 
@@ -103,10 +103,14 @@ O requisito mais crítico do **FIFA Team Hub** é o isolamento completo de dados
 
 ## 🔑 3. Matriz de Permissões e Perfis de Usuário
 
-O sistema opera com base em controle de acesso baseado em funções (RBAC). Abaixo estão documentados os limites operacionais de cada um dos 3 tipos de usuários:
+O sistema opera com base em controle de acesso baseado em funções (RBAC), com **5 perfis** (`UserRole`):
 
 | Perfil de Usuário | O que PODE fazer | O que NÃO PODE fazer |
 | --- | --- | --- |
-| **`TECHNICAL_STAFF`**<br>*(Comissões, Médicos, Atletas)*<br> |<br> • Autenticar no sistema.<br> • Realizar upload de documentos da **sua** seleção. <br>• Listar e baixar documentos da **sua** seleção.<br> • Visualizar o histórico de ações da sua própria conta. <br> | <br>  • Visualizar, baixar ou listar qualquer documento de **outra** seleção.<br>• Criar ou excluir usuários. <br>• Visualizar logs globais do sistema. <br> |
-| **`ORGANIZER`**<br>*(Organizadores da FIFA/Admin)* | <br>• Cadastrar novas seleções no sistema.<br>• Criar e gerenciar contas de usuários.<br>• Visualizar o status de envio de documentos (metadados burocráticos). | <br>• Acessar o conteúdo confidencial de documentos táticos ou esquemas de jogos.<br>• Alterar registros de logs de auditoria. |
-| **`AUDITOR`**<br>*(Auditores de Conformidade)* | <br>• Visualizar **todos** os logs de auditoria do sistema (`AuditLog`).<br>• Rastrear tentativas de acessos negados (`ACCESS_DENIED`).<br>• Auditar quem enviou e quem baixou arquivos. | <br>• Realizar uploads ou modificações de arquivos.<br>• Alterar ou apagar registros de logs (os logs são de leitura exclusiva e imutáveis).<br>• Alterar permissões de usuários. |
+| **`ATHELETE`**<br>*(sic — grafia usada no enum do código)* | <br>• Autenticar no sistema (após aprovação do cadastro).<br>• Fazer upload de `PASSPORT` e `LAUDO_MEDICO` da **sua** seleção.<br>• Listar/baixar documentos da **sua** seleção. | <br>• Acessar documentos de **outra** seleção.<br>• Revisar (aprovar/rejeitar) documentos.<br>• Ver logs de auditoria. |
+| **`TECHNICAL_STAFF`** | <br>• Fazer upload de `CONVOCADO`, `RELATORIO_TATICO` e `PASSPORT` da **sua** seleção.<br>• Listar/baixar documentos da **sua** seleção. | <br>• Acessar documentos de outra seleção.<br>• Revisar documentos (nenhum tipo é revisável por este perfil).<br>• Ver logs de auditoria. |
+| **`MEDICAL_STAFF`** | <br>• Fazer upload de `LAUDO_MEDICO` e `PASSPORT` da **sua** seleção.<br>• Revisar (aprovar/rejeitar) `LAUDO_MEDICO` da própria seleção, exceto os que ele mesmo enviou. | <br>• Acessar documentos de outra seleção.<br>• Revisar `PASSPORT`. |
+| **`ORGANIZER`**<br>*(Organizadores da FIFA/Admin)* | <br>• Cadastrar novas seleções e o primeiro `AUDITOR` de cada uma (`POST /api/selection/`).<br>• Confirmar nomeações de novos `AUDITOR` indicados por outro `AUDITOR`.<br>• Visualizar `PASSPORT`/`CONVOCADO` de **todas** as seleções (metadados). | <br>• Fazer upload de documentos.<br>• Acessar o conteúdo de documentos táticos ou laudos médicos.<br>• Ver logs de auditoria.<br>• Aprovar cadastros comuns (isso é papel do `AUDITOR`). |
+| **`AUDITOR`**<br>*(Auditores de Conformidade)* | <br>• Visualizar os logs de auditoria (`AuditLog`) da **própria seleção** (ou globais, se não vinculado a nenhuma).<br>• Aprovar/rejeitar cadastros `PENDING` da própria seleção.<br>• Indicar outro usuário para `AUDITOR` (fica pendente até confirmação do `ORGANIZER`).<br>• Fazer upload de `PASSPORT`.<br>• Revisar `PASSPORT` (exceto os que ele mesmo enviou). | <br>• Listar/baixar documentos pela rota geral de documentos (`403` — auditor só acessa o endpoint de auditoria).<br>• Alterar ou apagar registros de logs (leitura exclusiva e imutável). |
+
+> **Nota:** todo cadastro criado por autocadastro (`POST /auth/register`) nasce `ATHELETE`/`PENDING` — a atribuição de qualquer outro papel acontece apenas no momento da aprovação (`POST /api/auth/registrations/<id>/approve`), nunca no registro em si. Ver [API de Autenticação](api-auth.md).
