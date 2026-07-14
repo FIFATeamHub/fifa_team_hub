@@ -1,56 +1,99 @@
 <template>
-    <div v-if="isOpen" class="modal-overlay" @click.self="onClose">
-        <div class="modal-box">
-            <h2 class="modal-titulo">Enviar Documento</h2>
+    <div v-if="isOpen" class="upload-modal-overlay" @click.self="onClose">
+        <div class="upload-modal">
 
-            <!-- Area da upload-->
-            <div class="campo">
-                <label>Selecione o arquivo</label>
-                <input 
-                type="file" 
-                accept=".pdf,.jpg,.jpeg,.png,.docx"
-                :disabled="isLoading"
-                @change="handleFileChange" 
+            <header class="upload-modal__header">
+                <h2 class="upload-modal__title">Enviar Documento</h2>
+            </header>
+
+            <div
+                class="upload-modal__dropzone"
+                :class="{
+                    'upload-modal__dropzone--active': isDragging,
+                    'upload-modal__dropzone--filled': !!selectedFile
+                }"
+                @dragover.prevent="isDragging = true"
+                @dragleave.prevent="isDragging = false"
+                @drop.prevent="handleDrop"
+            >
+                <span class="upload-modal__dropzone-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 15V4m0 0-4 4m4-4 4 4" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </span>
+
+                <p class="upload-modal__dropzone-title">
+                    {{ selectedFile ? selectedFile.name : 'Arraste arquivos aqui' }}
+                </p>
+
+                <p v-if="!selectedFile" class="upload-modal__dropzone-hint">
+                    ou <span class="upload-modal__dropzone-link">clique para selecionar</span> do dispositivo
+                </p>
+                <p v-else class="upload-modal__dropzone-hint">
+                    Clique para selecionar outro arquivo
+                </p>
+
+                <div class="upload-modal__tags">
+                    <span class="upload-modal__tag">PDF</span>
+                    <span class="upload-modal__tag">DOCX</span>
+                    <span class="upload-modal__tag">JPG</span>
+                    <span class="upload-modal__tag">PNG</span>
+                    <span class="upload-modal__tag">máx. 10MB</span>
+                </div>
+
+                <input
+                    type="file"
+                    class="upload-modal__file-input"
+                    accept=".pdf,.jpg,.jpeg,.png,.docx"
+                    :disabled="isLoading"
+                    @change="handleFileChange"
                 />
             </div>
 
-            <!-- Campo: Tipo de documento-->
-            <div class="campo">
-                <label>Tipo de documento</label>
-                <select v-model="selectedType" :disabled="isLoading">
-                    <option value="" disabled>Selecione...</option>
-                    <option value="CONVOCADO">Convocação</option>
-                    <option value="PASSPORT">Passaporte</option>
-                    <option value="LAUDO_MEDICO">Laudo Médico</option>
-                    <option value="RELATORIO_TATICO">Relatório Tático</option>
-                    <option value="ESQUEMA_JOGADAS">Esquema de Jogadas</option>
-                </select>
+            <div class="upload-modal__field">
+                <label class="upload-modal__label" for="upload-modal-category">Categoria</label>
+                <div class="upload-modal__select-wrap">
+                    <select
+                        id="upload-modal-category"
+                        v-model="selectedType"
+                        class="upload-modal__select"
+                        :disabled="isLoading || lockType"
+                    >
+                        <option value="" disabled>Selecione uma categoria</option>
+                        <option value="CONVOCADO">Convocação</option>
+                        <option value="PASSPORT">Passaporte</option>
+                        <option value="LAUDO_MEDICO">Laudo Médico</option>
+                        <option value="RELATORIO_TATICO">Relatório Tático</option>
+                        <option value="ESQUEMA_JOGADAS">Esquema de Jogadas</option>
+                    </select>
+                    <svg class="upload-modal__select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
             </div>
 
-            <!-- Barra de Progresso (só durante o upload)-->
-             <div v-if="isLoading" class="progresso-container">
-                <div class="progresso-barra" :style="{width: uploadProgress + '%'}"></div>
-                <span>{{ uploadProgress }}%</span>
-             </div>
+            <div v-if="isLoading" class="upload-modal__progress">
+                <div class="upload-modal__progress-bar" :style="{ width: uploadProgress + '%' }"></div>
+                <span class="upload-modal__progress-label">{{ uploadProgress }}%</span>
+            </div>
 
-             <!-- Mensagem de Erro -->
-             <p v-if="errorMessage" class="mensagem-erro">{{ errorMessage }}</p>
+            <p v-if="errorMessage" class="upload-modal__error">{{ errorMessage }}</p>
 
-             <!-- Botoes -->
-              <div class="botoes">
-                <button @click="onClose" :disabled="isLoading" class="btn-cancelar">
-                Cancelar
+            <div class="upload-modal__actions">
+                <button @click="onClose" :disabled="isLoading" class="upload-modal__btn upload-modal__btn--secondary">
+                    Cancelar
                 </button>
-                <button @click="handleSubmit" :disabled="!isFormValid || isLoading" class="btn-enviar">
-                {{ isLoading ? 'Enviando...' : 'Enviar' }}
+                <button @click="handleSubmit" :disabled="!isFormValid || isLoading" class="upload-modal__btn upload-modal__btn--primary">
+                    {{ isLoading ? 'Enviando...' : 'Enviar' }}
                 </button>
-             </div>
-             
+            </div>
+
         </div>
     </div>
 </template>
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { uploadDocument } from '@/services/documentService.js'
 
 // Props com tipagem correta para TypeScript
@@ -58,22 +101,45 @@ const props = defineProps<{
   isOpen: boolean
   onClose?: () => void
   onSuccess?: (doc: unknown) => void
+  preselectedType?: string
 }>()
 
+// Se o modal for aberto a partir de um item do Painel de Pendências, o tipo
+// já vem definido e o select fica travado para evitar que o Jogador envie
+// um tipo de documento fora do que está pendente para ele.
+const lockType = computed(() => Boolean(props.preselectedType))
+
 const selectedFile     = ref<File | null>(null)
-const selectedType     = ref('')
+const selectedType     = ref(props.preselectedType ?? '')
+const isDragging       = ref(false)
 const uploadProgress   = ref(0)
 const isLoading        = ref(false)
 const errorMessage     = ref('')
+
+watch(
+  () => props.preselectedType,
+  (novoTipo) => {
+    selectedType.value = novoTipo ?? ''
+  }
+)
+
+watch(
+  () => props.isOpen,
+  (aberto) => {
+    if (aberto) {
+      selectedFile.value = null
+      errorMessage.value = ''
+      uploadProgress.value = 0
+      selectedType.value = props.preselectedType ?? ''
+    }
+  }
+)
 
 const isFormValid = computed(() =>
   selectedFile.value !== null && selectedType.value !== ''
 )
 
-// "event: Event" diz ao TypeScript qual é o tipo do parâmetro
-function handleFileChange(event: Event) {
-  const input = event.target as HTMLInputElement
-  const arquivo = input.files?.[0]
+function applyFile(arquivo: File | null | undefined) {
   errorMessage.value = ''
 
   if (arquivo && arquivo.size > 10 * 1024 * 1024) {
@@ -83,6 +149,17 @@ function handleFileChange(event: Event) {
   }
 
   selectedFile.value = arquivo ?? null
+}
+
+// "event: Event" diz ao TypeScript qual é o tipo do parâmetro
+function handleFileChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  applyFile(input.files?.[0])
+}
+
+function handleDrop(event: DragEvent) {
+  isDragging.value = false
+  applyFile(event.dataTransfer?.files?.[0])
 }
 
 async function handleSubmit() {
@@ -126,122 +203,296 @@ async function handleSubmit() {
 </script>
 
 <style scoped>
-/* Fundo escuro que cobre a tela toda */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+
+.upload-modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-6);
+    background-color: color-mix(in srgb, var(--color-bg-deep) 80%, transparent);
+    z-index: var(--z-modal);
 }
-/* A caixa branca do modal */
-.modal-box {
-  background-color: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 12px;
-  padding: 2rem;
-  width: 100%;
-  max-width: 480px;
-  display: flex;
-  flex-direction: column;
-  gap: 1.2rem;
+
+.upload-modal {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    width: 100%;
+    max-width: 30rem;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: var(--padding-card);
+    background-color: var(--color-surface-primary);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-deep);
 }
-.modal-titulo {
-  color: #f1f5f9;
-  margin: 0;
-  font-size: 1.25rem;
+
+.upload-modal__header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
 }
-/* Cada campo do formulário */
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+
+.upload-modal__title {
+    font-family: var(--font-heading);
+    font-weight: var(--font-weight-black);
+    font-size: var(--font-size-h3);
+    letter-spacing: var(--letter-spacing-heading);
+    color: var(--color-text-primary);
 }
-.campo label {
-  color: #94a3b8;
-  font-size: 0.875rem;
+
+.upload-modal__dropzone {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    padding: var(--space-8) var(--space-4);
+    background-color: var(--color-bg-deep);
+    border: 1px dashed var(--color-border-default);
+    border-radius: var(--radius-xl);
+    text-align: center;
+    transition: border-color var(--transition-default), background-color var(--transition-default);
 }
-.campo input,
-.campo select {
-  background-color: #0f172a;
-  color: #f1f5f9;
-  border: 1px solid #334155;
-  border-radius: 8px;
-  padding: 0.6rem 0.8rem;
-  font-size: 0.95rem;
-  outline: none;
+
+.upload-modal__dropzone:hover,
+.upload-modal__dropzone--active {
+    border-color: var(--color-border-gold-full);
+    background-color: var(--color-gold-dim);
 }
-.campo input:disabled,
-.campo select:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+
+.upload-modal__dropzone--filled {
+    border-style: solid;
+    border-color: var(--color-border-teal);
 }
-/* Barra de progresso */
-.progresso-container {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background-color: #0f172a;
-  border-radius: 8px;
-  padding: 0.5rem 0.8rem;
-  overflow: hidden;
-  position: relative;
+
+.upload-modal__file-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
 }
-.progresso-barra {
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  background-color: #3b82f6;
-  border-radius: 8px;
-  transition: width 0.3s ease;
-  opacity: 0.3;
+
+.upload-modal__dropzone-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    background-color: var(--color-warning-bg);
+    border: 1px solid var(--color-border-gold);
+    border-radius: var(--radius-lg);
+    color: var(--color-gold);
+    transition: background-color var(--transition-default), border-color var(--transition-default), color var(--transition-default);
 }
-.progresso-container span {
-  position: relative; /* fica na frente da barra */
-  color: #f1f5f9;
-  font-size: 0.875rem;
-  font-weight: 600;
+
+.upload-modal__dropzone--filled .upload-modal__dropzone-icon {
+    background-color: var(--color-success-bg);
+    border-color: var(--color-border-teal);
+    color: var(--color-teal-light);
 }
-/* Mensagem de erro */
-.mensagem-erro {
-  color: #f87171;
-  font-size: 0.875rem;
-  margin: 0;
-  background-color: rgba(248, 113, 113, 0.1);
-  border-radius: 6px;
-  padding: 0.5rem 0.8rem;
+
+.upload-modal__dropzone-icon svg {
+    width: 24px;
+    height: 24px;
 }
-/* Linha dos botões */
-.botoes {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
+
+.upload-modal__dropzone-title {
+    font-family: var(--font-body);
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-body);
+    color: var(--color-text-primary);
 }
-.btn-cancelar,
-.btn-enviar {
-  padding: 0.55rem 1.25rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.2s;
+
+.upload-modal__dropzone-hint {
+    font-family: var(--font-body);
+    font-size: var(--font-size-small);
+    color: var(--color-text-tertiary);
 }
-.btn-cancelar {
-  background-color: #334155;
-  color: #cbd5e1;
+
+.upload-modal__dropzone-link {
+    color: var(--color-gold);
+    font-weight: var(--font-weight-semibold);
+    text-decoration: underline;
 }
-.btn-enviar {
-  background-color: #3b82f6;
-  color: white;
+
+.upload-modal__tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
 }
-.btn-cancelar:disabled,
-.btn-enviar:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+
+.upload-modal__tag {
+    padding: var(--space-1) var(--space-3);
+    background-color: var(--color-surface-elevated);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-full);
+    color: var(--color-text-tertiary);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-label);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
 }
+
+.upload-modal__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.upload-modal__label {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-label);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+}
+
+.upload-modal__select-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.upload-modal__select {
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    padding: var(--space-3) var(--space-10) var(--space-3) var(--space-4);
+    background-color: var(--color-bg-deep);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-primary);
+    font-family: var(--font-body);
+    font-size: var(--font-size-body);
+    cursor: pointer;
+    transition: border-color var(--transition-default);
+}
+
+.upload-modal__select:focus {
+    outline: none;
+    border-color: var(--color-border-gold-full);
+}
+
+.upload-modal__select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.upload-modal__select-chevron {
+    position: absolute;
+    right: var(--space-4);
+    width: 14px;
+    height: 14px;
+    color: var(--color-text-tertiary);
+    pointer-events: none;
+}
+
+.upload-modal__progress {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    background-color: var(--color-bg-deep);
+    border-radius: var(--radius-sm);
+    padding: var(--space-2) var(--space-4);
+    overflow: hidden;
+}
+
+.upload-modal__progress-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background-color: var(--color-gold);
+    border-radius: var(--radius-sm);
+    transition: width var(--transition-slow);
+    opacity: 0.3;
+}
+
+.upload-modal__progress-label {
+    position: relative;
+    color: var(--color-text-primary);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-semibold);
+}
+
+.upload-modal__error {
+    color: var(--color-danger);
+    font-family: var(--font-body);
+    font-size: var(--font-size-small);
+    background-color: var(--color-danger-bg);
+    border: 1px solid var(--color-danger-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-2) var(--space-4);
+}
+
+.upload-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+}
+
+.upload-modal__btn {
+    padding: var(--space-3) var(--space-6);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: var(--font-size-body);
+    cursor: pointer;
+    transition: background-color var(--transition-default), border-color var(--transition-default), color var(--transition-default);
+}
+
+.upload-modal__btn--secondary {
+    background: none;
+    border: 1px solid var(--color-border-default);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-semibold);
+}
+
+.upload-modal__btn--secondary:hover:not(:disabled) {
+    border-color: var(--color-border-teal);
+    color: var(--color-teal-light);
+}
+
+.upload-modal__btn--primary {
+    background-color: var(--color-gold);
+    border: none;
+    color: var(--color-bg-deep);
+    font-weight: var(--font-weight-black);
+}
+
+.upload-modal__btn--primary:hover:not(:disabled) {
+    background-color: var(--color-gold-hover);
+}
+
+.upload-modal__btn--primary:disabled {
+    background-color: var(--color-surface-elevated);
+    color: var(--color-text-tertiary);
+}
+
+.upload-modal__btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+@media (max-width: 480px) {
+
+    .upload-modal {
+        padding: var(--space-5);
+        gap: var(--space-5);
+    }
+
+    .upload-modal__dropzone {
+        padding: var(--space-6) var(--space-3);
+    }
+
+}
+
 </style>

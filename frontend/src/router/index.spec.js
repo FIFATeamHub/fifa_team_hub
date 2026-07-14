@@ -45,3 +45,37 @@ describe('router - bloqueio de rotas guest', () => {
     expect(router.currentRoute.value.name).toBe('login')
   })
 })
+
+describe('router - guard da rota /audit', () => {
+  beforeEach(() => {
+    vi.mocked(useAuthStore).mockReset()
+  })
+
+  it('ORGANIZER consegue acessar /audit', async () => {
+    vi.mocked(useAuthStore).mockReturnValue({
+      isAuthenticated: true,
+      token: 'fake-token',
+      user: { role: 'ORGANIZER' },
+      fetchMe: vi.fn(),
+      logout: vi.fn(),
+    })
+
+    await router.push('/audit')
+
+    expect(router.currentRoute.value.name).toBe('audit')
+  })
+
+  it('TECHNICAL_STAFF é redirecionado para 403 ao acessar /audit', async () => {
+    vi.mocked(useAuthStore).mockReturnValue({
+      isAuthenticated: true,
+      token: 'fake-token',
+      user: { role: 'TECHNICAL_STAFF' },
+      fetchMe: vi.fn(),
+      logout: vi.fn(),
+    })
+
+    await router.push('/audit')
+
+    expect(router.currentRoute.value.name).toBe('403')
+  })
+})

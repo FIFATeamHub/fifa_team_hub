@@ -65,7 +65,6 @@ class DocumentService:
                 )
             )
         else:
-            # Se o perfil não for mapeado, retorna None para a controller barrar
             return None
 
         # 3. Suporte ao Filtro de URL Dinâmico (?doc_type=X)
@@ -94,26 +93,21 @@ class DocumentService:
 
         # 2. Validação da Matriz de Permissões
         
-        # --- Caso do ORGANIZER ---
         if user_role == UserRole.ORGANIZER:
             if document.type in [TypeDocument.PASSPORT, TypeDocument.CONVOCADO]:
                 return document, None
             return None, f"ORGANIZER tentou acessar tipo restrito: {document.type}"
 
-        # --- Caso dos demais perfis vinculados a uma seleção ---
         else:
-            # Trava Primária: Garantia absoluta de isolamento de país/seleção
             if document.selection_id != selection_id:
                 return None, f"Usuário da seleção {selection_id} tentou acessar documento da seleção {document.selection_id}"
 
-            # Trava Secundária: Validação por tipo permitido dentro da seleção
             if user_role == UserRole.AUDITOR:
                 if document.type in [TypeDocument.PASSPORT, TypeDocument.LAUDO_MEDICO]:
                     return document, None
                 return None, "AUDITOR tentou acessar tipo não autorizado"
 
             elif user_role in [UserRole.TECHNICAL_STAFF, UserRole.ATHELETE]:
-                # Vê os documentos táticos/gerais do time OU o seu PRÓPRIO passaporte
                 if document.type in [TypeDocument.CONVOCADO, TypeDocument.LAUDO_MEDICO, TypeDocument.RELATORIO_TATICO, TypeDocument.ESQUEMA_JOGADAS]:
                     return document, None
                 elif document.type == TypeDocument.PASSPORT and document.uploaded_by == user_id:
@@ -121,7 +115,6 @@ class DocumentService:
                 return None, "TECHNICAL_STAFF/ATHLETE tentou acessar passaporte de terceiro ou tipo inválido"
 
             elif user_role == UserRole.MEDICAL_STAFF:
-                # Vê LAUDO_MEDICO do time OU o seu PRÓPRIO passaporte
                 if document.type == TypeDocument.LAUDO_MEDICO:
                     return document, None
                 elif document.type == TypeDocument.PASSPORT and document.uploaded_by == user_id:
@@ -133,15 +126,6 @@ class DocumentService:
     
     @staticmethod
     def list_pending_documents(current_user):
-        """
-        Retorna os tipos de documentos obrigatórios que o usuário
-        autenticado ainda precisa enviar.
-
-        Regras:
-        - Apenas atletas possuem documentos obrigatórios nesta primeira versão.
-        - Documentos APPROVED e PENDING contam como enviados.
-        - Documentos REJECTED e DELETED continuam sendo considerados pendentes.
-        """
 
         required_documents = REQUIRED_DOCUMENTS_BY_ROLE.get(
             current_user.role,

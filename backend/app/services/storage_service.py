@@ -17,7 +17,8 @@ class StorageService(ABC):
         self,
         file_stream,
         stored_name: str,
-        selection_id: str
+        selection_id: str,
+        content_type: str = None
     ) -> str:
         pass
         
@@ -44,8 +45,11 @@ class LocalStorageService(StorageService):
         self,
         file_stream,
         stored_name: str,
-        selection_id: str
+        selection_id: str,
+        content_type: str = None
     ) -> str:
+        # Content-Type não é persistido no storage local: quem serve o arquivo
+        # (stream_local_file) usa send_file, que já infere o tipo pela extensão.
         safe_selection_id = os.path.basename(selection_id.strip())
         safe_stored_name = os.path.basename(stored_name.strip())
 
@@ -93,12 +97,9 @@ class LocalStorageService(StorageService):
             
     def get_signed_url(self, storage_path: str, document_id: str = None, expiration_minutes: int = 15) -> str:
 
-        path = Path(storage_path)
-
-        if len(path.parts) >= 2:
-            return f"/static/uploads/{path.parts[-2]}/{path.parts[-1]}"
-
-        return f"/static/uploads/{path.name}"
+        # Armazenamento local não tem conceito de URL assinada pública: o arquivo
+        # só pode ser servido através da rota autenticada de streaming.
+        return f"/api/document/{document_id}/stream"
     
 
 
@@ -114,15 +115,17 @@ class GCSStorageService(StorageService):
         self.client = gcs_storage.Client(project=project_id, credentials=credentials)
         self.bucket = self.client.bucket(bucket_name)
 
-    def save_file(self, file_stream, stored_name: str, selection_id: str) -> str:
+    def save_file(self, file_stream, stored_name: str, selection_id: str, content_type: str = None) -> str:
 
         blob_path = f"{selection_id}/{stored_name}"
         blob = self.bucket.blob(blob_path)
-        
-       
+
         file_stream.seek(0)
-        blob.upload_from_file(file_stream)
-        
+        # Sem content_type explícito, o GCS grava o blob como
+        # application/octet-stream: o navegador não consegue exibir o arquivo
+        # inline (só baixa em silêncio) ao abrir a URL assinada em "Visualizar".
+        blob.upload_from_file(file_stream, content_type=content_type)
+
         return f"gs://{self.bucket_name}/{blob_path}"
     
 

@@ -24,7 +24,7 @@ def test_gcs_save_file(gcs_service):
     
     gcs_service.bucket.blob.assert_called_once_with("BRA/document.pdf")
     
-    mock_blob.upload_from_file.assert_called_once_with(file_stream)
+    mock_blob.upload_from_file.assert_called_once_with(file_stream, content_type=None)
 
 def test_gcs_get_signed_url(gcs_service):
     # 1. Preparação: Configura o que a função generate_signed_url deve simular

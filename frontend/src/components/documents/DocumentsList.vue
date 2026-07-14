@@ -3,8 +3,29 @@ import { ref, watch, onMounted } from 'vue'
 import { useDocuments, type Documento } from '@/composables/useDocuments'
 import { usePermissions } from '@/composables/usePermissions';
 import { useAuthStore } from '@/stores/auth.js'
+import UploadDocumentModal from '@/components/documents/UploadDocumentModal.vue'
 
 const selectedType = ref('')
+
+// Controla o modal de upload disparado a partir de um item pendente específico
+const uploadModalOpen = ref(false)
+const uploadDocType = ref('')
+
+function openUploadFor(docType: string) {
+    uploadDocType.value = docType
+    uploadModalOpen.value = true
+}
+
+function closeUploadModal() {
+    uploadModalOpen.value = false
+}
+
+async function handleUploadSuccess() {
+    uploadModalOpen.value = false
+    // Atualiza as duas listas: o documento some das pendências e aparece na listagem geral
+    await fetchDocuments({ doc_type: selectedType.value || undefined, page: 1 })
+    await fetchPendingDocuments()
+}
 
 watch(selectedType, async () => {
 
@@ -26,7 +47,8 @@ const {
     fetchPendingDocuments,
     deleteDocument,
     downloadDocument,
-    previewDocument
+    previewDocument,
+    reviewDocument
 } = useDocuments()
 
 const { can } = usePermissions()
@@ -137,32 +159,71 @@ async function handleView(doc: Documento) {
     }
 }
 
+async function handleReview(doc: Documento) {
+    try {
+        await reviewDocument(doc.id, 'APPROVED')
+        alert('Documento aprovado com sucesso!')
+    } catch (err) {
+        alert(err instanceof Error ? err.message : 'Falha ao aprovar o documento.')
+    }
+}
+
+async function handleReject(doc: Documento) {
+    const reason = prompt('Por favor, informe o motivo da rejeição:')
+    if (reason === null) return // usuário cancelou
+    
+    try {
+        await reviewDocument(doc.id, 'REJECTED', reason)
+        alert('Documento rejeitado com sucesso!')
+    } catch (err) {
+        alert(err instanceof Error ? err.message : 'Falha ao rejeitar o documento.')
+    }
+}
+
+defineExpose({
+    refresh: () => fetchDocuments({ doc_type: selectedType.value || undefined, page: pagination.value.page })
+})
+
 </script>
 
 <template>
 
     <div class="documents">
 
-        <div class="documents__toolbar">
-
-            <div
-                v-if="
-                    authStore.user?.role === 'ATHELETE' &&
-                    pendingDocuments.length > 0
-                "
-                class="documents__pending"
-            >
+        <div
+            v-if="
+                authStore.user?.role === 'ATHELETE' &&
+                pendingDocuments.length > 0
+            "
+            class="documents__pending"
+        >
+            <div class="documents__pending-head">
+                <svg class="documents__pending-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 9v4m0 4h.01M10.3 3.9 2.6 17a1.5 1.5 0 0 0 1.3 2.2h16.2a1.5 1.5 0 0 0 1.3-2.2L13.7 3.9a1.5 1.5 0 0 0-2.6 0Z" />
+                </svg>
                 <h3>Documentos Pendentes</h3>
-
-                <ul>
-                    <li
-                        v-for="doc in pendingDocuments"
-                        :key="doc.doc_type"
-                    >
-                        {{ doc.doc_type }}
-                    </li>
-                </ul>
             </div>
+
+            <ul>
+                <li
+                    v-for="doc in pendingDocuments"
+                    :key="doc.doc_type"
+                    class="documents__pending-item"
+                >
+                    <span>{{ formatDocType(doc.doc_type) }}</span>
+
+                    <button
+                        v-if="can('upload:documents')"
+                        class="documents__pending-upload-btn"
+                        @click="openUploadFor(doc.doc_type)"
+                    >
+                        Enviar
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="documents__toolbar">
 
             <div class="documents__filter">
                 <label for="doc-type-filter" class="documents__filter-label">Filtro</label>
@@ -182,6 +243,10 @@ async function handleView(doc: Documento) {
                         <path d="M6 9l6 6 6-6" />
                     </svg>
                 </div>
+            </div>
+
+            <div v-if="$slots['toolbar-actions']" class="documents__toolbar-actions">
+                <slot name="toolbar-actions"></slot>
             </div>
 
         </div>
@@ -290,6 +355,36 @@ async function handleView(doc: Documento) {
 
                     <button
                         v-if="
+                            ['AUDITOR', 'MEDICAL_STAFF'].includes(authStore.user?.role || '') &&
+                            doc.status === 'PENDING' &&
+                            doc.uploaded_by_id !== authStore.user?.id
+                        "
+                        class="doc-card__action doc-card__action--primary"
+                        @click="handleReview(doc)"
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 6 9 17l-5-5" />
+                        </svg>
+                        Aprovar
+                    </button>
+
+                    <button
+                        v-if="
+                            ['AUDITOR', 'MEDICAL_STAFF'].includes(authStore.user?.role || '') &&
+                            doc.status === 'PENDING' &&
+                            doc.uploaded_by_id !== authStore.user?.id
+                        "
+                        class="doc-card__action doc-card__action--danger"
+                        @click="handleReject(doc)"
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                        Rejeitar
+                    </button>
+
+                    <button
+                        v-if="
                             can('upload:documents') &&
                             authStore.user?.id === doc.uploaded_by_id
                         "
@@ -327,6 +422,13 @@ async function handleView(doc: Documento) {
 
     </div>
 
+    <UploadDocumentModal
+        :isOpen="uploadModalOpen"
+        :preselectedType="uploadDocType"
+        :onClose="closeUploadModal"
+        :onSuccess="handleUploadSuccess"
+    />
+
 </template>
 
 
@@ -338,11 +440,87 @@ async function handleView(doc: Documento) {
     gap: var(--space-8);
 }
 
+.documents__pending {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-5) var(--padding-card);
+    background-color: var(--color-surface-primary);
+    border: 1px solid var(--color-warning-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+}
+
+.documents__pending-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.documents__pending-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: var(--color-gold);
+}
+
+.documents__pending h3 {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-label);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+    color: var(--color-gold);
+}
+
+.documents__pending ul {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+}
+
+.documents__pending-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-3) 0;
+    color: var(--color-text-secondary);
+    font-family: var(--font-body);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-body);
+}
+
+.documents__pending-item + .documents__pending-item {
+    border-top: 1px solid var(--color-border-subtle);
+}
+
+.documents__pending-upload-btn {
+    padding: var(--space-1) var(--space-4);
+    background: none;
+    border: 1px solid var(--color-border-gold);
+    border-radius: var(--radius-full);
+    color: var(--color-gold);
+    font-family: var(--font-body);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-small);
+    cursor: pointer;
+    transition: background-color var(--transition-default), color var(--transition-default);
+}
+
+.documents__pending-upload-btn:hover {
+    background-color: var(--color-gold);
+    color: var(--color-bg-deep);
+}
+
 .documents__toolbar {
     display: flex;
     align-items: flex-end;
     flex-wrap: wrap;
     gap: var(--space-6);
+}
+
+.documents__toolbar-actions {
+    margin-left: auto;
 }
 
 .documents__filter {
@@ -626,6 +804,16 @@ async function handleView(doc: Documento) {
 .doc-card__action--danger:hover {
     border-color: var(--color-danger);
     color: var(--color-danger);
+}
+
+.doc-card__action--primary {
+    color: var(--color-teal-light);
+    border-color: var(--color-border-teal);
+}
+
+.doc-card__action--primary:hover {
+    border-color: var(--color-teal);
+    color: var(--color-teal);
 }
 
 .documents__pagination {

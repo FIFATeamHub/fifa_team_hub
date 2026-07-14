@@ -7,6 +7,7 @@ import dashboardView from '../views/dashboardView.vue'
 import documentsView from '../views/documentsView.vue'
 import uploadView from '../views/uploadView.vue'
 import auditView from '../views/auditView.vue'
+import organizerView from '../views/organizerView.vue'
 import noAcessView from '../views/403View.vue'
 import { useAuthStore } from '../stores/auth'
 
@@ -62,6 +63,12 @@ const router = createRouter({
       component: auditView
     },
     {
+      path: '/organizer',
+      name: 'organizer',
+      meta: {requiresAuth: true},
+      component: organizerView
+    },
+    {
       path: '/403error',
       name: '403',
       meta: {requiresAuth: true},
@@ -96,7 +103,15 @@ router.beforeEach(async (to) => {
   if (to.name == 'audit'){
     const userRole = authStore.user?.role
 
-    if(userRole !== "AUDITOR"){
+    if(userRole !== "AUDITOR" && userRole !== "ORGANIZER"){
+      return {name : "403"}
+    }
+  }
+
+  if (to.name == 'organizer'){
+    const userRole = authStore.user?.role
+
+    if(userRole !== "ORGANIZER"){
       return {name : "403"}
     }
   }

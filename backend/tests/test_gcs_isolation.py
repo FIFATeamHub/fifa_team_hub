@@ -10,7 +10,6 @@ class TestGCSIsolation:
     def test_upload_to_gcs_isolates_by_selection(
         self, gcs_client, db, token_bra_staff, mock_gcs_storage, selection_bra, bra_staff
     ):
-        """Upload de BRA vai para gs://bucket/BRA/* e registra AuditLog de sucesso."""
         response = gcs_client.post(
             "/api/document/upload",
             headers={"Authorization": f"Bearer {token_bra_staff}"},
@@ -37,7 +36,6 @@ class TestGCSIsolation:
     def test_cross_selection_document_access_denied_with_gcs(
         self, gcs_client, db, token_bra_staff, mock_gcs_storage, selection_arg, arg_staff, bra_staff
     ):
-        """BRA não consegue acessar documento ARG mesmo em GCS."""
         arg_doc = create_test_document(
             db,
             selection_id=selection_arg,
@@ -64,7 +62,6 @@ class TestGCSIsolation:
     def test_delete_from_gcs_when_document_deleted(
         self, gcs_client, db, token_bra_staff, mock_gcs_storage, selection_bra, bra_staff
     ):
-        """DELETE /api/document/{id} deleta blob do GCS e registra AuditLog."""
         doc = create_test_document(
             db,
             selection_id=selection_bra,

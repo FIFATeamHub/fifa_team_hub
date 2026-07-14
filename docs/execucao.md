@@ -1,6 +1,6 @@
 # Guia de Deploy e Execução em Nuvem — FIFA Team Hub
 
-Este guia descreve o processo de provisionamento, configuração e deploy contínuo do FIFA Team Hub no Google Cloud Platform (Cloud Run + Cloud SQL), com CI/CD via GitHub Actions.
+Este guia descreve o processo de provisionamento, configuração e deploy contínuo do FIFA Team Hub no Google Cloud Platform (Cloud Run + Cloud SQL). A validação de PRs (testes/lint) roda via GitHub Actions (`ci.yml`); o deploy em si é feito por um **Cloud Build Trigger nativo do Google Cloud**, configurado para observar pushes na branch `main` do repositório.
 
 ---
 
@@ -23,7 +23,7 @@ Antes de operar o deploy (manual ou via pipeline), garanta que você tem:
   ```bash
   gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
   ```
-- Acesso ao repositório GitHub com permissão para configurar **Secrets** (Settings → Secrets and variables → Actions), caso precise alterar credenciais do pipeline de CD.
+- Acesso ao console do GCP (Cloud Build → Triggers) com permissão para configurar o Trigger de deploy, caso precise alterar sua configuração.
 
 ---
 
@@ -31,7 +31,7 @@ Antes de operar o deploy (manual ou via pipeline), garanta que você tem:
 
 O banco principal roda em **Cloud SQL para PostgreSQL 17** (mesma versão usada localmente via `docker-compose.yml` e no serviço de testes do CI).
 
-Instância de produção referenciada pelos scripts e pelo workflow de CD: **`fifa-db-prod`**, na região **`us-central1`**.
+Instância de produção referenciada pelos scripts e pelo `cloudbuild.yaml`: **`fifa-db-prod`**, na região **`us-central1`**.
 
 Passos para provisionar (caso a instância ainda não exista):
 
@@ -55,7 +55,7 @@ Pontos importantes:
   ```
   <GCP_PROJECT_ID>:us-central1:fifa-db-prod
   ```
-- Esse valor deve ser armazenado no Secret Manager como `CLOUD_SQL_INSTANCE_NAME` (usado pelo backend) e é passado ao Cloud Run pelo workflow de CD.
+- Esse valor deve ser armazenado no Secret Manager como `CLOUD_SQL_INSTANCE_NAME` (usado pelo backend) e é passado ao Cloud Run pelo Cloud Build Trigger, via `cloudbuild.yaml`.
 - A conta de serviço do backend (`fifa-team-hub-app@<PROJECT_ID>.iam.gserviceaccount.com`) precisa da role `roles/cloudsql.client` para conseguir abrir a conexão em runtime.
 - A `DATABASE_URL` final deve apontar para o socket Unix do Cloud SQL quando rodando em Cloud Run, por exemplo:
   ```
@@ -68,20 +68,9 @@ Pontos importantes:
 
 ## 3. 🔐 Variáveis de Ambiente e Segredos
 
-Existem dois "cofres" distintos que **não devem ser confundidos**:
+O build e o deploy não dependem mais de secrets do GitHub: o Cloud Build Trigger roda inteiramente dentro do GCP, autenticado por uma Service Account do Cloud Build configurada no próprio console/`gcloud` (Cloud Build → Triggers), sem chaves estáticas nem federação de identidade com o GitHub. O único "cofre" relevante para a aplicação em runtime é o **Secret Manager (GCP)**, cujos segredos são injetados no Cloud Run via `--set-secrets` (ver `cloudbuild.yaml`, na raiz do repositório).
 
-- **GitHub Secrets** → usados apenas pelo pipeline de CI/CD para autenticar no GCP e fazer o build/push/deploy.
-- **Secret Manager (GCP)** → segredos injetados diretamente no runtime do Cloud Run via `--update-secrets`, consumidos pela aplicação.
-
-### GitHub Secrets (pipeline `cd.yml`)
-
-| Secret | Finalidade |
-|---|---|
-| `WIF_PROVIDER` | Identity Provider do Workload Identity Federation, usado para autenticação sem chave estática (`google-github-actions/auth@v2`) |
-| `GCP_SERVICE_ACCOUNT` | E-mail da service account impersonada pelo GitHub Actions para publicar imagens e fazer deploy |
-| `GCP_PROJECT_ID` | ID do projeto GCP (`fifa-team-hub`), usado para compor URLs de imagem e nome da instância Cloud SQL |
-
-### Secret Manager / Ambiente do Cloud Run (injetados no backend via `--update-secrets`)
+### Secret Manager / Ambiente do Cloud Run (injetados no backend via `--set-secrets`)
 
 | Secret | Finalidade |
 |---|---|
@@ -102,23 +91,16 @@ Existem dois "cofres" distintos que **não devem ser confundidos**:
 
 ## 4. 🚀 Fluxo de Deploy
 
-O deploy contínuo é feito pelo workflow **`.github/workflows/cd.yml`**, disparado em dois cenários:
+O deploy contínuo é feito por um **Cloud Build Trigger nativo do Google Cloud**, configurado para escutar pushes na branch `main` e executar automaticamente os steps definidos em **`cloudbuild.yaml`** (raiz do repositório):
 
-1. **Push direto na branch `main`** (merge de PR já validado pelo `ci.yml`).
-2. **Disparo manual** via `workflow_dispatch` (aba *Actions* → CD → *Run workflow*).
-
-Passo a passo executado pelo pipeline:
-
-1. **Checkout** do código.
-2. **Autenticação no GCP via WIF** (`google-github-actions/auth@v2`), usando `WIF_PROVIDER` + `GCP_SERVICE_ACCOUNT` — sem chaves JSON estáticas.
-3. **Setup do Cloud SDK** e `gcloud auth configure-docker` para o Artifact Registry (`us-central1-docker.pkg.dev`).
-4. **Build e push da imagem do backend** (`./backend`), tag `<sha do commit>`.
-5. **Build e push da imagem do frontend** (`./frontend`), tag `<sha do commit>`.
-6. **Deploy do backend no Cloud Run** (`google-github-actions/deploy-cloudrun@v2`):
+1. **Build e push da imagem do backend** (`./backend`), tag `latest`.
+2. **Migração do banco**: deploy e execução de um **Cloud Run Job** dedicado (`fifa-team-hub-migrate`), que roda `flask db upgrade` contra a instância Cloud SQL antes de qualquer coisa subir.
+3. **Deploy do backend no Cloud Run** (`gcloud run deploy`):
    - conecta à instância Cloud SQL via `--add-cloudsql-instances`;
-   - injeta os segredos de runtime via `--update-secrets` (tabela da seção 3);
-   - roda com a service account `GCP_SERVICE_ACCOUNT` e `--allow-unauthenticated`.
-7. **Deploy do frontend no Cloud Run**, mesma service account, `--allow-unauthenticated`.
+   - injeta os segredos de runtime via `--set-secrets` (tabela da seção 3);
+   - roda com a service account de runtime configurada em `cloudbuild.yaml` (`_SERVICE_ACCOUNT`) e `--allow-unauthenticated`.
+4. **Build e push da imagem do frontend** (`./frontend`), tag `latest`.
+5. **Deploy do frontend no Cloud Run**, `--allow-unauthenticated`.
 
 Antes de qualquer merge na `main`, o workflow **`.github/workflows/ci.yml`** já validou o PR:
 
@@ -144,10 +126,10 @@ Esses scripts resolvem o `INSTANCE_CONN_NAME` dinamicamente via `gcloud sql inst
 
 | Sintoma | Causa provável | Ação |
 |---|---|---|
-| `Permission denied` / `unable to impersonate` na etapa de autenticação do CD | `WIF_PROVIDER` ou `GCP_SERVICE_ACCOUNT` incorretos, ou a service account não tem `roles/iam.workloadIdentityUser` vinculada ao pool do GitHub | Revisar o Workload Identity Pool no GCP e o binding IAM entre o repositório e a service account |
-| `denied: Permission "artifactregistry.repositories.uploadArtifacts" denied` no push da imagem | Service account do CD sem role `roles/artifactregistry.writer` no repositório `fifa-team-hub` | Conceder a role na Artifact Registry para a `GCP_SERVICE_ACCOUNT` |
+| `Permission denied` / falha de autenticação na etapa de build ou deploy do Cloud Build Trigger | Service account do Cloud Build Trigger sem as roles necessárias (`roles/run.admin`, `roles/artifactregistry.writer`, `roles/iam.serviceAccountUser` na service account de runtime) | Revisar as roles da service account associada ao Trigger em Cloud Build → Configurações |
+| `denied: Permission "artifactregistry.repositories.uploadArtifacts" denied` no push da imagem | Service account do Cloud Build Trigger sem role `roles/artifactregistry.writer` no repositório `fifa-team-hub` | Conceder a role na Artifact Registry para a service account do Trigger |
 | Backend sobe no Cloud Run mas falha ao conectar no banco (erros de conexão/timeout no boot) | `CLOUD_SQL_INSTANCE_NAME` errado, instância não anexada via `--add-cloudsql-instances`, ou service account sem `roles/cloudsql.client` | Conferir o connection name (`gcloud sql instances describe fifa-db-prod`) e a role IAM da service account do runtime |
-| Container falha no boot com erro de variável obrigatória ausente (`SECRET_KEY`, `DATABASE_URL`, `JWT_SECRET_KEY` etc.) | Segredo não existe no Secret Manager ou não foi incluído na flag `--update-secrets` do deploy | Criar o secret no Secret Manager (`gcloud secrets create ...`) e garantir que está listado na etapa de deploy do `cd.yml` |
-| CI falha em `backend-tests` mas passa localmente | Variáveis de ambiente de teste divergentes do `ci.yml` (ex.: `JWT_ALGORITHM`, `STORAGE_BACKEND=gcs` sem credenciais reais) | Rodar os testes localmente exportando exatamente as mesmas envs definidas no job `backend-tests` |
-| `workflow_dispatch` não aparece na aba Actions | Workflow `cd.yml` não está na branch padrão (`main`) ainda | Garantir que o arquivo já foi mesclado na `main`; o GitHub só lista gatilhos manuais de workflows presentes na branch padrão |
+| Container falha no boot com erro de variável obrigatória ausente (`SECRET_KEY`, `DATABASE_URL`, `JWT_SECRET_KEY` etc.) | Segredo não existe no Secret Manager ou não foi incluído na flag `--set-secrets` do deploy | Criar o secret no Secret Manager (`gcloud secrets create ...`) e garantir que está listado em `cloudbuild.yaml` |
+| CI falha em `backend-tests` mas passa localmente | Variáveis de ambiente de teste divergentes do `ci.yml` (ex.: `STORAGE_BACKEND=gcs` sem credenciais reais) | Rodar os testes localmente exportando exatamente as mesmas envs definidas no job `backend-tests` |
+| Trigger não dispara após push na `main` | Cloud Build Trigger desabilitado ou configurado para observar outra branch/repositório | Conferir a configuração do Trigger em Cloud Build → Triggers no console do GCP |
 | Upload de imagem lento ou falha por autenticação Docker (deploy manual) | `gcloud auth configure-docker` não foi executado para a região correta | Rodar `gcloud auth configure-docker us-central1-docker.pkg.dev --quiet` antes do `docker push` |
