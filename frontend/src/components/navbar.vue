@@ -17,6 +17,13 @@
                 >
                     Auditoria
                 </RouterLink>
+                <RouterLink
+                    v-if="authStore.user?.role === 'ORGANIZER'"
+                    to="/organizer"
+                    class="navbar__link"
+                >
+                    Seleções
+                </RouterLink>
             </nav>
 
             <div class="navbar__user" ref="userMenuRef">
