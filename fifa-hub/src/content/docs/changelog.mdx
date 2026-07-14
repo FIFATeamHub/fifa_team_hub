@@ -1,0 +1,56 @@
+---
+title: Changelog
+description: Novidades recentes e débito técnico conhecido do FIFA Team Hub
+---
+
+import { Card } from '@astrojs/starlight/components';
+
+> **Última atualização:** 14/07/2026 — gerado a partir de uma varredura completa do código em relação à branch `main`.
+
+Esta página resume, em linguagem de produto, o que mudou recentemente no FIFA Team Hub e quais itens de débito técnico foram identificados durante essa varredura. Para o histórico de decisões de arquitetura, veja `docs/decisoes.md`; para o processo sprint a sprint, veja [Sprints](/fifa_team_hub/sprints/semanas-7-8/) e [Atas de Reunião](/fifa_team_hub/atas/reuniao-01/).
+
+---
+
+## 🚀 Novidades
+
+### Fluxo de registro e aprovação de usuários
+Autocadastro público (`POST /auth/register`) substituiu a criação de usuários por um administrador. Todo cadastro nasce `ATHELETE`/`PENDING` e passa por aprovação de um `AUDITOR`; a concessão do papel `AUDITOR` agora exige confirmação em duas etapas (indicação por outro `AUDITOR` + confirmação por um `ORGANIZER`). Ver [API — Autenticação](/fifa_team_hub/api/auth/).
+
+### Revisão de documentos (aprovação/rejeição)
+Novo endpoint `PATCH /api/document/<id>/review` permite aprovar ou rejeitar documentos `PENDING`, com regras específicas por tipo: `PASSPORT` só pode ser revisado por `AUDITOR`, `LAUDO_MEDICO` só por `MEDICAL_STAFF` da mesma seleção, e autorrevisão é sempre bloqueada. Ver [API — Documentos](/fifa_team_hub/api/documents/).
+
+### Criação de seleções por organizadores
+`POST /api/selection/` permite que um `ORGANIZER` crie uma nova seleção e seu primeiro `AUDITOR` atomicamente, sem passar pelo fluxo de aprovação (o auditor já nasce `APPROVED`).
+
+### Dashboard e telas de upload
+Novas views no frontend (`dashboardView.vue`, tela de upload dedicada, listagem de documentos com filtros) consolidam as ações mais comuns — enviar documento, ver pendências, revisar — em um único painel por perfil.
+
+### Portal de documentação (este site)
+O site de documentação foi reconstruído em **Astro + Starlight** e passou a ser publicado automaticamente no GitHub Pages a cada push na branch `deploy_git_pages`, via `pnpm build` + `actions/deploy-pages`.
+
+---
+
+## 🛠️ Débito técnico conhecido
+
+<Card title="Documentado, não removido" icon="warning">
+Os itens abaixo foram identificados durante a varredura de documentação, mas **não foram alterados** — ficam registrados aqui para que um PR de limpeza dedicado possa tratá-los com a devida revisão.
+</Card>
+
+| Item | Onde | Observação |
+|---|---|---|
+| `package.json` / `package-lock.json` na raiz | raiz do repositório | Não corresponde a nenhuma aplicação real; parece resultado de um `npm install` acidental fora de `frontend/` |
+| Scaffold Alembic duplicado | `backend/app/models/alembic/` | Órfão de um `flask db init` rodado no diretório errado — as migrações reais vivem em `backend/migrations/` |
+| `main.js` não utilizado | `frontend/src/main.js` | O `index.html` carrega `src/main.ts`; o `.js` é um duplicado legado que não importa o CSS global |
+| Nome de arquivo digitado errado | `frontend/ngix.conf.template` | O Dockerfile de produção referencia `nginx.conf.template` (sem o typo); este arquivo parece não estar em uso |
+| Composable e componentes órfãos | `frontend/src/composables/useComponents.ts`, `frontend/src/components/baseCard.vue`, `frontend/src/components/Error403Card.vue` | Não referenciados por nenhuma rota/tela atual |
+| Vue fixado no canal `beta` | `frontend/package.json` (`"vue": "beta"`) | Decisão deliberada da equipe, mas é um pino de versão pré-lançamento — vale documentar um plano de migração para a versão estável quando disponível |
+| Desvio de versão do Python entre CI e produção | `.github/workflows/ci.yml` (3.11) vs. `backend/Dockerfile` (3.13) | Os testes automatizados não rodam na mesma versão do runtime de produção |
+| Documentação de deploy GCP sobreposta | `docs/execucao.md`, `docs/gcs-setup.md`, `docs/cloud-run-deployment.md` | Três documentos cobrindo Cloud Run/GCS com conteúdo parcialmente duplicado — candidatos a consolidação futura |
+
+---
+
+## Ver também
+
+- [Sprints](/fifa_team_hub/sprints/semanas-7-8/) — histórico sprint a sprint
+- [Atas de Reunião](/fifa_team_hub/atas/reuniao-01/) — decisões registradas em reunião
+- [Visão de Produto](/fifa_team_hub/visao/cenario/) — contexto e requisitos originais do projeto

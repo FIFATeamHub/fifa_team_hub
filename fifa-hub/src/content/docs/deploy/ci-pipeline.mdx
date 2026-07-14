@@ -3,7 +3,24 @@ title: Pipeline de CI (GitHub Actions)
 description: O que roda automaticamente em cada Pull Request do FIFA Team Hub
 ---
 
+import Mermaid from '../../../components/Mermaid.astro';
+
 O workflow `.github/workflows/ci.yml` dispara em toda Pull Request aberta contra a branch `main` e roda dois jobs em paralelo. Nenhum dos dois publica nada — o propósito deste workflow é exclusivamente **bloquear merge de código quebrado**; o deploy é um processo separado (ver [Deploy em Cloud Run](/fifa_team_hub/deploy/deploy-cloud-run/)).
+
+<Mermaid code={`flowchart LR
+    PR[Pull Request → main] --> A[backend-tests]
+    PR --> B[frontend-lint]
+    A --> A1[postgres:17 service]
+    A --> A2[pip install -r requirements.txt]
+    A --> A3[pytest backend/tests/]
+    B --> B1[npm ci]
+    B --> B2[npm run lint]
+    B --> B3[npm run type-check]
+    A3 --> OK{Ambos os jobs passam?}
+    B3 --> OK
+    OK -- sim --> M[Merge liberado]
+    OK -- não --> X[PR bloqueado]
+`} />
 
 ## `backend-tests`
 
@@ -24,6 +41,10 @@ steps:
 ```
 
 O job sobe um container de serviço com **PostgreSQL 17 real** — a mesma versão usada em produção — em vez de um banco em memória, para que os testes exerçam o mesmo dialeto SQL e as mesmas constraints que rodam no Cloud SQL. As variáveis de ambiente do job desativam o acesso real ao GCS (`STORAGE_BACKEND=gcs` com credenciais falsas), então os testes que envolvem armazenamento em nuvem usam mocks — não uma conta GCP real.
+
+<div class="tech-note">
+  <strong>Nota de precisão:</strong> o CI roda os testes em <strong>Python 3.11</strong>, enquanto <code>backend/Dockerfile</code> (produção) usa <strong>Python 3.13</strong> — é um desvio real de versão entre ambientes, não um erro deste texto. Ver <a href="/fifa_team_hub/changelog/">Changelog</a> (débito técnico conhecido).
+</div>
 
 Essa suíte inclui os testes de isolamento entre seleções (com armazenamento local e com GCS mockado) — se um desses testes falhar, o Pull Request fica bloqueado.
 

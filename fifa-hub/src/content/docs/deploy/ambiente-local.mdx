@@ -32,15 +32,28 @@ docker compose up --build
 
 Ordem de inicialização controlada por `depends_on` com `condition`: o backend só sobe depois que o Postgres reporta saudável e o bucket do emulador de GCS já foi criado pelo serviço `gcs-init`.
 
-## Variáveis de ambiente principais
+## Variáveis de ambiente
 
-| Variável | Uso |
-|---|---|
-| `DATABASE_URL` | String de conexão PostgreSQL |
-| `JWT_SECRET_KEY`, `JWT_ALGORITHM`, `JWT_EXPIRE_MINUTES` | Configuração de emissão/validação do token |
-| `STORAGE_BACKEND` | `local` ou `gcs` |
-| `GCS_BUCKET_NAME`, `GCP_PROJECT_ID` | Identificação do bucket/projeto (real ou emulado) |
-| `STORAGE_EMULATOR_HOST` | Endereço interno do emulador de GCS (apenas dev) |
-| `GCS_PUBLIC_URL` | Endereço público usado para assinar URLs em dev (vazio em produção) |
+Todas partem de `.env.example` na raiz do repositório — copie para `.env` e ajuste conforme o ambiente.
+
+| Variável | Uso | Obrigatória? |
+|---|---|---|
+| `SECRET_KEY` | Chave secreta do Flask (sessão/criptografia interna) | ✅ |
+| `DATABASE_URL` | String de conexão PostgreSQL | ✅ |
+| `JWT_SECRET_KEY` | Segredo usado para assinar/validar o JWT (algoritmo é sempre `HS256`, fixo no código) | ✅ |
+| `JWT_EXPIRE_MINUTES` | Tempo de vida do token em minutos (padrão `60`) | Opcional |
+| `STORAGE_BACKEND` | `local` ou `gcs` | ✅ |
+| `LOCAL_STORAGE_PATH` | Diretório em disco quando `STORAGE_BACKEND=local` (padrão `./storage/uploads`) | Se `local` |
+| `GCS_BUCKET_NAME`, `GCP_PROJECT_ID` | Identificação do bucket/projeto (real ou emulado) | Se `gcs` |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Caminho do JSON de credenciais da service account | Se `gcs` (fora do GCP) |
+| `STORAGE_EMULATOR_HOST` | Endereço interno do emulador de GCS (apenas dev) | Dev com `fake-gcs` |
+| `GCS_PUBLIC_URL` | Endereço público usado para assinar URLs em dev (vazio em produção) | Dev com `fake-gcs` |
+| `CORS_ALLOWED_ORIGINS` | Lista de origens permitidas pelo CORS, separadas por vírgula | Opcional (fallback: `FRONTEND_URL`) |
+| `MAX_FILE_SIZE_MB` / `ALLOWED_EXTENSIONS` | Lidas pela config, mas a validação real de upload usa constantes fixas no código (10 MB, `pdf,jpg,jpeg,png,docx`) — mantidas por compatibilidade | Opcional |
+| `VITE_API_URL` | URL base da API consumida pelo frontend Vue (ex.: `http://localhost:5000`) | ✅ (frontend) |
+
+<div class="tech-note">
+  <strong>Nota de precisão:</strong> a Vite lê <code>VITE_API_URL</code> a partir do <code>.env</code> na <strong>raiz do repositório</strong>, não de um <code>.env</code> dentro de <code>frontend/</code> — ver <code>envDir</code> em <code>frontend/vite.config.ts</code>.
+</div>
 
 Depois de subir, o backend fica em `http://localhost:5000`, o frontend em `http://localhost:5173`, e o console do emulador de GCS em `http://localhost:4443`.

@@ -1,13 +1,28 @@
 ---
 title: "API — Documentos"
-description: Endpoints de upload, listagem, download e exclusão de documentos
+description: Endpoints de upload, listagem, download, revisão e exclusão de documentos
 ---
 
 import { Card } from '@astrojs/starlight/components';
+import Mermaid from '../../../components/Mermaid.astro';
 
 # 📂 API — Documentos
 
-Todos os endpoints desta seção requerem obrigatoriamente autenticação via Bearer Token JWT.
+Todos os endpoints desta seção requerem obrigatoriamente autenticação via Bearer Token JWT. Todas as rotas vivem sob o prefixo **`/api/document`** (singular).
+
+---
+
+## 🔄 Ciclo de vida do documento
+
+<Mermaid code={`stateDiagram-v2
+    [*] --> PENDING: POST /api/document/upload
+    PENDING --> APPROVED: PATCH /review (status=APPROVED)
+    PENDING --> REJECTED: PATCH /review (status=REJECTED)
+    PENDING --> DELETED: DELETE (pelo próprio autor)
+    APPROVED --> DELETED: DELETE (pelo próprio autor)
+    REJECTED --> DELETED: DELETE (pelo próprio autor)
+    DELETED --> [*]
+`} />
 
 ---
 
@@ -18,30 +33,21 @@ Todos os endpoints desta seção requerem obrigatoriamente autenticação via Be
 | `id` | UUID | Identificador único |
 | `selection_id` | UUID | Seleção do documento (extraído do token, nunca do body) |
 | `uploaded_by` | UUID | ID do utilizador que fez upload |
-| `doc_type` | Enum | Tipo do documento (ver abaixo) |
-| `original_name` | String | Nome original do arquivo |
-| `stored_name` | String | UUID gerado + extensão do arquivo |
-| `storage_path` | String | `gs://bucket/...` (GCS) ou path local |
-| `file_size_kb` | Integer | Tamanho em KB |
-| `mime_type` | String | MIME type validado via python-magic |
-| `status` | Enum | PENDING, APPROVED, REJECTED |
+| `type` / `doc_type` | Enum | Tipo do documento (ver abaixo) |
+| `original_name` | String | Nome original do arquivo, sanitizado (`secure_filename`) |
+| `storage_path` | String | Caminho no bucket GCS ou no disco local (nunca exposto na API) |
+| `status` | String | `PENDING`, `APPROVED`, `REJECTED` ou `DELETED` |
 | `created_at` | DateTime | Data/hora do upload |
-| `deleted_at` | DateTime | Soft delete (null se ativo) |
-
----
+| `deleted_at` | DateTime | Soft delete (`null` se ativo) |
+| `reviewed_by` / `reviewed_at` | UUID / DateTime | Preenchidos quando o documento é revisado |
 
 **🏷️ Enums Disponíveis:**
 - **DocType:** `CONVOCADO` \| `PASSPORT` \| `LAUDO_MEDICO` \| `RELATORIO_TATICO` \| `ESQUEMA_JOGADAS`
-- **DocStatus:** `PENDING` \| `APPROVED` \| `REJECTED`
-
-<div class="tech-note">
-  <strong>Nota de precisão:</strong> o campo <code>status</code> retornado no corpo da resposta de <code>POST /documents/upload</code> reflete sempre o valor inicial calculado pela matriz de permissão (ver <a href="/fifa_team_hub/features/upload-documentos/">Upload de Documentos Sensíveis</a>); consulte <code>GET /documents</code> para o status atualizado de um documento já existente.
-</div>
-
+- **DocStatus:** `PENDING` \| `APPROVED` \| `REJECTED` \| `DELETED`
 
 ---
 
-## 📤 POST /documents/upload
+## 📤 POST /api/document/upload
 
 Faz upload de documento para a seleção do utilizador autenticado.
 
@@ -57,7 +63,6 @@ Faz upload de documento para a seleção do utilizador autenticado.
 
 ### 📦 Ver Resposta de Sucesso (201)
 
-
 ```json
 {
   "id": "uuid",
@@ -66,26 +71,25 @@ Faz upload de documento para a seleção do utilizador autenticado.
   "file_size_kb": 245,
   "status": "PENDING",
   "uploaded_by": "uuid-do-user",
-  "created_at": "2026-06-09T10:00:00Z"
+  "created_at": "2026-06-09T10:00:00-03:00"
 }
 ```
-
 
 ### 📊 Respostas de Erro
 
 | Status | Motivo |
 | :--- | :--- |
-| `400` | Ficheiro ausente no request |
+| `400` | Ficheiro ausente no request ou `doc_type` não informado |
 | `401` | Token ausente ou inválido |
-| `403` | Perfil sem permissão de upload |
+| `403` | Perfil sem permissão de upload para este `doc_type` |
 | `413` | Ficheiro excede 10 MB |
-| `415` | Formato de ficheiro não suportado |
-| `422` | doc_type inválido |
-| `503` | Falha ao armazenar (GCS indisponível) |
+| `415` | Formato de ficheiro não suportado (MIME real diferente da extensão) |
+| `422` | `doc_type` não é um valor válido do enum |
+| `503` | Falha ao armazenar (cota do GCS excedida ou storage indisponível) |
 
 ---
 
-## 🔍 GET /documents
+## 🔍 GET /api/document/
 
 Lista documentos filtrados pelo perfil do utilizador autenticado.
 
@@ -97,17 +101,13 @@ Lista documentos filtrados pelo perfil do utilizador autenticado.
 | :--- | :--- | :--- | :--- |
 | `doc_type` | String | — | Filtrar por tipo de documento |
 | `page` | Integer | 1 | Número da página |
-| `per_page` | Integer | 20 | Itens por página |
+| `per_page` | Integer | 10 | Itens por página |
 
-
-> 
-- **`TECHNICAL_STAFF` / `MEDICAL_STAFF` / `ATHELETE`:** Retorna documentos da própria seleção, restritos aos tipos permitidos ao perfil (ver [Controle de Acesso](/fifa_team_hub/features/controle-acesso/))
-- **`ORGANIZER`:** Retorna `CONVOCADO` e `PASSPORT` de **todas** as seleções
-- **`AUDITOR`:** HTTP `403` (este perfil só acessa o endpoint de auditoria, não a listagem de documentos)
-
+> - **`TECHNICAL_STAFF` / `MEDICAL_STAFF` / `ATHELETE`:** Retorna documentos da própria seleção, restritos aos tipos permitidos ao perfil (ver [Controle de Acesso](/fifa_team_hub/features/controle-acesso/))
+> - **`ORGANIZER`:** Retorna `CONVOCADO` e `PASSPORT` de **todas** as seleções
+> - **`AUDITOR`:** HTTP `403` (este perfil só acessa o endpoint de auditoria, não a listagem de documentos)
 
 ### 📦 Ver Resposta de Sucesso (200)
-
 
 ```json
 {
@@ -116,33 +116,78 @@ Lista documentos filtrados pelo perfil do utilizador autenticado.
       "id": "uuid",
       "original_name": "convocacao.pdf",
       "doc_type": "CONVOCADO",
-      "file_size_kb": 245,
+      "storage_url": null,
       "status": "PENDING",
-      "uploaded_by_name": "Josef Woljtyla",
+      "uploaded_by_id": "uuid-do-user",
       "selection_code": "BRA",
       "created_at": "2026-06-09T10:00:00Z"
     }
   ],
   "pagination": {
     "page": 1,
-    "per_page": 20,
+    "per_page": 10,
     "total": 45,
-    "pages": 3
+    "pages": 5
   }
 }
 ```
 
+---
+
+## 📌 GET /api/document/pending
+
+Retorna os **tipos** de documento que o usuário autenticado ainda precisa enviar (não é uma lista de documentos, é uma lista de `doc_type` pendentes segundo a matriz de obrigatoriedade do seu perfil).
+
+- **Autenticação Requerida:** ✅ `Bearer <token>`
+
+### 📦 Ver Resposta de Sucesso (200)
+
+```json
+[
+  { "doc_type": "PASSPORT" },
+  { "doc_type": "LAUDO_MEDICO" }
+]
+```
 
 ---
 
-## 📥 GET /documents/:id/download
+## 📄 GET /api/document/&lt;uuid:document_id&gt;
+
+Retorna os metadados de um documento específico, já acompanhados de uma URL de download assinada (válida por 15 minutos).
+
+- **Autenticação Requerida:** ✅ `Bearer <token>` — RBAC idêntico ao da listagem, escopado por seleção
+
+### 📦 Ver Resposta de Sucesso (200)
+
+```json
+{
+  "id": "uuid",
+  "original_name": "convocacao_brasil.pdf",
+  "doc_type": "CONVOCADO",
+  "status": "PENDING",
+  "selection_id": "uuid-da-selecao",
+  "created_at": "2026-06-09T10:00:00Z",
+  "download_url": "https://storage.googleapis.com/bucket/...?X-Goog-Signature=..."
+}
+```
+
+### 📊 Respostas e Códigos de Status
+
+| Status | Descrição |
+| :--- | :--- |
+| `200` | Documento encontrado |
+| `403` | Documento pertencente a outra seleção / tipo não visível ao perfil |
+| `404` | Documento não encontrado |
+
+---
+
+## 📥 GET /api/document/&lt;uuid:document_id&gt;/download
 
 Gera um link temporário e assinado para a realização do download seguro do arquivo.
 
 - **Autenticação Requerida:** ✅ `Bearer <token>`
 
 ### 📦 Ver Resposta de Sucesso (200)
-
 
 ```json
 {
@@ -152,7 +197,6 @@ Gera um link temporário e assinado para a realização do download seguro do ar
 }
 ```
 
-
 ### 📊 Respostas e Códigos de Status
 
 | Status | Descrição |
@@ -160,39 +204,92 @@ Gera um link temporário e assinado para a realização do download seguro do ar
 | `200` | URL assinada gerada (válida por 15 min) |
 | `403` | Documento pertencente a outra seleção |
 | `404` | Documento não encontrado |
-| `410` | Documento excluído (o arquivo físico/blob não existe mais) |
+| `410` | Arquivo não encontrado no storage (removido ou corrompido) |
+| `503` | Serviço de armazenamento temporariamente indisponível |
 
 ---
 
-## 🗑️ DELETE /documents/:id
+## 📡 GET /api/document/&lt;uuid:document_id&gt;/stream
 
-Realiza a exclusão lógica do documento (*soft delete*).
+Endpoint **interno**, usado apenas quando `STORAGE_BACKEND=local` — faz streaming direto do arquivo em disco via Flask (`send_file`), em vez de gerar uma URL assinada do GCS. Não retorna JSON, retorna o binário do arquivo.
 
-- **Autenticação Requerida:** ✅ `Bearer <token>` — restrito ao perfil `TECHNICAL_STAFF`, e apenas ao próprio autor do upload (outro `TECHNICAL_STAFF` da mesma seleção não pode excluir um documento que não enviou)
+- **Autenticação Requerida:** ✅ `Bearer <token>`
+
+### 📊 Respostas e Códigos de Status
+
+| Status | Descrição |
+| :--- | :--- |
+| `200` | Stream do arquivo (binário) |
+| `403` | Acesso negado |
+| `404` | Documento não encontrado no banco |
+| `410` | Arquivo físico não encontrado no disco |
+
+---
+
+## 📝 PATCH /api/document/&lt;uuid:document_id&gt;/review
+
+Aprova ou rejeita um documento `PENDING`. Só documentos com status `PENDING` podem ser revisados.
+
+- **Autenticação Requerida:** ✅ `Bearer <token>` — autorrevisão é sempre bloqueada; `PASSPORT` só pode ser revisado por `AUDITOR`; `LAUDO_MEDICO` só por `MEDICAL_STAFF` da mesma seleção do documento.
+
+### 📦 Ver Body do Request (JSON)
+
+```json
+{
+  "status": "APPROVED",
+  "reason": "Documentação conferida e válida"
+}
+```
+
+### 📦 Ver Resposta de Sucesso (200)
+
+```json
+{
+  "message": "Documento revisado com sucesso. Novo status: APPROVED",
+  "id": "uuid",
+  "status": "APPROVED",
+  "reviewed_by": "uuid-do-revisor",
+  "reviewed_at": "2026-07-09T18:00:00-03:00"
+}
+```
+
+### 📊 Respostas e Códigos de Status
+
+| Status | Descrição |
+| :--- | :--- |
+| `200` | Documento revisado com sucesso |
+| `400` | `status` ausente/inválido, ou documento não está `PENDING` |
+| `403` | Autorrevisão bloqueada, ou perfil sem permissão para revisar este `doc_type` |
+| `404` | Documento não encontrado |
+
+---
+
+## 🗑️ DELETE /api/document/&lt;uuid:document_id&gt;
+
+Realiza a exclusão lógica do documento (*soft delete*) e remove o arquivo físico do storage.
+
+- **Autenticação Requerida:** ✅ `Bearer <token>` — qualquer perfil **exceto `ORGANIZER`** pode excluir, mas **somente o próprio autor do upload**, dentro da própria seleção (outro usuário da mesma seleção não pode excluir um documento que não enviou).
 
 ### 📊 Respostas e Códigos de Status
 
 | Status | Descrição |
 | :--- | :--- |
 | `204` | Documento excluído com sucesso |
-| `403` | Sem permissão (documento de outra seleção ou o usuário não é o autor) |
+| `403` | Perfil sem permissão, documento de outro autor, ou de outra seleção |
 | `404` | Documento não encontrado |
 
 ---
 
 ## 🛠️ Regras de Validação Geral
 
-
-> 
-- **Tamanho Máximo:** 10 MB por arquivo
-- **Formatos Aceitos:** PDF, JPG, JPEG, PNG, DOCX
-- **Validação de Integridade:** O tipo real do arquivo é validado via MIME type através da biblioteca `python-magic` (rejeitando alterações apenas na extensão)
-- **Segurança de Infraestrutura:** O `storage_path` real nunca é exposto nas respostas da API; apenas URLs assinadas e temporárias são distribuídas
-- **Segurança de Multitenancy:** O parâmetro `selection_id` é obrigatoriamente injetado a partir do token JWT e nunca aceito via payload do body
-
+> - **Tamanho Máximo:** 10 MB por arquivo
+> - **Formatos Aceitos:** PDF, JPG, JPEG, PNG, DOCX
+> - **Validação de Integridade:** O tipo real do arquivo é validado via MIME type através da biblioteca `python-magic` (rejeitando alterações apenas na extensão)
+> - **Segurança de Infraestrutura:** O `storage_path` real nunca é exposto nas respostas da API; apenas URLs assinadas e temporárias são distribuídas
+> - **Segurança de Multitenancy:** O parâmetro `selection_id` é obrigatoriamente injetado a partir do token JWT e nunca aceito via payload do body
 
 ---
 
 <Card title="🚀 Testando localmente" icon="download">
-Ainda não há uma coleção Postman dedicada a documentos no repositório — use a coleção de autenticação (`docs/postman/Auth Endpoints.postman_collection.json`) para obter um token e então exercite manualmente os fluxos de upload, listagem, download e remoção.
+Ainda não há uma coleção Postman dedicada a documentos no repositório — use a coleção de autenticação (`docs/postman/Auth Endpoints.postman_collection.json`) para obter um token e então exercite manualmente os fluxos de upload, listagem, download, revisão e remoção.
 </Card>

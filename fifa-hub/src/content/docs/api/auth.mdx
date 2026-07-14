@@ -1,61 +1,97 @@
 ---
 title: "API — Autenticação"
-description: Endpoints de autenticação JWT do FIFA Team Hub
+description: Endpoints de autenticação, registro e aprovação de cadastros do FIFA Team Hub
 ---
 
 import { Card } from '@astrojs/starlight/components';
+import Mermaid from '../../../components/Mermaid.astro';
 
 # 🔐 API — Autenticação
 
-Todos os endpoints da aplicação requerem autenticação via **Bearer Token JWT**, exceto `POST /auth/login` e `POST /auth/register`.
+Todos os endpoints desta seção requerem **Bearer Token JWT**, exceto `POST /auth/register`, `POST /auth/login` e `GET /api/selection/`.
 
 <Card title="🌐 Configuração de Ambiente" icon="globe">
 - **Base URL (dev):** `http://localhost:5000`
 - **Esquema de Autenticação:** `Bearer <token>`
 </Card>
 
+<div class="tech-note">
+  <strong>Nota de precisão:</strong> não existe cadastro feito por um administrador em nome de terceiros. Todo usuário se registra publicamente e entra como <code>ATHELETE</code> pendente de aprovação — ver fluxo abaixo.
+</div>
+
+---
+
+## 🧭 Fluxo de registro e aprovação
+
+<Mermaid code={`sequenceDiagram
+    participant U as Usuário (público)
+    participant API as API Flask
+    participant AUD as AUDITOR
+    participant ORG as ORGANIZER
+
+    U->>API: POST /auth/register (email, password, full_name, selection_id)
+    API-->>U: 201 - role=ATHELETE, registration_status=PENDING
+
+    Note over U,API: Login bloqueado (403) até aprovação
+
+    AUD->>API: POST /api/auth/registrations/{id}/approve (role)
+    alt role != AUDITOR
+        API-->>AUD: 200 - registration_status=APPROVED
+    else role == AUDITOR (só AUDITOR pode indicar, não aprovar)
+        API-->>AUD: 202 - nomeação enviada para o Organizador
+        ORG->>API: POST /api/auth/registrations/{id}/approve (role=AUDITOR)
+        API-->>ORG: 200 - registration_status=APPROVED
+    end
+`} />
+
 ---
 
 ## 👥 POST /auth/register
 
-Cria um novo utilizador. Apenas AUDITOR pode registrar outros utilizadores.
+Autocadastro público de um novo usuário. **Não requer autenticação.** O servidor ignora qualquer `role`/`registration_status` enviado pelo cliente: todo cadastro é criado como `role=ATHELETE` e `registration_status=PENDING`, exigindo aprovação de um `AUDITOR` (ou `ORGANIZER`, no caso de nomeação de auditor) antes do primeiro login.
 
-- **Autenticação Requerida:** ✅ `Bearer <token>` (role: `AUDITOR`)
+- **Autenticação Requerida:** ❌ Nenhuma
 
 ### 📦 Ver Body do Request (JSON)
 
-
 ```json
 {
-  "name": "Josef Woljtyla",
   "email": "josef@fifateamhub.com",
   "password": "senhaProvisoria123",
-  "role": "TECHNICAL_STAFF",
+  "full_name": "Josef Woljtyla",
   "selection_id": "uuid-da-selecao"
 }
 ```
 
+### 📦 Ver Resposta de Sucesso (201)
+
+```json
+{
+  "id": "uuid-do-usuario",
+  "email": "josef@fifateamhub.com",
+  "full_name": "Josef Woljtyla",
+  "role": "ATHELETE",
+  "selection_id": "uuid-da-selecao"
+}
+```
 
 ### 📊 Respostas e Códigos de Status
 
 | Status | Descrição |
 | :--- | :--- |
-| `201` | Utilizador criado com sucesso |
-| `400` | Body inválido ou senha < 8 caracteres |
-| `401` | Token ausente ou inválido |
-| `403` | Perfil sem permissão de registro |
+| `201` | Usuário criado com sucesso — sempre como `ATHELETE`/`PENDING` |
+| `400` | Body inválido, senha &lt; 8 caracteres, e-mail mal formatado ou `selection_id` inexistente |
 | `409` | E-mail já cadastrado |
 
 ---
 
 ## 🔑 POST /auth/login
 
-Autentica utilizador e retorna o token JWT.
+Autentica o usuário e retorna o token JWT. Bloqueado (`403`) enquanto o cadastro não for `APPROVED`. Limitado a **5 tentativas por minuto** por IP.
 
 - **Autenticação Requerida:** ❌ Nenhuma
 
 ### 📦 Ver Body e Payload do JWT
-
 
 ```json
 **Body (JSON):**
@@ -67,8 +103,7 @@ Autentica utilizador e retorna o token JWT.
 **Response 200 (Sucesso):**
 {
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "token_type": "Bearer",
-  "expires_in": 3600
+  "token_type": "bearer"
 }
 
 **Payload Decodificado do JWT:**
@@ -80,53 +115,201 @@ Autentica utilizador e retorna o token JWT.
 }
 ```
 
-
 ### 📊 Respostas e Códigos de Status
 
 | Status | Descrição |
 | :--- | :--- |
 | `200` | Login bem-sucedido, retorna JWT |
 | `401` | Credenciais inválidas (sem indicar qual campo) |
+| `403` | Cadastro `PENDING` (aguardando aprovação) ou `REJECTED` |
+| `429` | Mais de 5 tentativas de login no último minuto |
 
 ---
 
-## 👤 GET /auth/me
+## 🚪 POST /auth/logout
 
-Retorna os dados do utilizador autenticado baseado no token enviado.
+Registra o evento de logout em auditoria. **Não revoga o token no servidor** — não há blacklist, então o JWT permanece tecnicamente válido até expirar naturalmente.
 
 - **Autenticação Requerida:** ✅ `Bearer <token>`
 
 ### 📦 Ver Resposta de Sucesso
 
+```json
+{ "message": "Logout realizado com sucesso" }
+```
+
+---
+
+## 👤 GET /auth/me
+
+Retorna os dados do usuário autenticado com base no token enviado.
+
+- **Autenticação Requerida:** ✅ `Bearer <token>`
+
+### 📦 Ver Resposta de Sucesso
 
 ```json
-**Response 200:**
 {
   "id": "uuid-do-usuario",
-  "name": "Josef Woljtyla",
   "email": "josef@fifateamhub.com",
+  "full_name": "Josef Woljtyla",
   "role": "TECHNICAL_STAFF",
   "selection_id": "uuid-da-selecao",
+  "is_active": true,
   "created_at": "2026-05-28T21:30:00Z"
 }
 ```
-
 
 ### 📊 Respostas e Códigos de Status
 
 | Status | Descrição |
 | :--- | :--- |
-| `200` | Dados do utilizador autenticado |
+| `200` | Dados do usuário autenticado |
 | `401` | Token ausente, inválido ou expirado |
+
+---
+
+## 📋 GET /api/auth/registrations/pending
+
+Lista cadastros pendentes de aprovação, com visibilidade diferente por perfil.
+
+- **Autenticação Requerida:** ✅ `Bearer <token>` (role: `AUDITOR` ou `ORGANIZER`)
+- **`AUDITOR`:** vê cadastros `PENDING` da própria seleção (ou de todas, se não estiver vinculado a nenhuma).
+- **`ORGANIZER`:** vê apenas usuários com uma **nomeação de auditor** ativa aguardando confirmação (não vê cadastros comuns).
+
+### 📦 Ver Resposta de Sucesso (200)
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid-do-usuario",
+      "full_name": "Josef Woljtyla",
+      "email": "josef@fifateamhub.com",
+      "selection_id": "uuid-da-selecao",
+      "created_at": "2026-05-28T21:30:00Z"
+    }
+  ]
+}
+```
+
+### 📊 Respostas e Códigos de Status
+
+| Status | Descrição |
+| :--- | :--- |
+| `200` | Lista retornada com sucesso |
+| `403` | Perfil autenticado não é `AUDITOR` nem `ORGANIZER` |
+
+---
+
+## ✅ POST /api/auth/registrations/&lt;uuid:user_id&gt;/approve
+
+Aprova um cadastro pendente, concedendo o `role` informado no body. A concessão do papel `AUDITOR` segue um fluxo em duas etapas: um `AUDITOR` só pode **indicar** outro usuário para `AUDITOR` (fica pendente), e apenas um `ORGANIZER` pode **confirmar** essa indicação.
+
+- **Autenticação Requerida:** ✅ `Bearer <token>` (role: `AUDITOR` para papéis comuns; `ORGANIZER` para confirmar `AUDITOR`)
+
+### 📦 Ver Body do Request (JSON)
+
+```json
+{ "role": "TECHNICAL_STAFF" }
+```
+
+### 📊 Respostas e Códigos de Status
+
+| Status | Descrição |
+| :--- | :--- |
+| `200` | Cadastro aprovado — `registration_status=APPROVED` com o `role` concedido |
+| `202` | `AUDITOR` indicou o usuário para `AUDITOR`; aguardando confirmação do `ORGANIZER` |
+| `400` | `role` inválida (não é um valor válido do enum) |
+| `403` | Sem permissão — papel não autorizado ou cadastro pertence a outra seleção |
+| `404` | Usuário não encontrado |
+| `409` | Cadastro já foi processado (não está mais `PENDING`) |
+
+---
+
+## ❌ POST /api/auth/registrations/&lt;uuid:user_id&gt;/reject
+
+Rejeita um cadastro pendente **ou** uma nomeação de auditor pendente.
+
+- **Autenticação Requerida:** ✅ `Bearer <token>` (role: `AUDITOR` ou `ORGANIZER`)
+- **`ORGANIZER`:** rejeita a **nomeação de auditor** — o cadastro permanece `PENDING` (pode ser redirecionado para outro papel por um `AUDITOR`).
+- **`AUDITOR`:** rejeita o cadastro comum — define `registration_status=REJECTED` definitivamente.
+
+### 📊 Respostas e Códigos de Status
+
+| Status | Descrição |
+| :--- | :--- |
+| `200` | Rejeição processada com sucesso |
+| `403` | Sem permissão, ou (para `ORGANIZER`) não há nomeação de auditor pendente para este usuário |
+| `404` | Usuário não encontrado |
+| `409` | Cadastro já foi processado |
+
+---
+
+## 🌍 GET /api/selection/
+
+Lista todas as seleções cadastradas — usado pela tela de registro para popular o seletor de país/seleção.
+
+- **Autenticação Requerida:** ❌ Nenhuma
+
+### 📦 Ver Resposta de Sucesso (200)
+
+```json
+[
+  { "id": "uuid-da-selecao", "name": "Brasil", "code": "BRA" }
+]
+```
+
+---
+
+## 🏳️ POST /api/selection/
+
+Cria uma nova seleção **e** seu primeiro usuário `AUDITOR` em uma única transação. Diferente do autocadastro, este auditor já nasce `registration_status=APPROVED` — não passa pelo fluxo de aprovação.
+
+- **Autenticação Requerida:** ✅ `Bearer <token>` (role: `ORGANIZER`)
+
+### 📦 Ver Body do Request (JSON)
+
+```json
+{
+  "name": "Argentina",
+  "code": "ARG",
+  "auditor_name": "Nome do Auditor",
+  "auditor_email": "auditor@fifateamhub.com",
+  "auditor_password": "senhaProvisoria123"
+}
+```
+
+### 📦 Ver Resposta de Sucesso (201)
+
+```json
+{
+  "selection": { "id": "uuid-da-selecao", "name": "Argentina", "code": "ARG" },
+  "auditor": {
+    "id": "uuid-do-auditor",
+    "full_name": "Nome do Auditor",
+    "email": "auditor@fifateamhub.com",
+    "role": "AUDITOR"
+  }
+}
+```
+
+### 📊 Respostas e Códigos de Status
+
+| Status | Descrição |
+| :--- | :--- |
+| `201` | Seleção e auditor criados com sucesso |
+| `400` | Campo obrigatório ausente, `code` com tamanho diferente de 3, e-mail inválido, senha &lt; 8 caracteres, código/e-mail já em uso |
+| `403` | Perfil autenticado não é `ORGANIZER` |
 
 ---
 
 ## 🛡️ Regras de Segurança
 
-- [ ] **Expiração do Token:** JWT expira em 60 minutos — sem extensão automática
+- [ ] **Expiração do Token:** JWT expira em 60 minutos (configurável via `JWT_EXPIRE_MINUTES`) — sem extensão automática
 - [ ] **Criptografia:** hash de senha via Werkzeug (scrypt) — hash nunca é exposto em responses
 - [ ] **Privacidade de Erro:** Credenciais inválidas retornam `401` sem revelar qual campo errou
-- [ ] **Ciclo de Vida da Senha:** Senha provisória obriga a troca no primeiro acesso
+- [ ] **Anti-escalonamento de Privilégio:** `role`/`registration_status` enviados no registro são sempre ignorados pelo servidor
 - [ ] **Sessão Expirada:** Token expirado retorna `401` com redirecionamento para `/login`
 - [ ] **Logout:** invalida a sessão no cliente e registra o evento em auditoria, mas não revoga o token no servidor — ele permanece tecnicamente válido até expirar (sem blacklist)
 

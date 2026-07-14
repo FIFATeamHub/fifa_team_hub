@@ -11,7 +11,7 @@ Endpoint exclusivo de **leitura** dos registros de auditoria e segurança do sis
 
 ---
 
-## 🔍 GET /api/audit
+## 🔍 GET /api/audit/
 
 Retorna, de forma paginada e ordenada, os eventos registrados na plataforma.
 
@@ -23,8 +23,10 @@ Retorna, de forma paginada e ordenada, os eventos registrados na plataforma.
 | :--- | :--- | :--- | :--- |
 | `page` | Integer | 1 | Número da página atual |
 | `per_page` | Integer | 20 | Registros por página |
-| `action` | String | — | Filtra por tipo de ação (`LOGIN`, `LOGOUT`, `UPLOAD`, `DOWNLOAD`, `DELETE`, `ACCESS_DENIED`) |
+| `action` | String | — | Filtra por tipo de ação (`LOGIN`, `LOGOUT`, `UPLOAD`, `DOWNLOAD`, `DELETE`, `REVIEW`, `ACCESS_DENIED`, `REGISTER_APPROVED`, `REGISTER_REJECTED`, `AUDITOR_NOMINATION_REQUESTED`, `AUDITOR_NOMINATION_REJECTED`) |
 | `user_id` | UUID | — | Filtra pelos logs gerados por um autor específico |
+| `start_date` | Date (`YYYY-MM-DD`) | — | Início do intervalo, interpretado em `America/Sao_Paulo` e convertido para UTC |
+| `end_date` | Date (`YYYY-MM-DD`) | — | Fim do intervalo, interpretado em `America/Sao_Paulo` e convertido para UTC |
 
 <div class="tech-note">
   <strong>Nota de precisão:</strong> a visibilidade deste endpoint é escopada pela seleção do auditor autenticado — um `AUDITOR` vinculado a uma seleção enxerga apenas os eventos daquela seleção, não um painel global do sistema. Apenas um auditor sem seleção vinculada tem visão ampla. Ver <a href="/fifa_team_hub/features/auditoria-seguranca/">Auditoria de Segurança</a>.

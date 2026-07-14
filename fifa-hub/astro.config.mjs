@@ -116,6 +116,10 @@ export default defineConfig({
 					label: "Processo & Entregas",
 					items: [
 						{
+							label: "Changelog",
+							slug: "changelog",
+						},
+						{
 							label: "Processo de Desenvolvimento",
 							slug: "home/processo",
 						},

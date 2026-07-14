@@ -10,6 +10,7 @@ export default new Map([
 ["src/content/docs/atas/reuniao-01.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fatas%2Freuniao-01.mdx&astroContentModuleFlag=true")],
 ["src/content/docs/atas/reuniao-02.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fatas%2Freuniao-02.mdx&astroContentModuleFlag=true")],
 ["src/content/docs/atas/reuniao-03.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fatas%2Freuniao-03.mdx&astroContentModuleFlag=true")],
+["src/content/docs/changelog.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fchangelog.mdx&astroContentModuleFlag=true")],
 ["src/content/docs/deploy/ambiente-local.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fdeploy%2Fambiente-local.mdx&astroContentModuleFlag=true")],
 ["src/content/docs/deploy/ci-pipeline.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fdeploy%2Fci-pipeline.mdx&astroContentModuleFlag=true")],
 ["src/content/docs/deploy/deploy-cloud-run.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fdocs%2Fdeploy%2Fdeploy-cloud-run.mdx&astroContentModuleFlag=true")],

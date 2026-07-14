@@ -3,6 +3,8 @@ title: Visão Geral da Arquitetura
 description: Como o frontend, backend, banco de dados e armazenamento do FIFA Team Hub se conectam
 ---
 
+import Mermaid from '../../../components/Mermaid.astro';
+
 O FIFA Team Hub é uma aplicação de três camadas clássica — SPA, API REST e armazenamento de dados/arquivos — com cada camada publicada como um serviço independente no Google Cloud.
 
 <div class="arch-flow">
@@ -24,7 +26,7 @@ O FIFA Team Hub é uma aplicação de três camadas clássica — SPA, API REST 
     <p>Organizada em <code>routes → controllers → services/models</code>. As rotas apenas conectam URL e método HTTP ao controller correspondente; controllers orquestram validação, RBAC e chamadas de serviço; services concentram regra de negócio reutilizável (armazenamento, auditoria, autenticação).</p>
     <div class="arch-tags">
       <span class="arch-tag">Flask 3</span>
-      <span class="arch-tag">Python 3.11</span>
+      <span class="arch-tag">Python 3.13</span>
       <span class="arch-tag">SQLAlchemy + Alembic</span>
       <span class="arch-tag">python-jose (JWT)</span>
       <span class="arch-tag">Gunicorn</span>
@@ -61,3 +63,14 @@ O FIFA Team Hub é uma aplicação de três camadas clássica — SPA, API REST 
 - **A lógica de negócio fica concentrada no backend.** O frontend não decide isolamento, permissões ou validação de arquivo — ele apenas reflete o que a API retorna, o que evita duplicar (e divergir) regras de segurança entre duas camadas.
 
 Para o detalhamento de cada peça, veja [Stack Tecnológico](/fifa_team_hub/architecture/stack-tecnologico/), [Armazenamento & Google Cloud Storage](/fifa_team_hub/architecture/armazenamento-gcs/) e [Segurança e Isolamento de Dados](/fifa_team_hub/architecture/seguranca-dados/).
+
+## Diagrama de fluxo
+
+<Mermaid code={`flowchart TD
+    A[Cliente Vue 3 SPA] -- "HTTPS / JSON + multipart\n(Bearer JWT)" --> B[API Flask - Cloud Run]
+    B -- "routes -> controllers -> services" --> C[(PostgreSQL - Cloud SQL)]
+    B -- "upload / signed URL" --> D[(Google Cloud Storage)]
+    D -- "download via signed URL" --> A
+    B -- "audit log" --> C
+`} />
+
