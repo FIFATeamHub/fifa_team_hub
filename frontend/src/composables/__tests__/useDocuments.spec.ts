@@ -6,6 +6,7 @@ vi.mock('@/services/api', () => ({
   default: {
     get: vi.fn(),
     head: vi.fn(),
+    patch: vi.fn(),
   }
 }))
 
@@ -58,6 +59,18 @@ describe('useDocuments', () => {
     await expect(downloadDocument('doc-999', 'arquivo.pdf'))
       .rejects
       .toThrow('Este documento foi removido permanentemente.')
+  })
+
+  it('reviewDocument deve chamar api.patch com status e reason', async () => {
+    vi.mocked(api.patch).mockResolvedValue({ status: 200 })
+
+    const { reviewDocument } = useDocuments()
+    await reviewDocument('doc-123', 'REJECTED', 'Motivo de teste')
+
+    expect(api.patch).toHaveBeenCalledWith('/api/document/doc-123/review', {
+      status: 'REJECTED',
+      reason: 'Motivo de teste'
+    })
   })
 
 })
