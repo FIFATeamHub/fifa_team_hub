@@ -13,13 +13,17 @@
 
         <div class="documents-view__content">
 
-            <div v-if="can('upload:documents')" class="documents-view__toolbar">
-                <button class="documents-view__upload-btn" @click="isModalOpen = true">
-                    Enviar Documento
-                </button>
-            </div>
-
-            <DocumentsList ref="documentsListRef" />
+            <DocumentsList ref="documentsListRef">
+                <template v-if="can('upload:documents')" #toolbar-actions>
+                    <button class="documents-view__upload-btn" @click="isModalOpen = true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 15V4m0 0-4 4m4-4 4 4" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        Enviar Documento
+                    </button>
+                </template>
+            </DocumentsList>
         </div>
 
         <UploadDocumentModal
@@ -120,27 +124,32 @@ function handleUploadSuccess() {
     padding: var(--padding-section) var(--padding-page-x);
 }
 
-.documents-view__toolbar {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: var(--space-6);
-}
-
 .documents-view__upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
     padding: var(--space-3) var(--space-6);
     background-color: var(--color-gold);
     border: none;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-full);
     color: var(--color-bg-deep);
     font-family: var(--font-body);
     font-weight: var(--font-weight-black);
     font-size: var(--font-size-body);
     cursor: pointer;
-    transition: background-color var(--transition-default);
+    box-shadow: var(--shadow-card);
+    transition: background-color var(--transition-default), box-shadow var(--transition-default), transform var(--transition-default);
+}
+
+.documents-view__upload-btn svg {
+    width: 16px;
+    height: 16px;
 }
 
 .documents-view__upload-btn:hover {
     background-color: var(--color-gold-hover);
+    box-shadow: var(--shadow-glow-gold);
+    transform: translateY(-2px);
 }
 
 </style>
