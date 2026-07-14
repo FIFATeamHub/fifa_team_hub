@@ -178,35 +178,40 @@ defineExpose({
 
     <div class="documents">
 
-        <div class="documents__toolbar">
-
-            <div
-                v-if="
-                    authStore.user?.role === 'ATHELETE' &&
-                    pendingDocuments.length > 0
-                "
-                class="documents__pending"
-            >
+        <div
+            v-if="
+                authStore.user?.role === 'ATHELETE' &&
+                pendingDocuments.length > 0
+            "
+            class="documents__pending"
+        >
+            <div class="documents__pending-head">
+                <svg class="documents__pending-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 9v4m0 4h.01M10.3 3.9 2.6 17a1.5 1.5 0 0 0 1.3 2.2h16.2a1.5 1.5 0 0 0 1.3-2.2L13.7 3.9a1.5 1.5 0 0 0-2.6 0Z" />
+                </svg>
                 <h3>Documentos Pendentes</h3>
-
-                <ul>
-                    <li
-                        v-for="doc in pendingDocuments"
-                        :key="doc.doc_type"
-                        class="documents__pending-item"
-                    >
-                        <span>{{ formatDocType(doc.doc_type) }}</span>
-
-                        <button
-                            v-if="can('upload:documents')"
-                            class="documents__pending-upload-btn"
-                            @click="openUploadFor(doc.doc_type)"
-                        >
-                            Enviar
-                        </button>
-                    </li>
-                </ul>
             </div>
+
+            <ul>
+                <li
+                    v-for="doc in pendingDocuments"
+                    :key="doc.doc_type"
+                    class="documents__pending-item"
+                >
+                    <span>{{ formatDocType(doc.doc_type) }}</span>
+
+                    <button
+                        v-if="can('upload:documents')"
+                        class="documents__pending-upload-btn"
+                        @click="openUploadFor(doc.doc_type)"
+                    >
+                        Enviar
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="documents__toolbar">
 
             <div class="documents__filter">
                 <label for="doc-type-filter" class="documents__filter-label">Filtro</label>
@@ -407,15 +412,58 @@ defineExpose({
     gap: var(--space-8);
 }
 
+.documents__pending {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-5) var(--padding-card);
+    background-color: var(--color-surface-primary);
+    border: 1px solid var(--color-warning-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+}
+
+.documents__pending-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.documents__pending-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: var(--color-gold);
+}
+
+.documents__pending h3 {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-label);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+    color: var(--color-gold);
+}
+
+.documents__pending ul {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+}
+
 .documents__pending-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: var(--space-4);
-    padding: var(--space-2) 0;
+    padding: var(--space-3) 0;
     color: var(--color-text-secondary);
     font-family: var(--font-body);
-    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-body);
+}
+
+.documents__pending-item + .documents__pending-item {
+    border-top: 1px solid var(--color-border-subtle);
 }
 
 .documents__pending-upload-btn {

@@ -8,6 +8,7 @@
             </RouterLink>
 
             <nav class="navbar__links">
+                <RouterLink to="/dashboard" class="navbar__link">Dashboard</RouterLink>
                 <RouterLink to="/documentos" class="navbar__link">Documentos</RouterLink>
                 <RouterLink to="/upload" class="navbar__link">Upload</RouterLink>
                 <RouterLink
