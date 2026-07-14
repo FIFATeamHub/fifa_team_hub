@@ -47,7 +47,8 @@ const {
     fetchPendingDocuments,
     deleteDocument,
     downloadDocument,
-    previewDocument
+    previewDocument,
+    reviewDocument
 } = useDocuments()
 
 const { can } = usePermissions()
@@ -155,6 +156,15 @@ async function handleView(doc: Documento) {
         await previewDocument(doc.id)
     } catch (err) {
         alert(err instanceof Error ? err.message : 'Falha ao visualizar o documento.')
+    }
+}
+
+async function handleReview(doc: Documento) {
+    try {
+        await reviewDocument(doc.id, 'APPROVED')
+        alert('Documento aprovado com sucesso!')
+    } catch (err) {
+        alert(err instanceof Error ? err.message : 'Falha ao aprovar o documento.')
     }
 }
 
@@ -320,6 +330,20 @@ defineExpose({
                             <path d="M4 19h16" />
                         </svg>
                         Baixar
+                    </button>
+
+                    <button
+                        v-if="
+                            authStore.user?.role === 'AUDITOR' &&
+                            doc.status === 'PENDING'
+                        "
+                        class="doc-card__action doc-card__action--primary"
+                        @click="handleReview(doc)"
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 6 9 17l-5-5" />
+                        </svg>
+                        Aprovar
                     </button>
 
                     <button
@@ -696,6 +720,16 @@ defineExpose({
 .doc-card__action--danger:hover {
     border-color: var(--color-danger);
     color: var(--color-danger);
+}
+
+.doc-card__action--primary {
+    color: var(--color-teal-light);
+    border-color: var(--color-border-teal);
+}
+
+.doc-card__action--primary:hover {
+    border-color: var(--color-teal);
+    color: var(--color-teal);
 }
 
 .documents__pagination {
