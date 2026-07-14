@@ -157,12 +157,12 @@ export function useDocuments() {
     window.open(url, '_blank')
   }
 
-  async function reviewDocument(documentId: string, status: string) {
+  async function reviewDocument(documentId: string, status: string, reason?: string) {
     try {
-      await api.patch(`/api/document/${documentId}/review`, { status })
-      const docIndex = documents.value.findIndex(d => d.id === documentId)
-      if (docIndex !== -1) {
-        documents.value[docIndex].status = status
+      await api.patch(`/api/document/${documentId}/review`, { status, reason })
+      const doc = documents.value.find(d => d.id === documentId)
+      if (doc) {
+        doc.status = status
       }
     } catch (error) {
       const apiError = error as { response?: { status: number, data?: { error?: string } } }
