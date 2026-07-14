@@ -186,7 +186,7 @@ export function useDocuments() {
     }
   }
 
-  async function reviewDocument(documentId: string, status: string) {
+  async function reviewDocument(documentId: string, status: string, reason?: string) {
     try {
       await api.patch(`/api/document/${documentId}/review`, { status })
       const doc = documents.value.find(d => d.id === documentId)

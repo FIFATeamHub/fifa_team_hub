@@ -124,3 +124,54 @@ def test_review_success_by_different_auditor(app, client, auditor, bra_auditor, 
 
         assert audit is not None
         assert audit.user_id == bra_auditor.id
+
+
+def test_medical_cannot_review_cross_selection(app, client, bra_athlete, token_arg_medical, selection_bra):
+    with app.app_context():
+        documento = Document(
+            uploaded_by=bra_athlete.id,
+            selection_id=selection_bra,
+            type=TypeDocument.LAUDO_MEDICO,
+            original_name="laudo.pdf",
+            storage_path="/tmp/laudo.pdf",
+            status=DocStatus.PENDING.value
+        )
+        db.session.add(documento)
+        db.session.commit()
+        document_id = str(documento.id)
+
+    response = client.patch(
+        f"/api/document/{document_id}/review",
+        headers={"Authorization": f"Bearer {token_arg_medical}"},
+        json={"status": "APPROVED"}
+    )
+    
+    assert response.status_code == 403
+
+
+def test_medical_can_review_own_selection(app, client, bra_athlete, bra_medical, token_bra_medical, selection_bra):
+    with app.app_context():
+        documento = Document(
+            uploaded_by=bra_athlete.id,
+            selection_id=selection_bra,
+            type=TypeDocument.LAUDO_MEDICO,
+            original_name="laudo.pdf",
+            storage_path="/tmp/laudo.pdf",
+            status=DocStatus.PENDING.value
+        )
+        db.session.add(documento)
+        db.session.commit()
+        document_id = str(documento.id)
+
+    response = client.patch(
+        f"/api/document/{document_id}/review",
+        headers={"Authorization": f"Bearer {token_bra_medical}"},
+        json={"status": "REJECTED", "reason": "Faltou assinatura"}
+    )
+    
+    assert response.status_code == 200
+    
+    with app.app_context():
+        documento_atualizado = Document.query.get(UUID(document_id))
+        assert documento_atualizado.status == DocStatus.REJECTED.value
+
