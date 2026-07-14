@@ -16,6 +16,7 @@ from app.models.enums.user_role import (
     TypeDocument,
     DocStatus,
     LogAction,
+    RegistrationStatus,
 )
 
 from app.services.auth import hash_password, create_access_token, user_to_token_payload
@@ -99,15 +100,15 @@ def selection_arg(app):
 # ----------------------------------------------------------------------
 
 @pytest.fixture
-def bra_staff(app, selection_bra):
+def bra_athlete(app, selection_bra):
 
     with app.app_context():
 
         user = User(
-            full_name="Brazil Technical Staff",
-            email="bra.staff@test.com",
+            full_name="Brazil Athlete",
+            email="bra.athlete@test.com",
             password_hash=hash_password("123456"),
-            role=UserRole.TECHNICAL_STAFF,
+            role=UserRole.ATHELETE,
             selection_id=selection_bra
         )
 
@@ -119,6 +120,83 @@ def bra_staff(app, selection_bra):
 
         return user
 
+@pytest.fixture
+def bra_staff(app, selection_bra):
+
+    with app.app_context():
+
+        user = User(
+            full_name="Brazil Technical Staff",
+            email="bra.staff@test.com",
+            password_hash=hash_password("123456"),
+            role=UserRole.TECHNICAL_STAFF,
+            registration_status=RegistrationStatus.APPROVED,
+            selection_id=selection_bra
+        )
+
+        db.session.add(user)
+        db.session.commit()
+
+        db.session.refresh(user)
+        db.session.expunge(user)
+
+        return user
+
+@pytest.fixture
+def bra_medical_staff(app, selection_bra):
+
+    with app.app_context():
+
+        user = User(
+            full_name="Brazil Medical Staff",
+            email="medical.bra@test.com",
+            password_hash=hash_password("123456"),
+            role=UserRole.MEDICAL_STAFF,
+            registration_status=RegistrationStatus.APPROVED,
+            selection_id=selection_bra
+        )
+
+        db.session.add(user)
+        db.session.commit()
+
+        db.session.refresh(user)
+        db.session.expunge(user)
+
+        return user
+
+@pytest.fixture
+def bra_medical(app, selection_bra):
+    with app.app_context():
+        user = User(
+            full_name="Brazil Medical",
+            email="bra.medical@test.com",
+            password_hash=hash_password("123456"),
+            role=UserRole.MEDICAL_STAFF,
+            registration_status=RegistrationStatus.APPROVED,
+            selection_id=selection_bra
+        )
+        db.session.add(user)
+        db.session.commit()
+        db.session.refresh(user)
+        db.session.expunge(user)
+        return user
+
+@pytest.fixture
+def arg_medical(app, selection_arg):
+    with app.app_context():
+        user = User(
+            full_name="Argentina Medical",
+            email="arg.medical@test.com",
+            password_hash=hash_password("123456"),
+            role=UserRole.MEDICAL_STAFF,
+            registration_status=RegistrationStatus.APPROVED,
+            selection_id=selection_arg
+        )
+        db.session.add(user)
+        db.session.commit()
+        db.session.refresh(user)
+        db.session.expunge(user)
+        return user
 
 @pytest.fixture
 def organizer(app):
@@ -130,6 +208,7 @@ def organizer(app):
             email="organizer@test.com",
             password_hash=hash_password("123456"),
             role=UserRole.ORGANIZER,
+            registration_status=RegistrationStatus.APPROVED,
             selection_id=None
         )
 
@@ -149,6 +228,7 @@ def auditor(app):
             email="auditor@test.com",
             password_hash=hash_password("123456"),
             role=UserRole.AUDITOR,
+            registration_status=RegistrationStatus.APPROVED,
             selection_id=None
         )
         db.session.add(user)
@@ -166,6 +246,7 @@ def bra_auditor(app, selection_bra):
             email="auditor.bra@test.com",
             password_hash=hash_password("123456"),
             role=UserRole.AUDITOR,
+            registration_status=RegistrationStatus.APPROVED,
             selection_id=selection_bra
         )
         db.session.add(user)
@@ -185,6 +266,7 @@ def arg_staff(app, selection_arg):
             email="arg.staff@test.com",
             password_hash=hash_password("123456"),
             role=UserRole.TECHNICAL_STAFF,
+            registration_status=RegistrationStatus.APPROVED,
             selection_id=selection_arg
         )
 
@@ -202,6 +284,10 @@ def arg_staff(app, selection_arg):
 # ----------------------------------------------------------------------
 
 @pytest.fixture
+def token_bra_athlete(bra_athlete):
+    return create_access_token(user_to_token_payload(bra_athlete))
+
+@pytest.fixture
 def token_bra_staff(bra_staff):
     return create_access_token(user_to_token_payload(bra_staff))
 
@@ -210,6 +296,14 @@ def token_bra_staff(bra_staff):
 def token_arg_staff(arg_staff):
 
     return create_access_token(user_to_token_payload(arg_staff))
+
+@pytest.fixture
+def token_bra_medical(bra_medical):
+    return create_access_token(user_to_token_payload(bra_medical))
+
+@pytest.fixture
+def token_arg_medical(arg_medical):
+    return create_access_token(user_to_token_payload(arg_medical))
 
 @pytest.fixture
 def token_auditor(auditor):
@@ -223,6 +317,13 @@ def token_bra_auditor(bra_auditor):
 def token_organizer(organizer):
 
     return create_access_token(user_to_token_payload(organizer))
+
+@pytest.fixture
+def token_bra_medical_staff(bra_medical_staff):
+
+    return create_access_token(
+        user_to_token_payload(bra_medical_staff)
+    )
 
 
 # ----------------------------------------------------------------------
@@ -256,6 +357,36 @@ def arg_document(app, arg_staff, selection_arg):
 def arg_document_id(arg_document):
 
     return str(arg_document.id)
+
+@pytest.fixture
+def bra_document(app, bra_staff, selection_bra):
+
+    with app.app_context():
+
+        document = Document(
+            selection_id=selection_bra,
+            uploaded_by=bra_staff.id,
+            type=TypeDocument.RELATORIO_TATICO,
+            original_name="relatorio_bra.pdf",
+            storage_path="/tmp/relatorio_bra.pdf",
+            status=DocStatus.APPROVED.value
+        )
+
+        db.session.add(document)
+        db.session.commit()
+
+        db.session.refresh(document)
+        db.session.expunge(document)
+
+        return document
+    
+@pytest.fixture
+def bra_document_id(bra_document):
+    return str(bra_document.id)
+
+# ----------------------------------------------------------------------
+# GCS
+# ----------------------------------------------------------------------
 
 @pytest.fixture
 def gcs_app(app):

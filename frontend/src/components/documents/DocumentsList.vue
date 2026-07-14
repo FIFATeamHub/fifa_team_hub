@@ -3,8 +3,29 @@ import { ref, watch, onMounted } from 'vue'
 import { useDocuments, type Documento } from '@/composables/useDocuments'
 import { usePermissions } from '@/composables/usePermissions';
 import { useAuthStore } from '@/stores/auth.js'
+import UploadDocumentModal from '@/components/documents/UploadDocumentModal.vue'
 
 const selectedType = ref('')
+
+// Controla o modal de upload disparado a partir de um item pendente específico
+const uploadModalOpen = ref(false)
+const uploadDocType = ref('')
+
+function openUploadFor(docType: string) {
+    uploadDocType.value = docType
+    uploadModalOpen.value = true
+}
+
+function closeUploadModal() {
+    uploadModalOpen.value = false
+}
+
+async function handleUploadSuccess() {
+    uploadModalOpen.value = false
+    // Atualiza as duas listas: o documento some das pendências e aparece na listagem geral
+    await fetchDocuments({ doc_type: selectedType.value || undefined, page: 1 })
+    await fetchPendingDocuments()
+}
 
 watch(selectedType, async () => {
 
@@ -18,13 +39,16 @@ watch(selectedType, async () => {
 
 const {
     documents,
+    pendingDocuments,
     loading,
     error,
     pagination,
     fetchDocuments,
+    fetchPendingDocuments,
     deleteDocument,
     downloadDocument,
-    previewDocument
+    previewDocument,
+    reviewDocument
 } = useDocuments()
 
 const { can } = usePermissions()
@@ -33,12 +57,61 @@ const authStore = useAuthStore()
 
 onMounted(async () => {
     await fetchDocuments()
+    await fetchPendingDocuments()
 })
 
 function formatDate(date: string) {
 
     return new Date(date).toLocaleString('pt-BR')
 
+}
+
+const docTypeLabels: Record<string, string> = {
+    PASSPORT: 'Passaporte',
+    CONVOCADO: 'Convocação',
+    LAUDO_MEDICO: 'Laudo Médico',
+    RELATORIO_TATICO: 'Relatório Tático',
+    ESQUEMA_JOGADAS: 'Esquema de Jogadas'
+}
+
+function formatDocType(type: string) {
+    return docTypeLabels[type] ?? type
+}
+
+const statusLabels: Record<string, string> = {
+    APPROVED: 'Aprovado',
+    PENDING: 'Em revisão',
+    REJECTED: 'Restrito'
+}
+
+function statusLabel(status: string) {
+    return statusLabels[status] ?? status
+}
+
+function statusBadgeClass(status: string) {
+    if (status === 'APPROVED') return 'doc-card__badge--success'
+    if (status === 'PENDING') return 'doc-card__badge--warning'
+    if (status === 'REJECTED') return 'doc-card__badge--danger'
+    return ''
+}
+
+function statusAccentClass(status: string) {
+    if (status === 'APPROVED') return 'doc-card--success'
+    if (status === 'PENDING') return 'doc-card--warning'
+    if (status === 'REJECTED') return 'doc-card--danger'
+    return ''
+}
+
+const docTypeIcons: Record<string, string> = {
+    PASSPORT: 'id',
+    CONVOCADO: 'clipboard',
+    LAUDO_MEDICO: 'pulse',
+    RELATORIO_TATICO: 'chart',
+    ESQUEMA_JOGADAS: 'flag'
+}
+
+function docTypeIcon(type: string) {
+    return docTypeIcons[type] ?? 'file'
 }
 
 async function nextPage() {
@@ -86,232 +159,718 @@ async function handleView(doc: Documento) {
     }
 }
 
+async function handleReview(doc: Documento) {
+    try {
+        await reviewDocument(doc.id, 'APPROVED')
+        alert('Documento aprovado com sucesso!')
+    } catch (err) {
+        alert(err instanceof Error ? err.message : 'Falha ao aprovar o documento.')
+    }
+}
+
+async function handleReject(doc: Documento) {
+    const reason = prompt('Por favor, informe o motivo da rejeição:')
+    if (reason === null) return // usuário cancelou
+    
+    try {
+        await reviewDocument(doc.id, 'REJECTED', reason)
+        alert('Documento rejeitado com sucesso!')
+    } catch (err) {
+        alert(err instanceof Error ? err.message : 'Falha ao rejeitar o documento.')
+    }
+}
+
+defineExpose({
+    refresh: () => fetchDocuments({ doc_type: selectedType.value || undefined, page: pagination.value.page })
+})
+
 </script>
 
 <template>
 
-    <div>
+    <div class="documents">
 
-        <h2>Documentos</h2>
+        <div
+            v-if="
+                authStore.user?.role === 'ATHELETE' &&
+                pendingDocuments.length > 0
+            "
+            class="documents__pending"
+        >
+            <div class="documents__pending-head">
+                <svg class="documents__pending-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 9v4m0 4h.01M10.3 3.9 2.6 17a1.5 1.5 0 0 0 1.3 2.2h16.2a1.5 1.5 0 0 0 1.3-2.2L13.7 3.9a1.5 1.5 0 0 0-2.6 0Z" />
+                </svg>
+                <h3>Documentos Pendentes</h3>
+            </div>
 
-        <div class="filtros">
-
-            <select v-model="selectedType">
-
-                <option value="">
-                    Todos os tipos
-                </option>
-
-                <option value="PASSPORT">
-                    Passaporte
-                </option>
-
-                <option value="CONVOCADO">
-                    Convocação
-                </option>
-
-                <option value="LAUDO_MEDICO">
-                    Laudo Médico
-                </option>
-
-                <option value="RELATORIO_TATICO">
-                    Relatório Tático
-                </option>
-
-            </select>
-
-            <p>Filtro selecionado: {{ selectedType }}</p>
-
-            <button @click="selectedType = ''">Limpar filtros</button>
-
-        </div>
-
-        <div v-if="loading" class="spinner-container">
-            <div class="spinner"></div>
-                <p>Carregando documentos...</p>
-        </div>
-
-        <p v-else-if="error">{{ error }}</p>
-
-        <p v-else-if="documents.length === 0">Nenhum documento foi encontrado.</p>
-
-        <div v-if="!loading && !error && documents.length > 0">
-
-        <table>
-
-            <thead>
-
-                <tr>
-                    <th>Nome</th>
-                    <th>Tipo</th>
-                    <th>Enviado por</th>
-                    <th>Data</th>
-                    <th>Status</th>
-                    <th>Ações</th>
-                </tr>
-                <th v-if="authStore.user?.role === 'ORGANIZER'">
-                    Seleção
-                </th>
-            </thead>
-
-            <tbody>
-
-                <tr
-                    v-for="doc in documents"
-                    :key="doc.id"
+            <ul>
+                <li
+                    v-for="doc in pendingDocuments"
+                    :key="doc.doc_type"
+                    class="documents__pending-item"
                 >
-                <td v-if="authStore.user?.role === 'ORGANIZER'">
-                    {{ doc.selection_code }}
-                </td>
-                
-                <td>{{ doc.original_name }}</td>
-                <td>{{ doc.doc_type }}</td>
-                <td>{{ doc.uploaded_by_id }}</td>
-                <td>{{ formatDate(doc.created_at) }}</td>
-                <!--status-->
-                <td>
-
-                    <span
-                        v-if="doc.status === 'APPROVED'"
-                        class="badge aprovado"
-                    >
-                        Aprovado
-                    </span>
-
-                    <span
-                        v-else-if="doc.status === 'PENDING'"
-                        class="badge pendente"
-                    >
-                        Pendente
-                    </span>
-
-                    <span
-                        v-else-if="doc.status === 'REJECTED'"
-                        class="badge rejeitado"
-                    >
-                        Rejeitado
-                    </span>
-
-
-                </td>
-
-                <td>
-
-                    <button 
-                        @click="handleView(doc)">
-                            Visualizar
-                    </button>
-
-                </td>
-
-                <td>
+                    <span>{{ formatDocType(doc.doc_type) }}</span>
 
                     <button
-                        @click="handleDownload(doc)">
-                            Baixar
+                        v-if="can('upload:documents')"
+                        class="documents__pending-upload-btn"
+                        @click="openUploadFor(doc.doc_type)"
+                    >
+                        Enviar
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="documents__toolbar">
+
+            <div class="documents__filter">
+                <label for="doc-type-filter" class="documents__filter-label">Filtro</label>
+                <div class="documents__select-wrap">
+                    <svg class="documents__select-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 5h16l-6 8v6l-4-2v-4Z" />
+                    </svg>
+                    <select id="doc-type-filter" v-model="selectedType" class="documents__select">
+                        <option value="">Todos</option>
+                        <option value="PASSPORT">Passaporte</option>
+                        <option value="CONVOCADO">Convocação</option>
+                        <option value="LAUDO_MEDICO">Laudo Médico</option>
+                        <option value="RELATORIO_TATICO">Relatório Tático</option>
+                        <option value="ESQUEMA_JOGADAS">Esquema de Jogadas</option>
+                    </select>
+                    <svg class="documents__select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 9l6 6 6-6" />
+                    </svg>
+                </div>
+            </div>
+
+            <div v-if="$slots['toolbar-actions']" class="documents__toolbar-actions">
+                <slot name="toolbar-actions"></slot>
+            </div>
+
+        </div>
+
+        <div v-if="!loading && !error" class="documents__stats">
+            <span>{{ pagination.total }} documento{{ pagination.total === 1 ? '' : 's' }}</span>
+            <span v-if="pagination.pages > 0">Página {{ pagination.page }} de {{ pagination.pages }}</span>
+        </div>
+
+        <div v-if="loading" class="documents__state">
+            <div class="documents__spinner"></div>
+            <p>Carregando documentos...</p>
+        </div>
+
+        <p v-else-if="error" class="documents__error">{{ error }}</p>
+
+        <p v-else-if="documents.length === 0" class="documents__empty">Nenhum documento foi encontrado.</p>
+
+        <div v-else class="documents__grid">
+
+            <article
+                v-for="doc in documents"
+                :key="doc.id"
+                class="doc-card"
+                :class="statusAccentClass(doc.status)"
+            >
+
+                <header class="doc-card__header">
+
+                    <span class="doc-card__icon">
+                        <svg v-if="docTypeIcon(doc.doc_type) === 'id'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="5" width="18" height="14" rx="2" />
+                            <circle cx="9" cy="11" r="2" />
+                            <path d="M15 10h3M15 14h3M6 16c.5-1.8 2-2.5 3-2.5s2.5.7 3 2.5" />
+                        </svg>
+                        <svg v-else-if="docTypeIcon(doc.doc_type) === 'clipboard'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1Z" />
+                            <path d="M6 6h12v14H6z" />
+                            <path d="M9 12l2 2 4-4" />
+                        </svg>
+                        <svg v-else-if="docTypeIcon(doc.doc_type) === 'pulse'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 12h4l2-7 4 14 2-7h6" />
+                        </svg>
+                        <svg v-else-if="docTypeIcon(doc.doc_type) === 'chart'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 20V10M12 20V4M20 20v-7" />
+                        </svg>
+                        <svg v-else-if="docTypeIcon(doc.doc_type) === 'flag'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 3v18" />
+                            <path d="M5 4h13l-3 4 3 4H5" />
+                        </svg>
+                        <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
+                            <path d="M14 3v5h5" />
+                        </svg>
+                    </span>
+
+                    <span class="doc-card__badge" :class="statusBadgeClass(doc.status)">
+                        {{ statusLabel(doc.status) }}
+                    </span>
+
+                </header>
+
+                <h3 class="doc-card__title">{{ doc.original_name }}</h3>
+
+                <dl class="doc-card__meta">
+
+                    <div class="doc-card__meta-row">
+                        <dt>Categoria</dt>
+                        <dd>{{ formatDocType(doc.doc_type) }}</dd>
+                    </div>
+
+                    <div
+                        v-if="authStore.user?.role === 'ORGANIZER' && doc.selection_code"
+                        class="doc-card__meta-row"
+                    >
+                        <dt>Seleção</dt>
+                        <dd>{{ doc.selection_code }}</dd>
+                    </div>
+
+                    <div class="doc-card__meta-row">
+                        <dt>Atualizado</dt>
+                        <dd>{{ formatDate(doc.created_at) }}</dd>
+                    </div>
+
+                </dl>
+
+                <div class="doc-card__divider"></div>
+
+                <div class="doc-card__actions">
+
+                    <button class="doc-card__action" @click="handleView(doc)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7-10.5-7-10.5-7Z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        Visualizar
                     </button>
 
-                </td>
+                    <button class="doc-card__action" @click="handleDownload(doc)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 3v12m0 0 4-4m-4 4-4-4" />
+                            <path d="M4 19h16" />
+                        </svg>
+                        Baixar
+                    </button>
 
-                <td>
+                    <button
+                        v-if="
+                            ['AUDITOR', 'MEDICAL_STAFF'].includes(authStore.user?.role || '') &&
+                            doc.status === 'PENDING' &&
+                            doc.uploaded_by_id !== authStore.user?.id
+                        "
+                        class="doc-card__action doc-card__action--primary"
+                        @click="handleReview(doc)"
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 6 9 17l-5-5" />
+                        </svg>
+                        Aprovar
+                    </button>
+
+                    <button
+                        v-if="
+                            ['AUDITOR', 'MEDICAL_STAFF'].includes(authStore.user?.role || '') &&
+                            doc.status === 'PENDING' &&
+                            doc.uploaded_by_id !== authStore.user?.id
+                        "
+                        class="doc-card__action doc-card__action--danger"
+                        @click="handleReject(doc)"
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                        Rejeitar
+                    </button>
 
                     <button
                         v-if="
                             can('upload:documents') &&
                             authStore.user?.id === doc.uploaded_by_id
                         "
-                        @click="handleDelete(doc.id)">
-                            Deletar
+                        class="doc-card__action doc-card__action--danger"
+                        @click="handleDelete(doc.id)"
+                    >
+                        Excluir
                     </button>
 
-                </td>
+                </div>
 
-            </tr>
+            </article>
 
-            </tbody>
+        </div>
 
-        </table>
+        <div v-if="!loading && !error && documents.length > 0" class="documents__pagination">
 
-    </div>
+            <button
+                class="documents__page-btn documents__page-btn--secondary"
+                @click="previousPage"
+                :disabled="pagination.page === 1"
+            >
+                Página anterior
+            </button>
 
-    <div class="pagination">
+            <button
+                class="documents__page-btn documents__page-btn--primary"
+                @click="nextPage"
+                :disabled="pagination.page >= pagination.pages || pagination.pages === 0"
+            >
+                Próxima página
+            </button>
 
-        <button
-        @click="previousPage"
-        :disabled="pagination.page === 1"       
-        >
-        Anterior
-        </button>
-
-        <span>
-            Página {{ pagination.page }} de {{ pagination.pages }}
-        </span>
-
-        <button
-        @click="nextPage"
-        :disabled="pagination.page >= pagination.pages || pagination.pages === 0"
-        >
-        Próxima
-        </button>
+        </div>
 
     </div>
 
-</div>
+    <UploadDocumentModal
+        :isOpen="uploadModalOpen"
+        :preselectedType="uploadDocType"
+        :onClose="closeUploadModal"
+        :onSuccess="handleUploadSuccess"
+    />
 
 </template>
 
 
 <style scoped>
 
-.badge {
-    padding: 0.4rem 0.8rem;
-    border-radius: 0.5rem;
-    font-size: 0.85rem;
-    font-weight: bold;
+.documents {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
 }
 
-.aprovado {
-    background: #d4edda;
+.documents__pending {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-5) var(--padding-card);
+    background-color: var(--color-surface-primary);
+    border: 1px solid var(--color-warning-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
 }
 
-.pendente {
-    background: #fff3cd;
+.documents__pending-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
 }
 
-.rejeitado {
-    background: #f8d7da;
+.documents__pending-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: var(--color-gold);
 }
 
-.spinner {
-    width: 40px;
-    height: 40px;
-
-    border: 4px solid #ddd;
-    border-top: 4px solid #3498db;
-
-    border-radius: 50%;
-
-    animation: spin 1s linear infinite;
+.documents__pending h3 {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-label);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+    color: var(--color-gold);
 }
 
-.spinner-container {
+.documents__pending ul {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+}
+
+.documents__pending-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-3) 0;
+    color: var(--color-text-secondary);
+    font-family: var(--font-body);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-body);
+}
+
+.documents__pending-item + .documents__pending-item {
+    border-top: 1px solid var(--color-border-subtle);
+}
+
+.documents__pending-upload-btn {
+    padding: var(--space-1) var(--space-4);
+    background: none;
+    border: 1px solid var(--color-border-gold);
+    border-radius: var(--radius-full);
+    color: var(--color-gold);
+    font-family: var(--font-body);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-small);
+    cursor: pointer;
+    transition: background-color var(--transition-default), color var(--transition-default);
+}
+
+.documents__pending-upload-btn:hover {
+    background-color: var(--color-gold);
+    color: var(--color-bg-deep);
+}
+
+.documents__toolbar {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: var(--space-6);
+}
+
+.documents__toolbar-actions {
+    margin-left: auto;
+}
+
+.documents__filter {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.documents__filter-label {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-label);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+    color: var(--color-gold);
+}
+
+.documents__select-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.documents__select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: var(--space-3) var(--space-8) var(--space-3) var(--space-10);
+    background-color: var(--color-surface-elevated);
+    border: 1px solid var(--color-border-gold);
+    border-radius: var(--radius-full);
+    color: var(--color-text-primary);
+    font-family: var(--font-body);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-body);
+    cursor: pointer;
+    transition: border-color var(--transition-default);
+}
+
+.documents__select:focus {
+    outline: none;
+    border-color: var(--color-border-gold-full);
+}
+
+.documents__select-icon {
+    position: absolute;
+    left: var(--space-4);
+    width: 14px;
+    height: 14px;
+    color: var(--color-gold);
+    pointer-events: none;
+}
+
+.documents__select-chevron {
+    position: absolute;
+    right: var(--space-4);
+    width: 14px;
+    height: 14px;
+    color: var(--color-text-tertiary);
+    pointer-events: none;
+}
+
+.documents__stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-label);
+    letter-spacing: var(--letter-spacing-mono);
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+}
+
+.documents__state {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
-    padding: 2rem;
+    gap: var(--space-4);
+    padding: var(--space-12);
+    color: var(--color-text-secondary);
+    font-family: var(--font-body);
+    font-size: var(--font-size-body);
 }
 
-@keyframes spin {
+.documents__spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--color-border-default);
+    border-top-color: var(--color-gold);
+    border-radius: var(--radius-full);
+    animation: documents-spin 1s linear infinite;
+}
 
-    from {
-        transform: rotate(0deg);
+@keyframes documents-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.documents__error {
+    padding: var(--space-4);
+    background-color: var(--color-danger-bg);
+    border: 1px solid var(--color-danger-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-danger);
+    font-family: var(--font-body);
+    font-size: var(--font-size-body);
+}
+
+.documents__empty {
+    padding: var(--space-8);
+    text-align: center;
+    color: var(--color-text-tertiary);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-label);
+    letter-spacing: var(--letter-spacing-mono);
+    text-transform: uppercase;
+}
+
+.documents__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+    gap: var(--space-6);
+}
+
+.doc-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--padding-card);
+    background-color: var(--color-surface-elevated);
+    border: 1px solid var(--color-border-default);
+    border-left: 3px solid var(--color-border-default);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    transition: transform var(--transition-default), border-color var(--transition-default);
+}
+
+.doc-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--color-border-gold);
+}
+
+.doc-card--success {
+    border-left-color: var(--color-teal);
+}
+
+.doc-card--warning {
+    border-left-color: var(--color-gold);
+}
+
+.doc-card--danger {
+    border-left-color: var(--color-danger);
+}
+
+.doc-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.doc-card__icon {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background-color: var(--color-warning-bg);
+    border: 1px solid var(--color-border-gold);
+    border-radius: var(--radius-md);
+    color: var(--color-gold);
+}
+
+.doc-card__icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.doc-card__badge {
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+}
+
+.doc-card__badge--success {
+    background-color: var(--color-success-bg);
+    color: var(--color-teal-light);
+}
+
+.doc-card__badge--warning {
+    background-color: var(--color-warning-bg);
+    color: var(--color-gold);
+}
+
+.doc-card__badge--danger {
+    background-color: var(--color-danger-bg);
+    color: var(--color-danger);
+}
+
+.doc-card__title {
+    font-family: var(--font-heading);
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-h3);
+    letter-spacing: var(--letter-spacing-heading);
+    color: var(--color-text-primary);
+}
+
+.doc-card__meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.doc-card__meta-row {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    font-family: var(--font-body);
+    font-size: var(--font-size-small);
+}
+
+.doc-card__meta-row dt {
+    color: var(--color-text-tertiary);
+}
+
+.doc-card__meta-row dd {
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-semibold);
+    text-align: right;
+}
+
+.doc-card__divider {
+    height: 1px;
+    background-color: var(--color-border-default);
+}
+
+.doc-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+}
+
+.doc-card__action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    flex: 1;
+    padding: var(--space-2) var(--space-4);
+    background: none;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-secondary);
+    font-family: var(--font-body);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-small);
+    cursor: pointer;
+    transition: border-color var(--transition-default), color var(--transition-default);
+}
+
+.doc-card__action svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.doc-card__action:hover {
+    border-color: var(--color-border-teal);
+    color: var(--color-teal-light);
+}
+
+.doc-card__action--danger {
+    color: var(--color-danger);
+    border-color: var(--color-danger-border);
+}
+
+.doc-card__action--danger:hover {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+
+.doc-card__action--primary {
+    color: var(--color-teal-light);
+    border-color: var(--color-border-teal);
+}
+
+.doc-card__action--primary:hover {
+    border-color: var(--color-teal);
+    color: var(--color-teal);
+}
+
+.documents__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+}
+
+.documents__page-btn {
+    padding: var(--space-3) var(--space-6);
+    border-radius: var(--radius-full);
+    font-family: var(--font-body);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-small);
+    cursor: pointer;
+    transition: border-color var(--transition-default), color var(--transition-default), background-color var(--transition-default);
+}
+
+.documents__page-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.documents__page-btn--secondary {
+    background: none;
+    border: 1px solid var(--color-border-default);
+    color: var(--color-text-secondary);
+}
+
+.documents__page-btn--secondary:hover:not(:disabled) {
+    border-color: var(--color-border-teal);
+    color: var(--color-teal-light);
+}
+
+.documents__page-btn--primary {
+    border: 1px solid var(--color-gold);
+    background-color: var(--color-gold);
+    color: var(--color-bg-deep);
+    font-weight: var(--font-weight-black);
+}
+
+.documents__page-btn--primary:hover:not(:disabled) {
+    background-color: var(--color-gold-hover);
+    border-color: var(--color-gold-hover);
+}
+
+.documents__page-btn--primary:disabled {
+    background-color: var(--color-surface-elevated);
+    border-color: var(--color-border-default);
+    color: var(--color-text-tertiary);
+}
+
+@media (max-width: 480px) {
+    .documents__grid {
+        grid-template-columns: 1fr;
     }
-
-    to {
-        transform: rotate(360deg);
-    }
-
 }
 
 </style>

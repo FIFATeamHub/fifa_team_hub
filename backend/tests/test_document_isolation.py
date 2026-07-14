@@ -114,3 +114,97 @@ def test_download_url_registers_audit_log(
         assert audit.action == LogAction.DOWNLOAD
         assert audit.status == "SUCCESS"
         assert audit.details.startswith("URL de download gerada")
+        
+def test_medical_staff_cannot_access_other_selection_document(
+    client,
+    token_bra_medical_staff,
+    arg_document_id
+):
+
+    response = client.get(
+        f"/api/document/{arg_document_id}",
+        headers={
+            "Authorization": f"Bearer {token_bra_medical_staff}"
+        }
+    )
+
+    assert response.status_code == 403
+    
+def test_medical_staff_only_lists_documents_from_own_selection(
+    client,
+    token_bra_medical_staff
+):
+
+    response = client.get(
+        "/api/document/",
+        headers={
+            "Authorization": f"Bearer {token_bra_medical_staff}"
+        }
+    )
+
+    assert response.status_code == 200
+
+    for document in response.json["data"]:
+        assert document["selection_code"] == "BRA"
+        
+def test_auditor_cannot_access_other_selection_document(
+    client,
+    token_bra_auditor,
+    arg_document_id
+):
+
+    response = client.get(
+        f"/api/document/{arg_document_id}",
+        headers={
+            "Authorization": f"Bearer {token_bra_auditor}"
+        }
+    )
+
+    assert response.status_code == 403
+    
+def test_auditor_only_lists_documents_from_own_selection(
+    client,
+    token_bra_auditor
+):
+
+    response = client.get(
+        "/api/document/",
+        headers={
+            "Authorization": f"Bearer {token_bra_auditor}"
+        }
+    )
+
+    assert response.status_code == 200
+
+    for document in response.json["data"]:
+        assert document["selection_code"] == "BRA"
+        
+def test_athlete_can_access_tactical_document_from_same_selection(
+    client,
+    token_bra_athlete,
+    bra_document_id
+):
+
+    response = client.get(
+        f"/api/document/{bra_document_id}",
+        headers={
+            "Authorization": f"Bearer {token_bra_athlete}"
+        }
+    )
+
+    assert response.status_code == 200
+    
+def test_athlete_cannot_access_tactical_document_from_other_selection(
+    client,
+    token_bra_athlete,
+    arg_document_id
+):
+
+    response = client.get(
+        f"/api/document/{arg_document_id}",
+        headers={
+            "Authorization": f"Bearer {token_bra_athlete}"
+        }
+    )
+
+    assert response.status_code == 403

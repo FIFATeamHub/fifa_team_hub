@@ -14,6 +14,10 @@ export interface Documento {
   created_at: string
 }
 
+export interface PendingDocument {
+  doc_type: string
+}
+
 interface Pagination {
   page: number
   pages: number
@@ -21,10 +25,12 @@ interface Pagination {
   total: number
 }
 
+const DEFAULT_PER_PAGE = 12
+
 const pagination = ref<Pagination>({
   page: 1,
   pages: 0,
-  per_page: 10,
+  per_page: DEFAULT_PER_PAGE,
   total: 0
 })
 
@@ -32,6 +38,9 @@ export function useDocuments() {
 
   // Lista de documentos exibidos na tela
   const documents = ref<Documento[]>([])
+
+  // Lista de documentos pendentes exibidos na tela
+  const pendingDocuments = ref<PendingDocument[]>([])
 
   // Indica quando uma operação está em andamento (Carregando...)
   const loading = ref(false)
@@ -57,7 +66,8 @@ export function useDocuments() {
       const response = await api.get('/api/document/', {
           params: {
               doc_type: params?.doc_type,
-              page: params?.page
+              page: params?.page,
+              per_page: DEFAULT_PER_PAGE
           }
       })
 
@@ -72,6 +82,29 @@ export function useDocuments() {
       loading.value = false
     }
   }
+
+  async function fetchPendingDocuments() {
+
+  loading.value = true
+  error.value = ''
+
+  try {
+
+    const response = await api.get('/api/document/pending')
+
+    pendingDocuments.value = response.data
+
+  } catch {
+
+    error.value = 'Erro ao carregar documentos pendentes.'
+
+  } finally {
+
+    loading.value = false
+
+  }
+
+}
 
   async function deleteDocument(id: string) {
       try {
@@ -91,17 +124,32 @@ export function useDocuments() {
     return response.data.url
   }
 
+  
+  async function resolveFileUrl(url: string): Promise<string> {
+    if (/^https?:\/\//i.test(url)) {
+      return url
+    }
+
+    const response = await api.get(url, { responseType: 'blob' })
+    return URL.createObjectURL(response.data)
+  }
+
   async function downloadDocument(documentId: string, filename: string) {
     try {
       const url = await getDownloadUrl(documentId)
+      const resolvedUrl = await resolveFileUrl(url)
 
       const link = document.createElement('a')
-      link.href = url
+      link.href = resolvedUrl
       link.download = filename
 
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+
+      if (resolvedUrl !== url) {
+        URL.revokeObjectURL(resolvedUrl)
+      }
 
     } catch (error) {
       const apiError = error as { response?: { status: number } }
@@ -120,20 +168,53 @@ export function useDocuments() {
   }
 
   async function previewDocument(documentId: string) {
-    const url = await getDownloadUrl(documentId)
-    window.open(url, '_blank')
+    // Abre a aba de forma síncrona, antes de qualquer await, para o navegador
+    // não bloquear como pop-up (só permite window.open sem bloqueio quando
+    // chamado diretamente a partir de um evento do usuário).
+    const previewWindow = window.open('', '_blank')
+
+    try {
+      const url = await getDownloadUrl(documentId)
+      const resolvedUrl = await resolveFileUrl(url)
+
+      if (previewWindow) {
+        previewWindow.location.href = resolvedUrl
+      }
+    } catch (error) {
+      previewWindow?.close()
+      throw error
+    }
+  }
+
+  async function reviewDocument(documentId: string, status: string, reason?: string) {
+    try {
+      await api.patch(`/api/document/${documentId}/review`, { status })
+      const doc = documents.value.find(d => d.id === documentId)
+      if (doc) {
+        doc.status = status
+      }
+    } catch (error) {
+      const apiError = error as { response?: { status: number, data?: { error?: string } } }
+      if (apiError.response?.status === 403) {
+        throw new Error(apiError.response.data?.error || 'Acesso negado.')
+      }
+      throw new Error('Erro ao revisar documento.')
+    }
   }
 
   return {
-    documents,
-    loading,
-    error,
-    pagination,
-    addDocument,
-    deleteDocument,
-    fetchDocuments,
-    getDownloadUrl,
-    downloadDocument,
-    previewDocument,
+      documents,
+      pendingDocuments,
+      loading,
+      error,
+      pagination,
+      addDocument,
+      deleteDocument,
+      fetchDocuments,
+      fetchPendingDocuments,
+      getDownloadUrl,
+      downloadDocument,
+      previewDocument,
+      reviewDocument
   }
 }

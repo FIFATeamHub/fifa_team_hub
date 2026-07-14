@@ -1,10 +1,78 @@
 <!-- frontend/src/views/auditView.vue -->
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useAuditLogs, type AuditLog } from '@/composables/useAuditLogs'
-import { ShieldCheck, ShieldAlert, Search, Calendar, Eye } from 'lucide-vue-next'
+import { usePendingRegistrations } from '@/composables/usePendingRegistrations'
+import { useAuthStore } from '@/stores/auth.js'
+import { Check, X } from 'lucide-vue-next'
+
+const authStore = useAuthStore()
+const isOrganizer = computed(() => authStore.user?.role === 'ORGANIZER')
 
 const { logs, loading, error, filters, pagination, fetchAuditLogs } = useAuditLogs()
+
+const {
+  registrations,
+  loading: loadingRegistrations,
+  error: registrationsError,
+  fetchPendingRegistrations,
+  approveRegistration,
+  rejectRegistration
+} = usePendingRegistrations()
+
+const activeTab = ref<'logs' | 'pendentes' | 'auditores'>('logs')
+
+const roleOptions = [
+  { value: 'ATHELETE', label: 'Jogador' },
+  { value: 'TECHNICAL_STAFF', label: 'Comissão Técnica' },
+  { value: 'MEDICAL_STAFF', label: 'Comissão Médica' },
+  { value: 'AUDITOR', label: 'Auditor' },
+  { value: 'ORGANIZER', label: 'Organizador' }
+]
+
+const selectedRoles = reactive<Record<string, string>>({})
+const actionError = ref('')
+const actionMessage = ref('')
+
+const roleFor = (userId: string) => selectedRoles[userId] ?? roleOptions[0]?.value ?? 'ATHELETE'
+
+const handleApprove = async (userId: string) => {
+  actionError.value = ''
+  actionMessage.value = ''
+  try {
+    const roleToGrant = activeTab.value === 'auditores' ? 'AUDITOR' : roleFor(userId)
+    const data = await approveRegistration(userId, roleToGrant)
+    if (data?.message) {
+      actionMessage.value = data.message
+      setTimeout(() => { actionMessage.value = '' }, 4000)
+    }
+  } catch (err) {
+    console.error('Approve Registration Error:', err)
+    actionError.value = 'Erro ao aprovar solicitação.'
+  }
+}
+
+const handleReject = async (userId: string) => {
+  actionError.value = ''
+  actionMessage.value = ''
+  try {
+    await rejectRegistration(userId)
+    if (activeTab.value === 'auditores') {
+      actionMessage.value = 'Nomeação de Auditor recusada. O cadastro permanece pendente para reavaliação.'
+      setTimeout(() => { actionMessage.value = '' }, 4000)
+    }
+  } catch (err) {
+    console.error('Reject Registration Error:', err)
+    actionError.value = 'Erro ao rejeitar solicitação.'
+  }
+}
+
+const switchTab = (tab: 'logs' | 'pendentes' | 'auditores') => {
+  activeTab.value = tab
+  if ((tab === 'pendentes' || tab === 'auditores') && registrations.value.length === 0) {
+    fetchPendingRegistrations()
+  }
+}
 
 // Estado para o modal de detalhes de segurança
 const selectedDetails = ref<string | null>(null)
@@ -26,7 +94,7 @@ const openDetailsModal = (details: AuditLog['details']) => {
   isModalOpen.value = true
 }
 
-const formatDate = (date: string) => {
+const formatDate = (date: string | null) => {
   return date ? new Date(date).toLocaleString('pt-BR') : '—'
 }
 
@@ -37,18 +105,55 @@ onMounted(() => {
 
 <template>
   <div class="audit-container">
+
     <!-- Header da Tela -->
-    <header class="audit-header">
-      <div class="title-block">
-        <span class="system-badge">[ AMBIENTE VERIFICADO ]</span>
-        <h1>Terminal de Integridade e Auditoria</h1>
-      </div>
-    </header>
+    <section class="audit-hero">
+      <div class="audit-hero__bg"></div>
+      <div class="audit-hero__overlay"></div>
+      <div class="audit-hero__edge"></div>
+      <h1 class="audit-hero__title">Terminal de Auditoria</h1>
+    </section>
+
+    <div class="audit-body">
+
+    <!-- Abas: Logs de Auditoria / Solicitações Pendentes -->
+    <div class="tab-bar">
+      <button
+        type="button"
+        :class="['tab-button', { 'tab-button--active': activeTab === 'logs' }]"
+        @click="switchTab('logs')"
+      >
+        Logs de Auditoria
+      </button>
+      <button
+        type="button"
+        :class="['tab-button', { 'tab-button--active': activeTab === 'pendentes' }]"
+        @click="switchTab('pendentes')"
+      >
+        Solicitações Pendentes
+      </button>
+      <button
+        v-if="isOrganizer"
+        type="button"
+        :class="['tab-button', { 'tab-button--active': activeTab === 'auditores' }]"
+        @click="switchTab('auditores')"
+      >
+        Nomeações de Auditor
+      </button>
+    </div>
+
+    <template v-if="activeTab === 'logs'">
 
     <!-- Barra de Filtros Avançados -->
     <section class="filter-bar">
       <div class="input-group">
-        <label><Search :size="14" /> Filtrar por Ação</label>
+        <label>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <circle cx="11" cy="11" r="6" />
+            <path d="m20 20-4.2-4.2" />
+          </svg>
+          Filtrar por Ação
+        </label>
         <select v-model="filters.action" class="custom-select">
           <option value="">Todas as ações operacionais</option>
           <option value="LOGIN">LOGIN</option>
@@ -61,12 +166,28 @@ onMounted(() => {
       </div>
 
       <div class="input-group">
-        <label><Calendar :size="14" /> Período Inicial</label>
+        <label>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            <path d="M16 2v4" />
+            <path d="M8 2v4" />
+            <path d="M3 10h18" />
+          </svg>
+          Período Inicial
+        </label>
         <input type="date" v-model="filters.startDate" class="custom-input" />
       </div>
 
       <div class="input-group">
-        <label><Calendar :size="14" /> Período Final</label>
+        <label>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            <path d="M16 2v4" />
+            <path d="M8 2v4" />
+            <path d="M3 10h18" />
+          </svg>
+          Período Final
+        </label>
         <input type="date" v-model="filters.endDate" class="custom-input" />
       </div>
     </section>
@@ -99,8 +220,13 @@ onMounted(() => {
             <td><span class="action-badge">{{ log.action }}</span></td>
             <td>
               <span :class="['status-indicator', log.status.toLowerCase()]">
-                <ShieldCheck v-if="log.status === 'SUCCESS'" :size="14" />
-                <ShieldAlert v-else :size="14" />
+                <svg v-if="log.status === 'SUCCESS'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                  <path d="M12 3v10" />
+                  <path d="M12 17v.01" />
+                </svg>
                 {{ log.status }}
               </span>
             </td>
@@ -108,7 +234,10 @@ onMounted(() => {
             <td class="font-mono text-muted">{{ formatDate(log.created_at) }}</td>
             <td class="text-center">
               <button @click="openDetailsModal(log.details)" class="btn-inspect" title="Inspecionar Metadados">
-                <Eye :size="16" />
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
               </button>
             </td>
           </tr>
@@ -135,6 +264,72 @@ onMounted(() => {
       </div>
     </section>
 
+    </template>
+
+    <template v-else-if="activeTab === 'pendentes' || activeTab === 'auditores'">
+
+    <p v-if="actionError" class="registrations-error">{{ actionError }}</p>
+    <p v-if="actionMessage" class="registrations-success">{{ actionMessage }}</p>
+
+    <!-- Tabela de Solicitações Pendentes / Nomeações de Auditor -->
+    <section class="table-container">
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>E-mail</th>
+            <th>Solicitado em</th>
+            <th>Papel</th>
+            <th class="text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="loadingRegistrations" class="state-row">
+            <td colspan="5" class="text-center text-muted">Carregando solicitações pendentes...</td>
+          </tr>
+          <tr v-else-if="registrationsError" class="state-row">
+            <td colspan="5" class="text-center text-muted">{{ registrationsError }}</td>
+          </tr>
+          <tr v-else-if="registrations.length === 0" class="state-row">
+            <td colspan="5" class="text-center text-muted">
+              {{ activeTab === 'auditores' ? 'Nenhuma nomeação de Auditor pendente.' : 'Nenhuma solicitação pendente para a sua seleção.' }}
+            </td>
+          </tr>
+          <tr v-for="registration in registrations" :key="registration.id" v-else>
+            <td class="font-ui font-medium text-white">{{ registration.full_name }}</td>
+            <td class="font-mono text-muted">{{ registration.email }}</td>
+            <td class="font-mono text-muted">{{ formatDate(registration.created_at) }}</td>
+            <td v-if="activeTab === 'auditores'">
+              <span class="font-ui text-white">Auditor</span>
+            </td>
+            <td v-else>
+              <select v-model="selectedRoles[registration.id]" class="custom-select">
+                <option
+                  v-for="option in roleOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
+            </td>
+            <td class="text-center registrations-actions">
+              <button @click="handleApprove(registration.id)" class="btn-approve" title="Aprovar solicitação">
+                <Check :size="16" /> Aprovar
+              </button>
+              <button @click="handleReject(registration.id)" class="btn-reject" title="Rejeitar solicitação">
+                <X :size="16" /> Rejeitar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    </template>
+
+    </div>
+
     <!-- Modal de Inspeção Crítica de Detalhes -->
     <div v-if="isModalOpen" class="modal-overlay" @click.self="isModalOpen = false">
       <div class="modal-card">
@@ -150,23 +345,146 @@ onMounted(() => {
 
 <style scoped>
 .audit-container {
-  padding: 40px;
-  background-color: #08111F; /* Midnight Navy */
+  background-color: var(--color-bg-base);
   min-height: 100vh;
 }
 
-.system-badge {
-  font-family: 'JetBrains Mono', monospace;
-  color: #0F766E; /* Tactical Teal */
-  font-size: 12px;
-  letter-spacing: 0.05em;
+.audit-body {
+  padding: var(--space-10) var(--padding-page-x);
 }
 
-.audit-header h1 {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 32px;
+.audit-hero {
+  position: relative;
+  overflow: hidden;
+  padding: calc(var(--space-16) * 1.4) var(--padding-page-x);
+  background-color: var(--color-bg-base);
+}
+
+.audit-hero__bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/img/audit-hero-2.png');
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+}
+
+.audit-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--color-bg-base) 85%, transparent) 0%,
+    color-mix(in srgb, var(--color-bg-base) 60%, transparent) 55%,
+    color-mix(in srgb, var(--color-bg-mid) 35%, transparent) 100%);
+  z-index: 1;
+}
+
+.audit-hero__edge {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--color-gold) 50%, transparent),
+    color-mix(in srgb, var(--color-gold) 20%, transparent),
+    transparent);
+  z-index: 2;
+}
+
+.audit-hero__title {
+  position: relative;
+  z-index: 3;
+  font-family: var(--font-heading);
+  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-display);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: var(--line-height-display);
+  color: var(--color-text-primary);
+}
+
+.tab-bar {
+  display: flex;
+  gap: 8px;
+  margin-top: 32px;
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 12px 16px;
+  color: #9AA8BA;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.tab-button:hover {
   color: #F4F7FB;
-  margin-top: 8px;
+}
+
+.tab-button--active {
+  color: #D4AF37;
+  border-bottom-color: #D4AF37;
+}
+
+.registrations-error {
+  margin: 0 0 16px 0;
+  padding: 12px 16px;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  color: #EF4444;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+}
+
+.registrations-success {
+  margin: 0 0 16px 0;
+  padding: 12px 16px;
+  background-color: rgba(15, 118, 110, 0.15);
+  border: 1px solid rgba(15, 118, 110, 0.3);
+  border-radius: 6px;
+  color: #0F766E;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+}
+
+.registrations-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn-approve, .btn-reject {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-approve {
+  background-color: rgba(15, 118, 110, 0.15);
+  color: #0F766E;
+}
+
+.btn-reject {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+}
+
+.btn-approve:hover, .btn-reject:hover {
+  opacity: 0.8;
 }
 
 .filter-bar {

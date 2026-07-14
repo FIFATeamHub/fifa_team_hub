@@ -27,20 +27,13 @@ export const useAuthStore = defineStore('auth', () => {
       body: JSON.stringify(credenciais)
     })
 
-    if (resposta.status === 401) {
-      throw { status: 401 }
-    }
-
     if (!resposta.ok) {
-      throw new Error(`Falha no login: ${resposta.status}`)
+      const dadosErro = await resposta.json().catch(() => ({}))
+      throw { status: resposta.status, message: dadosErro.error }
     }
 
     const data = await resposta.json()
 
-    // const resposta = await api.post('/auth/login', { email, password }) # IMPLEMENTAR COM AXIOS
-    // const dados = resposta.data
-
-    //sauma - alterar data.token para data.access_token
     token.value = data.access_token
     localStorage.setItem('token', data.access_token)
 
@@ -55,7 +48,6 @@ export const useAuthStore = defineStore('auth', () => {
 
     try{
 
-        //mudei os nomes das variaves p ingles para alinhas com o backend
         const resposta = await api.post('/auth/register', {
             full_name: dadosCadastro.nome,
             email: dadosCadastro.email,
@@ -112,7 +104,9 @@ export const useAuthStore = defineStore('auth', () => {
     })
 
     if (!res.ok) {
-      throw new Error(`Falha ao buscar usuario: ${res.status}`)
+      const erro = new Error(`Falha ao buscar usuario: ${res.status}`)
+      erro.status = res.status
+      throw erro
     }
 
     const data = await res.json()
