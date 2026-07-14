@@ -228,6 +228,10 @@ defineExpose({
                 </div>
             </div>
 
+            <div v-if="$slots['toolbar-actions']" class="documents__toolbar-actions">
+                <slot name="toolbar-actions"></slot>
+            </div>
+
         </div>
 
         <div v-if="!loading && !error" class="documents__stats">
@@ -437,6 +441,10 @@ defineExpose({
     align-items: flex-end;
     flex-wrap: wrap;
     gap: var(--space-6);
+}
+
+.documents__toolbar-actions {
+    margin-left: auto;
 }
 
 .documents__filter {
